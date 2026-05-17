@@ -17,7 +17,7 @@
                   class: "rail-item flex items-center gap-2 px-3 py-[3px] text-[11.5px] #{active ? 'bg-elevated text-fg border-l-2 border-purple pl-[10px]' : 'text-fg-dim hover:bg-elevated'}",
                   data: { active: active, rail_target: "item", tool_key: key } do %>
         <span class="w-3 inline-block text-purple"><%= "▸" if active %></span>
-        <span><%= klass.tool_name.sub(/^(WHOIS|SSL|HTTP|DNS|DKIM|SPF|DMARC) /i, '').downcase %></span>
+        <span><%= klass.tool_name.downcase %></span>
       <% end %>
     <% end %>
   <% end %>
