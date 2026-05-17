@@ -47,3 +47,7 @@
 # Ignore Superpowers brainstorm sessions
 /.superpowers/
 
+# Ignore Playwright MCP scratch (screenshots, console logs)
+/.playwright-mcp/
+/smoke-*.png
+
