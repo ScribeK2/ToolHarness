@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html data-controller="mode" data-mode-state-value="NORMAL">
+<html>
   <head>
     <title><%= content_for(:title) || "ToolHarness" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -14,7 +14,8 @@
     <%= javascript_importmap_tags %>
   </head>
   <body class="h-screen overflow-hidden text-fg bg-bg flex flex-col font-mono"
-        data-controller="tour">
+        data-controller="tour mode"
+        data-mode-state-value="NORMAL">
     <%= render "workbench/flash_strip" if notice.present? || alert.present? %>
     <%= render "workbench/top_bar" %>
 
