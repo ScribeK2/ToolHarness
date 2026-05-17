@@ -1,4 +1,8 @@
 <%= turbo_stream_from tool_run %>
+<% if tool_run.result_data.present? %>
+  <script type="application/json" id="raw_<%= dom_id(tool_run) %>"><%= JSON.generate(tool_run.result_data).html_safe %></script>
+  <script>window.toolRunRawJson = document.getElementById("raw_<%= dom_id(tool_run) %>").textContent;</script>
+<% end %>
 <div id="<%= dom_id(tool_run) %>" class="text-xs">
   <% case tool_run.status
      when "pending", "processing" %>
