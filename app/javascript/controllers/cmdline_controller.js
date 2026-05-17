@@ -127,7 +127,12 @@ export default class extends Controller {
         window.location = "/workbench?view=history" + (rest.length ? "&filter=" + encodeURIComponent(rest.join(" ")) : "")
         break
       case "help":
-        document.dispatchEvent(new Event("help:toggle"))
+        if (rest[0] === "tour") {
+          Prefs.remove("tour_done")
+          document.dispatchEvent(new Event("tour:start"))
+        } else {
+          document.dispatchEvent(new Event("help:toggle"))
+        }
         break
       case "set":
         if (rest[0] && rest[1] !== undefined) Prefs.set(rest[0], rest.slice(1).join(" "))

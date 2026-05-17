@@ -13,7 +13,8 @@
     <%= turbo_include_tags %>
     <%= javascript_importmap_tags %>
   </head>
-  <body class="h-screen overflow-hidden text-fg bg-bg flex flex-col font-mono">
+  <body class="h-screen overflow-hidden text-fg bg-bg flex flex-col font-mono"
+        data-controller="tour">
     <%= render "workbench/flash_strip" if notice.present? || alert.present? %>
     <%= render "workbench/top_bar" %>
 
