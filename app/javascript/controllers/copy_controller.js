@@ -6,7 +6,7 @@ import { Controller } from "@hotwired/stimulus"
 //   y <letter> → a specific result section (matches [data-section="<letter>"])
 // Listens for `yank:request` from mode controller.
 export default class extends Controller {
-  static values = { text: String, sectionValue: String }
+  static values = { text: String, section: String }
 
   connect() {
     this.onYank = (e) => this.handleYank(e.detail.target)
@@ -30,7 +30,7 @@ export default class extends Controller {
   }
 
   copySummary() { this.write(this.textValue) }
-  copySection() { this.write(this.getSection(this.sectionValueValue)) }
+  copySection() { this.write(this.getSection(this.sectionValue)) }
 
   getSummary() {
     // The summary button has data-copy-text-value="…"
