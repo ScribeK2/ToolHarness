@@ -1,4 +1,18 @@
-<header class="h-6 px-3 flex items-center justify-between border-b border-line text-[11px] bg-surface">
-  <span class="font-bold tracking-[0.14em] text-fg">[ TOOLHARNESS ]</span>
+<header class="h-6 px-3 flex items-center justify-between border-b border-line text-[11px] bg-surface"
+        data-controller="prefs">
+  <div class="flex items-center gap-4">
+    <span class="font-bold tracking-[0.14em] text-fg">[ TOOLHARNESS ]</span>
+    <nav class="flex items-center gap-3 text-mute" data-prefs-target="slots" data-default-slots="<%= @default_slots.to_json %>">
+      <% @default_slots.each_with_index do |slot_key, i| %>
+        <% klass = ToolHarness::Registry.find_tool(slot_key) %>
+        <% next unless klass %>
+        <%= link_to workbench_path(tool: slot_key, target: @target),
+                    class: "hover:text-fg #{'text-fg' if slot_key == @tool_key.to_s}",
+                    data: { slot: i + 1 } do %>
+          <span class="text-purple"><%= i + 1 %>:</span><span><%= klass.name.demodulize.underscore.split('_').first %></span>
+        <% end %>
+      <% end %>
+    </nav>
+  </div>
   <span class="text-mute">target=<%= @target.presence || "—" %></span>
 </header>
