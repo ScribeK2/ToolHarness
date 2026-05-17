@@ -4,11 +4,11 @@
 
     <%= form_for(resource, as: resource_name, url: session_path(resource_name), html: { class: "space-y-3" }) do |f| %>
       <div>
-        <label class="mono-label block mb-1">email</label>
+        <%= f.label :email, "email", class: "mono-label block mb-1" %>
         <%= f.email_field :email, autofocus: true, autocomplete: "email" %>
       </div>
       <div>
-        <label class="mono-label block mb-1">password</label>
+        <%= f.label :password, "password", class: "mono-label block mb-1" %>
         <%= f.password_field :password, autocomplete: "current-password" %>
       </div>
       <% if devise_mapping.rememberable? %>
