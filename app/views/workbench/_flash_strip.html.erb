@@ -1,6 +1,14 @@
 <% if notice %>
-  <div class="h-[22px] px-3 bg-yellow text-bg text-xs flex items-center"><%= notice %></div>
+  <div class="h-[22px] px-3 bg-yellow text-bg text-xs flex items-center justify-between"
+       data-controller="flash-strip" data-flash-strip-timeout-value="4000">
+    <span><%= notice %></span>
+    <button class="font-bold ml-3" data-action="click->flash-strip#dismiss">[x]</button>
+  </div>
 <% end %>
 <% if alert %>
-  <div class="h-[22px] px-3 bg-red text-bg text-xs flex items-center"><%= alert %></div>
+  <div class="h-[22px] px-3 bg-red text-bg text-xs flex items-center justify-between"
+       data-controller="flash-strip" data-flash-strip-timeout-value="4000">
+    <span><%= alert %></span>
+    <button class="font-bold ml-3" data-action="click->flash-strip#dismiss">[x]</button>
+  </div>
 <% end %>
