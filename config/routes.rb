@@ -16,6 +16,9 @@ Rails.application.routes.draw do
   post "tools/:tool_key/run", to: "tool_runs#create",  as: :tool_run_create
   resources :tool_runs, only: [:index, :show]
 
+  # Cmdline dispatcher — server-side handler for :run / :export commands.
+  post "commands", to: "commands#create", as: :commands
+
   # Action Cable WebSocket mount — required for Turbo Streams real-time broadcasts.
   mount ActionCable.server => "/cable"
 
