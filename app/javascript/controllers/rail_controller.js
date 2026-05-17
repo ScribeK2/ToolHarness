@@ -21,7 +21,8 @@ export default class extends Controller {
     document.addEventListener("rail:filter", this.onFilter)
     document.addEventListener("rail:slot", this.onSlot)
     document.addEventListener("rail:top", this.onTop)
-    this.index = Math.max(0, this.itemTargets.findIndex(el => el.dataset.toolKey === this.activeValue))
+    const found = this.itemTargets.findIndex(el => el.dataset.toolKey === this.activeValue)
+    this.index = found >= 0 ? found : null
     this.refreshOutline()
   }
 
@@ -36,7 +37,7 @@ export default class extends Controller {
   move(delta) {
     const items = this.itemTargets
     if (items.length === 0) return
-    if (delta === -Infinity) {
+    if (delta === -Infinity || this.index === null) {
       this.index = 0
     } else {
       this.index = (this.index + delta + items.length) % items.length
@@ -63,7 +64,7 @@ export default class extends Controller {
     input.type = "text"
     input.placeholder = "filter…"
     input.setAttribute("data-rail-filter", "")
-    input.className = "mx-2 my-2 text-[11px]"
+    input.className = "block w-full box-border px-3 my-2 text-[11px]"
     this.element.prepend(input)
     input.focus()
     input.addEventListener("input", () => this.applyFilter(input.value))

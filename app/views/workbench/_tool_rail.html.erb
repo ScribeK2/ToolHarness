@@ -5,14 +5,14 @@
 
 <aside class="w-[200px] border-r border-line bg-sunken overflow-y-auto"
        data-controller="rail"
-       data-rail-active-value="<%= @tool_key.to_s %>">
+       data-rail-active-value="<%= @view == "history" ? "" : @tool_key.to_s %>">
   <% (category_order + unknown).each do |cat| %>
     <% tools = by_cat[cat] %>
     <% next if tools.blank? %>
     <div class="pt-2 px-3"><span class="mono-label">// <%= cat.to_s.tr('_', ' ') %></span></div>
     <% tools.sort_by(&:tool_name).each do |klass| %>
       <% key = klass.name.demodulize.underscore %>
-      <% active = key == @tool_key.to_s %>
+      <% active = @view != "history" && key == @tool_key.to_s %>
       <%= link_to workbench_path(tool: key, target: @target),
                   class: "rail-item flex items-center gap-2 px-3 py-[3px] text-[11.5px] #{active ? 'bg-elevated text-fg border-l-2 border-purple pl-[10px]' : 'text-fg-dim hover:bg-elevated'}",
                   data: { active: active, rail_target: "item", tool_key: key } do %>

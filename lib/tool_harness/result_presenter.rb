@@ -24,7 +24,7 @@ module ToolHarness
     private
 
     def data_sections
-      (@run.result_data || {}).map do |key, value|
+      (@run.result_data || {}).reject { |_, v| v.blank? }.map do |key, value|
         case value
         when Hash
           Section.new(title: titleize(key), kvs: stringify(value))

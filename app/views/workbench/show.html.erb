@@ -1,1 +1,2 @@
-<% content_for :title, ((@tool_class&.tool_name || "Workbench") + " · ToolHarness") %>
+<% title = @view == "history" ? "History" : (@tool_class&.tool_name || "Workbench") %>
+<% content_for :title, "#{title} · ToolHarness" %>

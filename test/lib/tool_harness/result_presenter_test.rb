@@ -64,6 +64,19 @@ class ToolHarness::ResultPresenterTest < ActiveSupport::TestCase
     assert_equal "no issues found.", sections.last.kvs[""]
   end
 
+  test "skips top-level keys whose value is blank (nil, empty string, empty hash/array)" do
+    run = make_run(result_data: {
+      "registrar"   => "IANA",
+      "registrant"  => nil,
+      "raw_data"    => "",
+      "nameservers" => [],
+      "metadata"    => {},
+      "summary"     => "ok"
+    })
+    titles = ToolHarness::ResultPresenter.new(run).sections.map(&:title)
+    assert_equal ["Registrar", "Summary", "Issues"], titles
+  end
+
   test "failed runs emit an Error section first and no Issues section" do
     run = make_run(status: "failed", error: "boom")
     sections = ToolHarness::ResultPresenter.new(run).sections

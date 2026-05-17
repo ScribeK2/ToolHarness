@@ -4,7 +4,7 @@ import { Prefs } from "lib/prefs"
 const STEPS = [
   { selector: "[data-workbench-target='input']", text: "Type a target — domain, email, IP — and press Enter or click RUN." },
   { selector: "[data-controller='rail']",        text: "Tool rail. Press j/k to move, t to filter, 1–9 for pinned slots, Enter to switch." },
-  { selector: "#cmdline_wrap, [data-mode-badge]", text: "Press : to open the command line. Try :help anytime." },
+  { selector: "[data-mode-badge]",                text: "Press : to open the command line. Try :help anytime." },
   { selector: "[data-status='hints']",            text: "Press ? for a full help overlay. Re-open with :help tour." }
 ]
 
@@ -39,15 +39,22 @@ export default class extends Controller {
     const rect = target.getBoundingClientRect()
     const tip = document.createElement("div")
     tip.className = "fixed border border-cyan bg-bg text-fg text-xs p-2 z-50 max-w-xs"
-    tip.style.top = (rect.bottom + 6) + "px"
-    tip.style.left = (rect.left + 6) + "px"
     tip.innerHTML = `<div class="mb-2">${text}</div>
       <div class="flex justify-between text-mute">
         <span>step ${this.idx + 1}/${STEPS.length}</span>
         <button data-tour-action="next" class="text-cyan">[next ⏎]</button>
         <button data-tour-action="skip" class="text-mute ml-2">[skip Esc]</button>
       </div>`
+    // Position off-screen first so we can measure, then clamp to viewport.
+    tip.style.top = "-9999px"
+    tip.style.left = "-9999px"
     document.body.appendChild(tip)
+    const tipRect = tip.getBoundingClientRect()
+    const margin = 8
+    const top  = Math.max(margin, Math.min(rect.bottom + 6, window.innerHeight - tipRect.height - margin))
+    const left = Math.max(margin, Math.min(rect.left  + 6, window.innerWidth  - tipRect.width  - margin))
+    tip.style.top  = top  + "px"
+    tip.style.left = left + "px"
     this.currentTip = tip
 
     this.onClick = (e) => {
