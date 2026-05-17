@@ -1,4 +1,13 @@
-<section id="cmdline" class="hidden h-[22px] px-3 border-t border-line bg-bg flex items-center text-xs">
-  <span class="text-mute mr-1">:</span>
-  <input type="text" name="cmd" class="flex-1 border-0 p-0 bg-transparent">
-</section>
+<div id="cmdline_wrap" class="hidden" data-controller="cmdline">
+  <div id="cmdline_message"></div>
+  <form id="cmdline" action="<%= commands_path %>" method="post"
+        class="h-[22px] px-3 border-t border-line bg-bg flex items-center text-xs"
+        data-action="submit->cmdline#submit">
+    <%= csrf_meta_tags %>
+    <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
+    <input type="hidden" name="run_id" data-cmdline-target="runId">
+    <span class="text-mute mr-1">:</span>
+    <input type="text" name="cmd" data-cmdline-target="input"
+           class="flex-1 border-0 p-0 bg-transparent" autocomplete="off">
+  </form>
+</div>

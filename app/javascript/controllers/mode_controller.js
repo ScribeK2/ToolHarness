@@ -17,8 +17,10 @@ export default class extends Controller {
   connect() {
     this.boundKey = this.handleKey.bind(this)
     this.boundFocus = this.handleFocus.bind(this)
+    this.boundCmdClose = () => this.applyMode("NORMAL")
     document.addEventListener("keydown", this.boundKey)
     document.addEventListener("focusin", this.boundFocus)
+    document.addEventListener("cmd:close", this.boundCmdClose)
     this.applyMode("NORMAL", { silent: true })
     this.pending = "" // for multi-key sequences like "yy", "gh", "dd"
   }
@@ -26,6 +28,7 @@ export default class extends Controller {
   disconnect() {
     document.removeEventListener("keydown", this.boundKey)
     document.removeEventListener("focusin", this.boundFocus)
+    document.removeEventListener("cmd:close", this.boundCmdClose)
   }
 
   setMode(name) {
@@ -127,6 +130,7 @@ export default class extends Controller {
     }
     if (k === ":") {
       event.preventDefault()
+      this.applyMode("CMD")
       document.dispatchEvent(new Event("cmd:open"))
       return
     }
