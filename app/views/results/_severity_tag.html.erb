@@ -1,0 +1,15 @@
+<%
+  sev = severity.to_s
+  klass = case sev
+          when "critical" then "sev sev-crit"
+          when "warning"  then "sev sev-warn"
+          when "info"     then "sev sev-info"
+          else                  "sev sev-ok"
+          end
+  text  = case sev
+          when "critical" then "CRIT"
+          when "warning"  then "WARN"
+          when "info"     then "INFO"
+          else                 " OK "
+          end
+%><span class="<%= klass %>"><%= text %></span>

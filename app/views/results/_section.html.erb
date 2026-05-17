@@ -1,0 +1,24 @@
+<%
+  letter = ('a'..'z').to_a[index]
+%>
+<div class="py-2 border-t border-line first:border-t-0" data-section="<%= letter %>">
+  <div class="flex items-center justify-between mb-1">
+    <h3 class="text-[11px] tracking-[0.18em] uppercase text-fg font-bold">▸ <%= section.title %></h3>
+    <button type="button"
+            class="text-mute hover:text-cyan text-[10px]"
+            data-controller="copy"
+            data-action="click->copy#copySection"
+            data-copy-section-value="<%= letter %>">[y <%= letter %>]</button>
+  </div>
+
+  <% section.kvs.each do |k, v| %>
+    <%= render "results/kv_row", key: k, value: v %>
+  <% end %>
+
+  <% section.issues.each do |issue| %>
+    <div class="flex gap-2 py-[1px]">
+      <%= render "results/severity_tag", severity: (issue["severity"] || issue[:severity]) %>
+      <span class="text-fg"><%= issue["title"] || issue[:title] %><% msg = issue["message"] || issue[:message]; if msg.present? %> — <span class="text-fg-dim"><%= msg %></span><% end %></span>
+    </div>
+  <% end %>
+</div>

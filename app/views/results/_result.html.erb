@@ -1,1 +1,27 @@
-<div class="text-mute">▸ Run <%= tool_run.id %> · <%= tool_run.status %></div>
+<%= turbo_stream_from tool_run %>
+<div id="<%= dom_id(tool_run) %>" class="text-xs">
+  <% case tool_run.status
+     when "pending", "processing" %>
+    <div class="flex items-center gap-2 text-fg-dim">
+      <span class="spinner"></span>
+      <span>▸ <%= tool_run.tool_name.downcase %> · <%= tool_run.input_summary %> · running…</span>
+    </div>
+  <% else %>
+    <%
+      presenter = ToolHarness::ResultPresenter.new(tool_run)
+      sections  = presenter.sections
+    %>
+    <div class="flex items-center justify-between mb-2 text-mute">
+      <span>▸ <%= tool_run.tool_name.downcase %> · <%= tool_run.input_summary %> · <%= tool_run.status == "failed" ? "failed" : "done #{tool_run.execution_time&.round(2)}s" %></span>
+      <button type="button"
+              class="text-mute hover:text-cyan text-[10px]"
+              data-controller="copy"
+              data-action="click->copy#copySummary"
+              data-copy-text-value="<%= tool_run_ticket_text(tool_run) %>">[y s] copy summary</button>
+    </div>
+
+    <% sections.each_with_index do |section, i| %>
+      <%= render "results/section", section: section, index: i %>
+    <% end %>
+  <% end %>
+</div>

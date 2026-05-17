@@ -1,0 +1,8 @@
+<div class="flex gap-2 py-[1px]">
+  <span class="text-mute w-[110px] flex-shrink-0"><%= key %></span>
+  <% if value.to_s.include?("\n") %>
+    <pre class="text-fg whitespace-pre border-l border-line pl-2"><%= value %></pre>
+  <% else %>
+    <span class="text-fg"><%= value %></span>
+  <% end %>
+</div>
