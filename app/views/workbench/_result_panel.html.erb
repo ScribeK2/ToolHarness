@@ -1,0 +1,7 @@
+<section id="result_panel" class="flex-1 min-h-0 overflow-y-auto px-3 py-2 text-xs">
+  <% if @run %>
+    <%= render "results/result", tool_run: @run %>
+  <% else %>
+    <div class="text-mute">▸ Ready.  type a target, then Enter or :r</div>
+  <% end %>
+</section>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html data-controller="mode" data-mode-state-value="NORMAL">
+  <head>
+    <title><%= content_for(:title) || "ToolHarness" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= yield :head %>
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+    <%= turbo_include_tags %>
+    <%= javascript_importmap_tags %>
+  </head>
+  <body class="h-screen overflow-hidden text-fg bg-bg flex flex-col font-mono">
+    <%= render "workbench/flash_strip" if notice.present? || alert.present? %>
+    <%= render "workbench/top_bar" %>
+
+    <div class="flex flex-1 min-h-0">
+      <%= render "workbench/tool_rail" %>
+
+      <main class="flex-1 min-w-0 flex flex-col">
+        <%= render "workbench/target_row" %>
+        <%= render "workbench/result_panel" %>
+      </main>
+    </div>
+
+    <%= render "workbench/cmdline" %>
+    <%= render "workbench/status_bar" %>
+    <%= render "workbench/help_overlay" %>
+  </body>
+</html>

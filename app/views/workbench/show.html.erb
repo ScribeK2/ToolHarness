@@ -1,8 +1,1 @@
-<% content_for :title, "Workbench · ToolHarness" %>
-<div class="font-mono text-xs">
-  <header>TOOLHARNESS</header>
-  <% if @tool_class %>
-    <div>active: <%= @tool_class.tool_name %></div>
-  <% end %>
-  <footer>[NORMAL]</footer>
-</div>
+<% content_for :title, ((@tool_class&.tool_name || "Workbench") + " · ToolHarness") %>
