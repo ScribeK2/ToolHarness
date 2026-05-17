@@ -1,5 +1,42 @@
-<section class="h-10 px-3 border-b border-line bg-surface flex items-center gap-3">
-  <span class="mono-label">target ›</span>
-  <input type="text" name="target" value="<%= @target %>" class="flex-1" autofocus>
-  <button class="btn btn-primary">RUN ⏎</button>
+<% tool_key = @tool_class&.name&.demodulize&.underscore %>
+<% fields   = @tool_class&.form_fields || { target: :text } %>
+<% primary  = fields.keys.first %>
+
+<section class="border-b border-line bg-surface">
+  <%= form_with url: tool_key ? tool_run_create_path(tool_key) : "#",
+                method: :post, scope: :tool_run,
+                data: { turbo: true, action: "submit->mode#enterInsert" },
+                class: "flex flex-col" do |f| %>
+    <div class="h-10 px-3 flex items-center gap-3">
+      <span class="mono-label">target ›</span>
+      <%= f.text_field primary, value: @target,
+            autocomplete: "off", spellcheck: "false",
+            class: "flex-1",
+            data: { workbench_target: "input" } %>
+      <%= f.submit "RUN ⏎", class: "btn btn-primary cursor-pointer" %>
+    </div>
+
+    <% extras = fields.except(primary) %>
+    <% if extras.any? %>
+      <div class="px-3 pb-2 pt-1 flex items-center gap-4 border-t border-line">
+        <% extras.each do |name, type|
+             type_sym = type.is_a?(Hash) ? type[:type] : type
+             options  = type.is_a?(Hash) ? type[:options] : nil %>
+          <div class="flex items-center gap-2">
+            <%= f.label name, name.to_s, class: "mono-label" %>
+            <% case type_sym
+               when :select %>
+              <%= f.select name, options, { include_blank: false }, class: "w-28" %>
+            <% when :number %>
+              <%= f.number_field name, class: "w-20" %>
+            <% when :textarea %>
+              <%= f.text_area name, rows: 2, class: "w-64" %>
+            <% else %>
+              <%= f.text_field name, class: "w-28" %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
 </section>
