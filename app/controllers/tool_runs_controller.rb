@@ -29,7 +29,17 @@ class ToolRunsController < ApplicationController
     )
 
     ToolRunJob.perform_later(@tool_run.id)
-    redirect_to tool_run_path(@tool_run), notice: "#{tool_class.tool_name} started. Results will appear shortly."
+
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.replace(
+          "result_panel",
+          partial: "workbench/result_panel_with_run",
+          locals: { tool_run: @tool_run }
+        )
+      end
+      format.html { redirect_to workbench_path(tool: params[:tool_key], target: @tool_run.input_summary, run: @tool_run.id) }
+    end
   end
 
   private
