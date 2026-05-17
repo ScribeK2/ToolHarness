@@ -1,1 +1,67 @@
-<div id="help_overlay" class="hidden"></div>
+<div id="help_overlay"
+     class="hidden fixed inset-0 bg-bg/95 text-xs overflow-y-auto z-50"
+     data-controller="help-overlay"
+     aria-modal="true"
+     role="dialog">
+  <div class="max-w-4xl mx-auto py-6 px-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-fg font-bold tracking-[0.18em]">▸ HELP</h2>
+      <button type="button" data-action="click->help-overlay#close" class="text-mute hover:text-fg">[Esc]</button>
+    </div>
+
+    <div class="grid grid-cols-2 gap-x-12 gap-y-6">
+      <section>
+        <h3 class="text-fg font-bold mb-2">▸ MODES</h3>
+        <div><span class="text-mute">NORMAL</span>  default — keys do things</div>
+        <div><span class="text-mute">INSERT</span>  typing in any input (Esc to return)</div>
+        <div><span class="text-mute">CMD</span>     after `:` (Esc to return)</div>
+        <div><span class="text-mute">SEARCH</span>  after `/` (Esc to return)</div>
+      </section>
+
+      <section>
+        <h3 class="text-fg font-bold mb-2">▸ KEYS (NORMAL)</h3>
+        <div><span class="text-cyan">j k</span>     rail next / prev</div>
+        <div><span class="text-cyan">1–9</span>     pinned slot jump</div>
+        <div><span class="text-cyan">t</span>       focus rail filter</div>
+        <div><span class="text-cyan">r</span>       re-run current tool</div>
+        <div><span class="text-cyan">Y</span>       copy summary</div>
+        <div><span class="text-cyan">yr</span>      copy raw</div>
+        <div><span class="text-cyan">y &lt;a–z&gt;</span>  copy specific section</div>
+        <div><span class="text-cyan">x</span>       clear result</div>
+        <div><span class="text-cyan">/</span>       search target</div>
+        <div><span class="text-cyan">:</span>       open cmdline</div>
+        <div><span class="text-cyan">gh</span>      open history</div>
+        <div><span class="text-cyan">ge</span>      open expiring filter</div>
+        <div><span class="text-cyan">?</span>       toggle this overlay</div>
+      </section>
+
+      <section>
+        <h3 class="text-fg font-bold mb-2">▸ COMMANDS</h3>
+        <div>:run &lt;tool&gt; &lt;target&gt;</div>
+        <div>:tool &lt;name&gt;</div>
+        <div>:target &lt;value&gt;</div>
+        <div>:copy summary | raw | &lt;section&gt;</div>
+        <div>:export json | csv | md</div>
+        <div>:pin &lt;tool&gt; &lt;slot&gt;</div>
+        <div>:history [filter]</div>
+        <div>:expiring</div>
+        <div>:raw</div>
+        <div>:help [topic]</div>
+        <div>:set &lt;key&gt; &lt;value&gt;</div>
+        <div>:purge older=&lt;duration&gt;</div>
+        <div>:q</div>
+      </section>
+
+      <section>
+        <h3 class="text-fg font-bold mb-2">▸ HISTORY FILTER</h3>
+        <div>tool=whois</div>
+        <div>target~acme</div>
+        <div>status=done|err|running</div>
+        <div>severity&gt;=warn|crit|info</div>
+        <div>expires&lt;30d</div>
+        <div>age&lt;2h</div>
+        <div>today | yesterday | 7d</div>
+      </section>
+    </div>
+  </div>
+</div>
