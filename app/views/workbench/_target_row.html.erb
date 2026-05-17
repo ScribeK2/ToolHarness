@@ -2,7 +2,7 @@
 <% fields   = @tool_class&.form_fields || { target: :text } %>
 <% primary  = fields.keys.first %>
 
-<section class="border-b border-line bg-surface">
+<section class="border-b border-line bg-surface" data-controller="target-row">
   <%= form_with url: tool_key ? tool_run_create_path(tool_key) : "#",
                 method: :post, scope: :tool_run,
                 data: { turbo: true, action: "submit->mode#enterInsert" },
