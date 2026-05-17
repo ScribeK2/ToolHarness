@@ -1,3 +1,35 @@
-<aside class="w-[200px] border-r border-line bg-sunken overflow-y-auto" data-controller="rail">
-  <div class="py-2"><span class="mono-label px-3">// rail (todo)</span></div>
+<% category_order = %i[domain dns ssl email email_auth http hosting diagnostics general] %>
+<% by_cat = ToolHarness::Registry.categories %>
+<% known   = by_cat.keys & category_order %>
+<% unknown = by_cat.keys - known %>
+
+<aside class="w-[200px] border-r border-line bg-sunken overflow-y-auto"
+       data-controller="rail"
+       data-rail-active-value="<%= @tool_key.to_s %>">
+  <% (category_order + unknown).each do |cat| %>
+    <% tools = by_cat[cat] %>
+    <% next if tools.blank? %>
+    <div class="pt-2 px-3"><span class="mono-label">// <%= cat.to_s.tr('_', ' ') %></span></div>
+    <% tools.sort_by(&:tool_name).each do |klass| %>
+      <% key = klass.name.demodulize.underscore %>
+      <% active = key == @tool_key.to_s %>
+      <%= link_to workbench_path(tool: key, target: @target),
+                  class: "rail-item flex items-center gap-2 px-3 py-[3px] text-[11.5px] #{active ? 'bg-elevated text-fg border-l-2 border-purple pl-[10px]' : 'text-fg-dim hover:bg-elevated'}",
+                  data: { active: active, rail_target: "item", tool_key: key } do %>
+        <span class="w-3 inline-block text-purple"><%= "▸" if active %></span>
+        <span><%= klass.tool_name.sub(/^(WHOIS|SSL|HTTP|DNS|DKIM|SPF|DMARC) /i, '').downcase %></span>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <div class="pt-3 px-3 mt-2 border-t border-line">
+    <span class="mono-label">─── system ───</span>
+  </div>
+  <%= link_to "history", workbench_path(view: "history"),
+              class: "rail-item flex px-3 py-[3px] text-[11.5px] text-fg-dim hover:bg-elevated",
+              data: { rail_target: "system" } %>
+  <%= link_to "expiring", workbench_path(view: "history", filter: "severity>=warn expires<30d"),
+              class: "rail-item flex px-3 py-[3px] text-[11.5px] text-fg-dim hover:bg-elevated" %>
+  <%= link_to "help", "#", onclick: "document.getElementById('help_overlay').classList.toggle('hidden');return false;",
+              class: "rail-item flex px-3 py-[3px] text-[11.5px] text-fg-dim hover:bg-elevated" %>
 </aside>

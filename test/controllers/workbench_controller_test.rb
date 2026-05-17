@@ -24,4 +24,16 @@ class WorkbenchControllerTest < ActionDispatch::IntegrationTest
     get "/workbench"
     assert_redirected_to new_user_session_path
   end
+
+  test "rail groups tools by category" do
+    get "/workbench"
+    assert_match %r{// domain}, response.body
+    assert_match /whois_lookup|WHOIS Lookup/i, response.body
+  end
+
+  test "active tool is marked with the active rail class" do
+    get "/workbench", params: { tool: "whois_lookup" }
+    # Active row has data-active="true"
+    assert_match /data-active="true"/, response.body
+  end
 end
