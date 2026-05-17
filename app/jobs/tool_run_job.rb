@@ -35,7 +35,7 @@ class ToolRunJob < ApplicationJob
     Turbo::StreamsChannel.broadcast_replace_to(
       tool_run,
       target: ActionView::RecordIdentifier.dom_id(tool_run),
-      partial: "tool_runs/result",
+      partial: "results/result",
       locals: { tool_run: tool_run }
     )
   rescue StandardError => e
