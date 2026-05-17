@@ -21,8 +21,13 @@
       <%= render "workbench/tool_rail" %>
 
       <main class="flex-1 min-w-0 flex flex-col">
-        <%= render "workbench/target_row" %>
-        <%= render "workbench/result_panel" %>
+        <% if @view == "history" %>
+          <%= render "run_history/filter_row" %>
+          <%= render "run_history/runs_table" %>
+        <% else %>
+          <%= render "workbench/target_row" %>
+          <%= render "workbench/result_panel" %>
+        <% end %>
       </main>
     </div>
 

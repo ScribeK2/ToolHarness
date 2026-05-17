@@ -36,4 +36,19 @@ class WorkbenchControllerTest < ActionDispatch::IntegrationTest
     # Active row has data-active="true"
     assert_match /data-active="true"/, response.body
   end
+
+  test "view=history renders the filter row and runs table" do
+    @user.tool_runs.create!(tool_key: "whois_lookup", tool_name: "WHOIS", category: "domain", status: "completed", success: true, input_summary: "example.com")
+    get "/workbench", params: { view: "history" }
+    assert_match /filter ›/, response.body
+    assert_match /whois_lookup/, response.body
+  end
+
+  test "view=history with a filter narrows the table" do
+    @user.tool_runs.create!(tool_key: "whois_lookup", tool_name: "WHOIS", category: "domain", status: "completed", success: true, input_summary: "x.com")
+    @user.tool_runs.create!(tool_key: "dns_lookup",   tool_name: "DNS",   category: "dns",    status: "completed", success: true, input_summary: "y.com")
+    get "/workbench", params: { view: "history", filter: "tool=whois_lookup" }
+    assert_match /x\.com/, response.body
+    assert_no_match /y\.com/, response.body
+  end
 end

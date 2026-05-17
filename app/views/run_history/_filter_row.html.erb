@@ -1,0 +1,15 @@
+<section class="h-10 px-3 border-b border-line bg-surface flex items-center gap-3">
+  <%= form_with url: workbench_path, method: :get, scope: nil, local: true,
+                class: "flex items-center gap-3 w-full" do %>
+    <span class="mono-label">filter ›</span>
+    <%= hidden_field_tag :view, "history" %>
+    <%= text_field_tag :filter, @filter,
+          placeholder: "tool=ssl target~acme expires<30d",
+          class: "flex-1" %>
+    <%= submit_tag "GO ⏎", class: "btn btn-primary cursor-pointer" %>
+  <% end %>
+</section>
+
+<% if @errors.any? %>
+  <div class="px-3 py-1 text-red text-[11px] border-b border-line bg-bg"><%= @errors.join(" · ") %></div>
+<% end %>
