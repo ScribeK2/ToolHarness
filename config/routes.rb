@@ -4,6 +4,7 @@ Rails.application.routes.draw do
 
   # Dashboard
   get "dashboard", to: "dashboard#index"
+  get "workbench", to: "workbench#show", as: :workbench
   root to: "dashboard#index"
 
   # Global quick-search — auto-detects domain / IP / email / ticket.
