@@ -3,7 +3,7 @@ import { Prefs } from "lib/prefs"
 
 const KNOWN = ["run", "tool", "target", "copy", "export", "pin", "history",
                "expiring", "raw", "help", "set", "purge", "q"]
-const CLIENT_ONLY = ["copy", "set", "q", "raw", "tool", "target", "pin", "expiring", "history", "help", "purge"]
+const CLIENT_ONLY = ["copy", "set", "q", "raw", "tool", "target", "pin", "expiring", "history", "help"]
 
 export default class extends Controller {
   static targets = ["input", "runId"]

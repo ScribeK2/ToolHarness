@@ -6,6 +6,7 @@ class CommandsController < ApplicationController
       case cmd.name
       when :run     then dispatch_run(cmd.args)
       when :export  then dispatch_export(cmd.args, params[:run_id])
+      when :purge   then dispatch_purge(cmd.args)
       when :unknown then error_stream("no command '#{cmd.args[:raw]}'")
       when :empty   then error_stream("empty command")
       else
@@ -54,6 +55,17 @@ class CommandsController < ApplicationController
       "<div id='cmdline_message' class='px-3 py-1 text-cyan text-xs'>".html_safe +
         ActionController::Base.helpers.link_to("download #{filename}", data_url, download: filename, class: "underline") +
         "</div>".html_safe
+    )
+  end
+
+  def dispatch_purge(args)
+    older = args[:older].to_s
+    return error_stream("usage: :purge older=<N>d") unless older =~ /\A(\d+)d\z/
+    days = older.sub(/d\z/, "").to_i
+    n = current_user.tool_runs.purge_older_than!(days.days)
+    turbo_stream.replace(
+      "cmdline_message",
+      "<div id='cmdline_message' class='px-3 py-1 text-cyan text-xs'>▸ purged #{n} runs older than #{days}d</div>".html_safe
     )
   end
 

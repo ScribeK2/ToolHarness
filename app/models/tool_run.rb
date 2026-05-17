@@ -81,4 +81,28 @@ class ToolRun < ApplicationRecord
   rescue ArgumentError, TypeError
     nil
   end
+
+  RETENTION_CAP = 5000
+
+  def self.purge_older_than!(duration)
+    cutoff = duration.ago
+    where("created_at < ?", cutoff).delete_all
+  end
+
+  def self.enforce_retention_cap!(cap: RETENTION_CAP)
+    over = count - cap
+    return 0 if over <= 0
+    ids = order(:created_at).limit(over).pluck(:id)
+    where(id: ids).delete_all
+    over
+  end
+
+  after_create_commit :enforce_cap_async
+
+  private
+
+  def enforce_cap_async
+    # Quick inline check; if over cap, sweep oldest. Cheap because we only run on insert.
+    self.class.enforce_retention_cap! if self.class.count > RETENTION_CAP
+  end
 end
