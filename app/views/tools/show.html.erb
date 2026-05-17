@@ -1,0 +1,56 @@
+<% tool_key = @tool_class.name.demodulize.underscore %>
+<% content_for :title, "#{@tool_class.tool_name} · ToolHarness" %>
+
+<div class="mb-6">
+  <%= link_to tools_path, class: "text-sm text-ink-dim hover:text-ink inline-flex items-center gap-1 mb-3" do %>
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+    </svg>
+    All tools
+  <% end %>
+
+  <div class="flex items-start gap-3">
+    <h1 class="text-3xl font-bold flex-1"><%= @tool_class.tool_name %></h1>
+    <span class="badge badge-neutral"><%= @tool_class.category %></span>
+  </div>
+  <% if @tool_class.description.present? %>
+    <p class="text-ink-dim mt-2 max-w-2xl leading-relaxed"><%= @tool_class.description %></p>
+  <% end %>
+</div>
+
+<div class="card p-6 max-w-2xl">
+  <%= form_with url: tool_run_create_path(tool_key), scope: :tool_run, method: :post, data: { turbo: false } do |f| %>
+    <div class="space-y-4">
+      <% @tool_class.form_fields.each do |field, type|
+           type_sym    = type.is_a?(Hash) ? type[:type] : type
+           options     = type.is_a?(Hash) ? type[:options] : nil
+           label_txt   = (type.is_a?(Hash) && type[:label]) || field.to_s.humanize
+           rows        = (type.is_a?(Hash) && type[:rows]) || 6
+           placeholder = type.is_a?(Hash) ? type[:placeholder] : nil
+           prefill     = params.dig(:tool_run, field) %>
+        <div>
+          <%= f.label field, label_txt, class: "block text-sm font-medium text-ink-dim mb-1.5" %>
+          <% case type_sym
+             when :select %>
+            <%= f.select field, options, { include_blank: false, selected: prefill } %>
+          <% when :number %>
+            <%= f.number_field field, value: prefill %>
+          <% when :email %>
+            <%= f.email_field field, value: prefill %>
+          <% when :textarea %>
+            <%= f.text_area field, rows: rows, placeholder: placeholder, value: prefill %>
+          <% else %>
+            <%= f.text_field field, value: prefill,
+                  autofocus: field == @tool_class.form_fields.keys.first,
+                  placeholder: placeholder %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="mt-6 flex items-center gap-3">
+      <%= f.submit "Run #{@tool_class.tool_name}", class: "btn btn-primary cursor-pointer" %>
+      <%= link_to "Cancel", tools_path, class: "btn btn-ghost" %>
+    </div>
+  <% end %>
+</div>

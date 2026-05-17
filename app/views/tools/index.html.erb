@@ -1,0 +1,37 @@
+<% content_for :title, "Tool Catalog · ToolHarness" %>
+
+<div class="mb-8">
+  <h1 class="text-3xl font-bold mb-2">Tool Catalog</h1>
+  <p class="text-ink-dim">Diagnostic probes for domain, DNS, SSL, and email authentication. Pick a tool to run it against a target.</p>
+</div>
+
+<% if @tools_by_category.empty? %>
+  <div class="card p-8 text-center text-ink-dim">
+    No tools registered. Check <code class="font-mono">app/services/tools/</code> and the registry initializer.
+  </div>
+<% else %>
+  <div class="space-y-10">
+    <% @tools_by_category.each do |category, tools| %>
+      <section>
+        <div class="flex items-baseline gap-3 mb-4">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-ink-dim"><%= category.to_s.tr("_", " ") %></h2>
+          <span class="text-xs text-ink-mute font-mono"><%= tools.size %> tool<%= "s" if tools.size != 1 %></span>
+          <div class="flex-1 border-b border-edge"></div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <% tools.each do |tool_class| %>
+            <% tool_key = tool_class.name.demodulize.underscore %>
+            <%= link_to tool_path(tool_key), class: "card card-hover p-4 block" do %>
+              <div class="flex items-start justify-between gap-3 mb-2">
+                <h3 class="font-semibold text-base"><%= tool_class.tool_name %></h3>
+                <span class="badge badge-neutral"><%= tool_class.input_type %></span>
+              </div>
+              <p class="text-sm text-ink-dim leading-relaxed"><%= tool_class.description.presence || "No description." %></p>
+            <% end %>
+          <% end %>
+        </div>
+      </section>
+    <% end %>
+  </div>
+<% end %>

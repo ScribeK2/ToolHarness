@@ -1,318 +1,127 @@
-<div>
-  <%# Header with action %>
-  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
-    <div>
-      <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-2">Dashboard</h1>
-      <p class="text-gray-600">Your domain health at a glance</p>
-    </div>
-    <%= link_to new_check_path, class: "btn-retro-yellow inline-flex" do %>
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-      </svg>
-      New Check
-    <% end %>
-  </div>
+<% content_for :title, "Dashboard · ToolHarness" %>
 
-  <%# Stats Board - styled as retro board columns %>
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-    <%# Total Checks %>
-    <div class="sticky-card p-5 card-hover">
-      <div class="absolute bottom-0 left-0 right-0 h-2 stripes-purple rounded-b-sm"></div>
-      <div class="flex items-center gap-3 mb-3">
-        <div class="w-10 h-10 bg-retro-purple-light rounded-lg flex items-center justify-center">
-          <svg class="w-5 h-5 text-retro-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-          </svg>
-        </div>
-      </div>
-      <div class="text-3xl font-extrabold text-retro-purple"><%= @stats[:total_checks] %></div>
-      <div class="text-sm font-semibold text-gray-500 mt-1">Total Checks</div>
-    </div>
-
-    <%# Critical Issues %>
-    <div class="sticky-card p-5 card-hover">
-      <div class="absolute bottom-0 left-0 right-0 h-2 stripes-red rounded-b-sm"></div>
-      <div class="flex items-center gap-3 mb-3">
-        <div class="w-10 h-10 bg-retro-red-light rounded-lg flex items-center justify-center">
-          <svg class="w-5 h-5 text-retro-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-          </svg>
-        </div>
-      </div>
-      <div class="text-3xl font-extrabold <%= @stats[:critical_issues] > 0 ? 'text-retro-red' : 'text-gray-400' %>">
-        <%= @stats[:critical_issues] %>
-      </div>
-      <div class="text-sm font-semibold text-gray-500 mt-1">Critical Issues</div>
-    </div>
-
-    <%# Warnings %>
-    <div class="sticky-card p-5 card-hover">
-      <div class="absolute bottom-0 left-0 right-0 h-2 stripes-orange rounded-b-sm"></div>
-      <div class="flex items-center gap-3 mb-3">
-        <div class="w-10 h-10 bg-retro-orange-light rounded-lg flex items-center justify-center">
-          <svg class="w-5 h-5 text-retro-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
-        </div>
-      </div>
-      <div class="text-3xl font-extrabold <%= @stats[:warning_issues] > 0 ? 'text-retro-orange' : 'text-gray-400' %>">
-        <%= @stats[:warning_issues] %>
-      </div>
-      <div class="text-sm font-semibold text-gray-500 mt-1">Warnings</div>
-    </div>
-
-    <%# Info %>
-    <div class="sticky-card p-5 card-hover">
-      <div class="absolute bottom-0 left-0 right-0 h-2 stripes-blue rounded-b-sm"></div>
-      <div class="flex items-center gap-3 mb-3">
-        <div class="w-10 h-10 bg-retro-blue-light rounded-lg flex items-center justify-center">
-          <svg class="w-5 h-5 text-retro-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
-        </div>
-      </div>
-      <div class="text-3xl font-extrabold text-retro-blue"><%= @stats[:info_issues] %></div>
-      <div class="text-sm font-semibold text-gray-500 mt-1">Info</div>
-    </div>
-  </div>
-
-  <%# Expiring Soon Sections - styled as retro board columns %>
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-    <%# Domains Expiring Soon Column %>
-    <div>
-      <div class="flex items-center gap-3 mb-4">
-        <div class="w-8 h-8 bg-retro-orange rounded-lg flex items-center justify-center">
-          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
-        </div>
-        <h2 class="text-xl font-extrabold">Domains Expiring</h2>
-      </div>
-      
-      <div class="space-y-3">
-        <% if @stats[:domains_expiring_soon].present? %>
-          <% @stats[:domains_expiring_soon].each_with_index do |domain, idx| %>
-            <%= link_to check_path(domain[:check_id]), class: "block sticky-card p-4 card-hover #{idx.even? ? 'rotate-subtle-left' : 'rotate-subtle-right'}" do %>
-              <div class="absolute bottom-0 left-0 right-0 h-2 <%= domain[:days_until] <= 7 ? 'stripes-red' : (domain[:days_until] <= 30 ? 'stripes-orange' : 'stripes-yellow') %> rounded-b-sm"></div>
-              <div class="flex items-center justify-between">
-                <div class="font-mono font-bold"><%= domain[:domain] %></div>
-                <% if domain[:days_until] <= 7 %>
-                  <span class="px-3 py-1 text-xs font-bold bg-retro-red text-white rounded-full">
-                    <%= domain[:days_until] %> days
-                  </span>
-                <% elsif domain[:days_until] <= 30 %>
-                  <span class="px-3 py-1 text-xs font-bold bg-retro-orange text-white rounded-full">
-                    <%= domain[:days_until] %> days
-                  </span>
-                <% else %>
-                  <span class="px-3 py-1 text-xs font-bold bg-retro-yellow text-black rounded-full">
-                    <%= domain[:days_until] %> days
-                  </span>
-                <% end %>
-              </div>
-              <div class="text-xs text-gray-500 mt-2 flex items-center gap-1">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
-                <%= domain[:expiry_date].strftime("%B %d, %Y") %>
-              </div>
-            <% end %>
-          <% end %>
-        <% else %>
-          <div class="sticky-card p-6 text-center">
-            <div class="absolute bottom-0 left-0 right-0 h-2 stripes-green rounded-b-sm"></div>
-            <div class="w-12 h-12 mx-auto mb-3 bg-retro-green-light rounded-full flex items-center justify-center">
-              <svg class="w-6 h-6 text-retro-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-              </svg>
-            </div>
-            <div class="font-bold text-gray-700">All clear!</div>
-            <div class="text-sm text-gray-500 mt-1">No domains expiring in 90 days</div>
-          </div>
-        <% end %>
-      </div>
-    </div>
-
-    <%# SSL Certificates Expiring Column %>
-    <div>
-      <div class="flex items-center gap-3 mb-4">
-        <div class="w-8 h-8 bg-retro-purple rounded-lg flex items-center justify-center">
-          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-          </svg>
-        </div>
-        <h2 class="text-xl font-extrabold">SSL Expiring</h2>
-      </div>
-      
-      <div class="space-y-3">
-        <% if @stats[:ssl_expiring_soon].present? %>
-          <% @stats[:ssl_expiring_soon].each_with_index do |cert, idx| %>
-            <%= link_to check_path(cert[:check_id]), class: "block sticky-card p-4 card-hover #{idx.odd? ? 'rotate-subtle-left' : 'rotate-subtle-right'}" do %>
-              <div class="absolute bottom-0 left-0 right-0 h-2 <%= cert[:days_until] <= 7 ? 'stripes-red' : (cert[:days_until] <= 30 ? 'stripes-orange' : 'stripes-yellow') %> rounded-b-sm"></div>
-              <div class="flex items-center justify-between">
-                <div class="font-mono font-bold"><%= cert[:domain] %></div>
-                <% if cert[:days_until] <= 7 %>
-                  <span class="px-3 py-1 text-xs font-bold bg-retro-red text-white rounded-full">
-                    <%= cert[:days_until] %> days
-                  </span>
-                <% elsif cert[:days_until] <= 30 %>
-                  <span class="px-3 py-1 text-xs font-bold bg-retro-orange text-white rounded-full">
-                    <%= cert[:days_until] %> days
-                  </span>
-                <% else %>
-                  <span class="px-3 py-1 text-xs font-bold bg-retro-yellow text-black rounded-full">
-                    <%= cert[:days_until] %> days
-                  </span>
-                <% end %>
-              </div>
-            <% end %>
-          <% end %>
-        <% else %>
-          <div class="sticky-card p-6 text-center">
-            <div class="absolute bottom-0 left-0 right-0 h-2 stripes-green rounded-b-sm"></div>
-            <div class="w-12 h-12 mx-auto mb-3 bg-retro-green-light rounded-full flex items-center justify-center">
-              <svg class="w-6 h-6 text-retro-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-              </svg>
-            </div>
-            <div class="font-bold text-gray-700">All secure!</div>
-            <div class="text-sm text-gray-500 mt-1">No SSL certs expiring in 90 days</div>
-          </div>
-        <% end %>
-      </div>
-    </div>
-  </div>
-
-  <%# Recent Checks Section %>
+<%# Header %>
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
   <div>
-    <div class="flex items-center justify-between mb-6">
-      <div class="flex items-center gap-3">
-        <div class="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
-        </div>
-        <h2 class="text-xl font-extrabold">Recent Checks</h2>
-      </div>
-      <%= link_to checks_path, class: "text-sm font-bold text-retro-purple hover:underline" do %>
-        View all →
-      <% end %>
-    </div>
+    <h1 class="text-3xl font-bold mb-1">Dashboard</h1>
+    <p class="text-ink-dim text-sm">Diagnostic activity for <span class="font-mono"><%= current_user.email %></span>.</p>
+  </div>
+  <%= link_to tools_path, class: "btn btn-primary" do %>
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+    </svg>
+    Browse tools
+  <% end %>
+</div>
 
-    <% if @recent_checks.any? %>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <% @recent_checks.each_with_index do |check, idx| %>
-          <% 
-            # Count issues for this check
-            issues = []
-            %i[whois_data dns_data ssl_data http_data].each do |data_field|
-              data = check.send(data_field)
-              next unless data.present?
-              data = data.with_indifferent_access
-              issues.concat(data[:issues] || [])
-            end
-            
-            critical_count = issues.count { |i| (i[:severity] || i["severity"]) == "critical" }
-            warning_count = issues.count { |i| (i[:severity] || i["severity"]) == "warning" }
-            
-            # Determine status color
-            if check.completed?
-              if critical_count > 0
-                status_color = "red"
-                stripe_class = "stripes-red"
-              elsif warning_count > 0
-                status_color = "orange"
-                stripe_class = "stripes-orange"
-              else
-                status_color = "green"
-                stripe_class = "stripes-green"
-              end
-            elsif check.failed?
-              status_color = "red"
-              stripe_class = "stripes-red"
-            else
-              status_color = "blue"
-              stripe_class = "stripes-blue"
-            end
-          %>
-          
-          <%= link_to check_path(check), class: "block sticky-card p-5 card-hover #{['rotate-subtle-left', '', 'rotate-subtle-right'][idx % 3]}" do %>
-            <div class="absolute bottom-0 left-0 right-0 h-2 <%= stripe_class %> rounded-b-sm"></div>
-            
-            <%# Pin decoration %>
-            <div class="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full shadow-md
-              <%= case status_color
-                  when 'green' then 'bg-retro-green'
-                  when 'orange' then 'bg-retro-orange'
-                  when 'red' then 'bg-retro-red'
-                  else 'bg-retro-blue'
-                  end %>">
-            </div>
-            
-            <div class="pt-2">
-              <div class="font-mono font-bold text-lg truncate"><%= check.domain %></div>
-              <div class="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <%= time_ago_in_words(check.created_at) %> ago
-              </div>
-              
-              <div class="mt-4 flex items-center justify-between">
-                <% if check.completed? %>
-                  <% if critical_count > 0 %>
-                    <span class="flex items-center gap-1.5 text-xs font-bold px-2 py-1 bg-retro-red-light text-retro-red rounded-full">
-                      <span class="status-dot-critical"></span>
-                      <%= critical_count %> critical
-                    </span>
-                  <% elsif warning_count > 0 %>
-                    <span class="flex items-center gap-1.5 text-xs font-bold px-2 py-1 bg-retro-orange-light text-retro-orange rounded-full">
-                      <span class="status-dot-warning"></span>
-                      <%= warning_count %> warning<%= warning_count > 1 ? 's' : '' %>
-                    </span>
-                  <% else %>
-                    <span class="flex items-center gap-1.5 text-xs font-bold px-2 py-1 bg-retro-green-light text-retro-green rounded-full">
-                      <span class="status-dot-healthy"></span>
-                      Healthy
-                    </span>
-                  <% end %>
-                <% elsif check.processing? || check.pending? %>
-                  <span class="flex items-center gap-1.5 text-xs font-bold px-2 py-1 bg-retro-blue-light text-retro-blue rounded-full">
-                    <span class="w-2 h-2 rounded-full bg-retro-blue animate-pulse-dot"></span>
-                    Checking...
-                  </span>
-                <% elsif check.failed? %>
-                  <span class="flex items-center gap-1.5 text-xs font-bold px-2 py-1 bg-retro-red-light text-retro-red rounded-full">
-                    <span class="status-dot-critical"></span>
-                    Failed
-                  </span>
-                <% end %>
-                
-                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                </svg>
-              </div>
-            </div>
-          <% end %>
-        <% end %>
-      </div>
-    <% else %>
-      <div class="sticky-card tape-corners p-12 text-center pt-14">
-        <div class="absolute bottom-0 left-0 right-0 h-3 stripes-purple rounded-b-sm"></div>
-        <div class="w-16 h-16 mx-auto mb-4 bg-retro-purple-light rounded-full flex items-center justify-center">
-          <svg class="w-8 h-8 text-retro-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-          </svg>
-        </div>
-        <h3 class="text-xl font-bold mb-2">No checks yet</h3>
-        <p class="text-gray-600 mb-6">Run your first domain health check to get started!</p>
-        <%= link_to new_check_path, class: "btn-retro inline-flex" do %>
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-          </svg>
-          Run First Check
-        <% end %>
-      </div>
+<%# Stat tiles %>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+  <div class="card p-4">
+    <div class="text-xs text-ink-mute uppercase tracking-wider mb-1">Total runs</div>
+    <div class="text-2xl font-bold"><%= @stats[:total_runs] %></div>
+    <% if @stats[:success_rate] %>
+      <div class="text-xs text-ink-dim mt-1"><%= @stats[:success_rate] %>% success</div>
     <% end %>
   </div>
+
+  <div class="card p-4">
+    <div class="text-xs text-ink-mute uppercase tracking-wider mb-1 flex items-center gap-1.5">
+      <span class="dot dot-danger"></span> Critical
+    </div>
+    <div class="text-2xl font-bold text-danger"><%= @stats[:critical] %></div>
+    <div class="text-xs text-ink-dim mt-1">across completed runs</div>
+  </div>
+
+  <div class="card p-4">
+    <div class="text-xs text-ink-mute uppercase tracking-wider mb-1 flex items-center gap-1.5">
+      <span class="dot dot-warning"></span> Warnings
+    </div>
+    <div class="text-2xl font-bold text-warning"><%= @stats[:warning] %></div>
+    <div class="text-xs text-ink-dim mt-1">across completed runs</div>
+  </div>
+
+  <div class="card p-4">
+    <div class="text-xs text-ink-mute uppercase tracking-wider mb-1 flex items-center gap-1.5">
+      <span class="dot dot-info"></span> Info
+    </div>
+    <div class="text-2xl font-bold text-info"><%= @stats[:info] %></div>
+    <div class="text-xs text-ink-dim mt-1">across completed runs</div>
+  </div>
+</div>
+
+<%# Expiring sections side by side %>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+  <div class="card p-5">
+    <h2 class="text-sm font-bold uppercase tracking-wider text-ink-dim mb-4">Domains expiring soon</h2>
+    <% if @expiring_domains.empty? %>
+      <p class="text-sm text-ink-mute">No WHOIS runs report a domain expiring in the next <%= DashboardController::EXPIRY_THRESHOLD %> days.</p>
+      <%= link_to "Run WHOIS Lookup", tool_path(:whois_lookup), class: "btn btn-ghost text-xs mt-3" %>
+    <% else %>
+      <ul class="divide-y divide-edge">
+        <% @expiring_domains.each do |entry| %>
+          <li class="py-2 flex items-center justify-between">
+            <div class="min-w-0">
+              <%= link_to entry[:target], tool_run_path(entry[:run]),
+                    class: "font-medium hover:text-brand truncate block" %>
+              <div class="text-xs text-ink-mute font-mono"><%= entry[:expiry] %></div>
+            </div>
+            <span class="badge <%= entry[:days_until] <= 7 ? 'badge-critical' : entry[:days_until] <= 30 ? 'badge-warning' : 'badge-info' %>">
+              <%= entry[:days_until] %>d
+            </span>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  </div>
+
+  <div class="card p-5">
+    <h2 class="text-sm font-bold uppercase tracking-wider text-ink-dim mb-4">SSL certs expiring soon</h2>
+    <% if @expiring_certs.empty? %>
+      <p class="text-sm text-ink-mute">No SSL runs report a cert expiring in the next <%= DashboardController::EXPIRY_THRESHOLD %> days.</p>
+      <%= link_to "Run SSL/TLS Inspection", tool_path(:ssl_inspect), class: "btn btn-ghost text-xs mt-3" %>
+    <% else %>
+      <ul class="divide-y divide-edge">
+        <% @expiring_certs.each do |entry| %>
+          <li class="py-2 flex items-center justify-between">
+            <div class="min-w-0">
+              <%= link_to entry[:target], tool_run_path(entry[:run]),
+                    class: "font-medium hover:text-brand truncate block" %>
+              <div class="text-xs text-ink-mute">SSL/TLS</div>
+            </div>
+            <span class="badge <%= entry[:days_until] <= 7 ? 'badge-critical' : entry[:days_until] <= 30 ? 'badge-warning' : 'badge-info' %>">
+              <%= entry[:days_until] %>d
+            </span>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  </div>
+</div>
+
+<%# Recent runs %>
+<div class="card p-5">
+  <div class="flex items-baseline justify-between mb-4">
+    <h2 class="text-sm font-bold uppercase tracking-wider text-ink-dim">Recent runs</h2>
+    <%= link_to "View all", tool_runs_path, class: "text-xs text-ink-dim hover:text-ink" %>
+  </div>
+
+  <% if @recent_runs.empty? %>
+    <p class="text-sm text-ink-mute mb-3">No runs yet — pick a tool from the catalog to get started.</p>
+    <%= link_to "Browse tools", tools_path, class: "btn btn-ghost text-xs" %>
+  <% else %>
+    <ul class="divide-y divide-edge">
+      <% @recent_runs.each do |run| %>
+        <li class="py-2.5 flex items-center justify-between gap-3">
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2">
+              <%= link_to run.tool_name, tool_run_path(run), class: "font-medium hover:text-brand truncate" %>
+              <%= render "tool_runs/status_badge", tool_run: run %>
+            </div>
+            <div class="text-xs text-ink-mute font-mono truncate"><%= run.input_summary %></div>
+          </div>
+          <div class="text-xs text-ink-mute whitespace-nowrap"><%= time_ago_in_words(run.created_at) %> ago</div>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
 </div>

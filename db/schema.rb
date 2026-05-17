@@ -10,35 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_30_032447) do
-  create_table "domain_checks", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.json "dns_data"
-    t.string "domain", null: false
-    t.json "email_data"
-    t.json "http_data"
-    t.boolean "scan_subdomains", default: false
-    t.json "ssl_data"
-    t.string "status", default: "pending", null: false
-    t.json "subdomain_data"
-    t.datetime "updated_at", null: false
-    t.integer "user_id", null: false
-    t.json "whois_data"
-    t.index ["domain"], name: "index_domain_checks_on_domain"
-    t.index ["user_id"], name: "index_domain_checks_on_user_id"
-  end
-
-  create_table "feedbacks", force: :cascade do |t|
-    t.integer "accuracy_rating"
-    t.text "comments"
-    t.datetime "created_at", null: false
-    t.integer "domain_check_id", null: false
-    t.datetime "updated_at", null: false
-    t.integer "user_id", null: false
-    t.index ["domain_check_id"], name: "index_feedbacks_on_domain_check_id"
-    t.index ["user_id"], name: "index_feedbacks_on_user_id"
-  end
-
+ActiveRecord::Schema[8.1].define(version: 2026_05_16_200000) do
   create_table "solid_cable_messages", force: :cascade do |t|
     t.binary "channel", limit: 1024, null: false
     t.integer "channel_hash", limit: 8, null: false
@@ -181,6 +153,37 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_30_032447) do
     t.index ["key"], name: "index_solid_queue_semaphores_on_key", unique: true
   end
 
+  create_table "tool_runs", force: :cascade do |t|
+    t.boolean "cached", default: false, null: false
+    t.string "category", null: false
+    t.datetime "checked_at"
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.text "error"
+    t.float "execution_time"
+    t.json "input", default: {}, null: false
+    t.string "input_summary"
+    t.string "input_type"
+    t.json "issues", default: []
+    t.json "recommendations", default: []
+    t.json "result_data", default: {}
+    t.datetime "started_at"
+    t.string "status", default: "pending", null: false
+    t.boolean "success", default: false, null: false
+    t.string "summary"
+    t.string "tool_key", null: false
+    t.string "tool_name", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["category"], name: "index_tool_runs_on_category"
+    t.index ["input_summary"], name: "index_tool_runs_on_input_summary"
+    t.index ["success"], name: "index_tool_runs_on_success"
+    t.index ["tool_key", "created_at"], name: "index_tool_runs_on_tool_key_and_created_at"
+    t.index ["tool_key"], name: "index_tool_runs_on_tool_key"
+    t.index ["user_id", "created_at"], name: "index_tool_runs_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_tool_runs_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email", default: "", null: false
@@ -193,13 +196,11 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_30_032447) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
-  add_foreign_key "domain_checks", "users"
-  add_foreign_key "feedbacks", "domain_checks"
-  add_foreign_key "feedbacks", "users"
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_claimed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_failed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_ready_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_recurring_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_scheduled_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
+  add_foreign_key "tool_runs", "users"
 end

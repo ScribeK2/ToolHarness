@@ -107,9 +107,9 @@ class DkimChecker
               }
             end
           end
-        rescue Dnsruby::NXDomain, Dnsruby::NoError
+        rescue Dnsruby::NXDomain
           # Selector doesn't exist, continue to next
-        rescue Dnsruby::Timeout
+        rescue Dnsruby::ResolvTimeout
           # Skip this selector on timeout
         rescue StandardError
           # Skip on any other error

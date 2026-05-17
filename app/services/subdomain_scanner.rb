@@ -130,9 +130,7 @@ class SubdomainScanner
         end
       rescue Dnsruby::NXDomain
         result[:not_found] << subdomain
-      rescue Dnsruby::NoError
-        result[:not_found] << subdomain
-      rescue Dnsruby::Timeout
+      rescue Dnsruby::ResolvTimeout
         result[:errors] << { subdomain: subdomain, error: "Timeout" }
       rescue StandardError => e
         result[:errors] << { subdomain: subdomain, error: e.message }

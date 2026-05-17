@@ -6,11 +6,17 @@ Rails.application.routes.draw do
   get "dashboard", to: "dashboard#index"
   root to: "dashboard#index"
 
-  # Domain checks
-  resources :checks, only: [:index, :new, :create, :show] do
-    resource :export, only: [:show]
-    resources :feedbacks, only: [:create]
-  end
+  # Global quick-search — auto-detects domain / IP / email / ticket.
+  get "q", to: "search#show", as: :search
+
+  # ToolHarness — catalog, per-tool form, run lifecycle
+  get  "tools",               to: "tools#index",       as: :tools
+  get  "tools/:tool_key",     to: "tools#show",        as: :tool
+  post "tools/:tool_key/run", to: "tool_runs#create",  as: :tool_run_create
+  resources :tool_runs, only: [:index, :show]
+
+  # Action Cable WebSocket mount — required for Turbo Streams real-time broadcasts.
+  mount ActionCable.server => "/cable"
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.

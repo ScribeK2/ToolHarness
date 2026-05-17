@@ -87,7 +87,7 @@ class SpfChecker
         message: "The domain #{@domain} does not exist in DNS.",
         recommendation: "Verify the domain name is correct."
       }
-    rescue Dnsruby::Timeout
+    rescue Dnsruby::ResolvTimeout
       result[:error] = "DNS query timed out"
     rescue StandardError => e
       result[:error] = "Error checking SPF: #{e.message}"
@@ -120,7 +120,7 @@ class SpfChecker
     end
 
     spf_records
-  rescue Dnsruby::NXDomain, Dnsruby::NoError
+  rescue Dnsruby::NXDomain
     []
   end
 

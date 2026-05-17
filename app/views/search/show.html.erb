@@ -1,0 +1,51 @@
+<% content_for :title, "Search · ToolHarness" %>
+
+<div class="mb-6">
+  <h1 class="text-2xl font-bold mb-2">Search</h1>
+
+  <% case @type
+     when :empty %>
+    <p class="text-ink-dim text-sm">Enter a domain, IP, email, or ticket ID in the sidebar search.</p>
+  <% when :unknown %>
+    <p class="text-ink-dim text-sm">
+      Couldn't auto-detect <code class="text-ink"><%= @raw_query %></code> — try a domain, IPv4/IPv6, email, or ticket ID like <code class="text-ink">TH-12345</code>.
+    </p>
+  <% else %>
+    <div class="flex items-center flex-wrap gap-2 text-sm text-ink-dim">
+      <span class="badge badge-info"><%= @type %></span>
+      <code class="text-ink"><%= @raw_query %></code>
+      <% if @canonical != @raw_query %>
+        <span class="text-ink-mute">→ probing</span>
+        <code class="text-ink"><%= @canonical %></code>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
+<% if @applicable.any? %>
+  <div class="flex items-baseline gap-3 mb-4">
+    <h2 class="text-sm font-bold uppercase tracking-wider text-ink-dim">
+      <%= pluralize(@applicable.size, "applicable tool") %>
+    </h2>
+    <span class="text-xs text-ink-mute">click to pre-fill the form</span>
+    <div class="flex-1 border-b border-edge"></div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <% @applicable.values.sort_by(&:tool_name).each do |klass| %>
+      <% tool_key = klass.name.demodulize.underscore %>
+      <%= link_to tool_path(tool_key, tool_run: { @prefill_field => @prefill_value }),
+            class: "card card-hover p-4 block" do %>
+        <div class="flex items-start justify-between gap-3 mb-2">
+          <h3 class="font-semibold text-base"><%= klass.tool_name %></h3>
+          <span class="badge badge-neutral"><%= klass.category %></span>
+        </div>
+        <p class="text-sm text-ink-dim leading-relaxed">
+          <%= klass.description.presence || "No description." %>
+        </p>
+      <% end %>
+    <% end %>
+  </div>
+<% elsif @type.in?([:empty, :unknown]) %>
+  <%= link_to "Browse the full catalog", tools_path, class: "btn btn-ghost" %>
+<% end %>

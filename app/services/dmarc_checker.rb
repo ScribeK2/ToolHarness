@@ -90,7 +90,7 @@ class DmarcChecker
         message: "No DMARC record found at _dmarc.#{@domain}.",
         recommendation: "Add a DMARC record to protect against email spoofing."
       }
-    rescue Dnsruby::Timeout
+    rescue Dnsruby::ResolvTimeout
       result[:error] = "DNS query timed out"
     rescue StandardError => e
       result[:error] = "Error checking DMARC: #{e.message}"
@@ -124,7 +124,7 @@ class DmarcChecker
     end
 
     dmarc_records
-  rescue Dnsruby::NXDomain, Dnsruby::NoError
+  rescue Dnsruby::NXDomain
     []
   end
 

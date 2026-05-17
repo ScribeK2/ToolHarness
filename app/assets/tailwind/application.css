@@ -1,294 +1,206 @@
-/* Custom fonts - Using bold, playful sans-serif */
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Space+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 @import "tailwindcss";
 
 /* ===============================================
-   Fast Retro-Inspired Design System for SiteProbe
+   ToolHarness — Dark professional theme
+   Tech-support blue/gray, dark mode default
    =============================================== */
 
 @theme {
-  /* Retro color palette */
-  --color-cream: #FFFEF5;
-  --color-cream-dark: #F8F6EB;
-  --color-retro-purple: #8B5CF6;
-  --color-retro-purple-light: #EDE9FE;
-  --color-retro-orange: #F97316;
-  --color-retro-orange-light: #FFF7ED;
-  --color-retro-blue: #3B82F6;
-  --color-retro-blue-light: #EFF6FF;
-  --color-retro-green: #22C55E;
-  --color-retro-green-light: #F0FDF4;
-  --color-retro-yellow: #FACC15;
-  --color-retro-yellow-light: #FEFCE8;
-  --color-retro-pink: #EC4899;
-  --color-retro-pink-light: #FDF2F8;
-  --color-retro-red: #EF4444;
-  --color-retro-red-light: #FEF2F2;
-  --color-board-bg: #F5F3EB;
-  --color-dots: #D4D0C4;
-  
+  /* Surfaces */
+  --color-base:     #0b1220;
+  --color-surface:  #131c2e;
+  --color-elevated: #1a2540;
+  --color-sunken:   #070d18;
+
+  /* Borders */
+  --color-edge:        #243047;
+  --color-edge-strong: #3a4768;
+
+  /* Text */
+  --color-ink:      #e6e9f1;
+  --color-ink-dim:  #94a3b8;
+  --color-ink-mute: #64748b;
+
+  /* Brand / accent (blue) */
+  --color-brand:        #4f8cff;
+  --color-brand-strong: #3b76e8;
+  --color-brand-mute:   #1e3a8a;
+
+  /* Status */
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger:  #ef4444;
+  --color-info:    #38bdf8;
+
   /* Typography */
-  --font-heading: 'Bricolage Grotesque', system-ui, sans-serif;
-  --font-mono: 'Space Mono', monospace;
+  --font-sans: 'Inter', system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, "SF Mono", Menlo, monospace;
 }
 
 @layer base {
   html {
-    font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+    background-color: var(--color-base);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
-  
-  h1, h2, h3, h4 {
-    font-family: var(--font-heading);
-    font-weight: 800;
-    letter-spacing: -0.025em;
+
+  body {
+    background-color: var(--color-base);
+    color: var(--color-ink);
   }
-  
-  code, pre, .font-mono {
+
+  h1, h2, h3, h4, h5 {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--color-ink);
+  }
+
+  code, pre, kbd, samp, .font-mono {
     font-family: var(--font-mono);
   }
-  
-  button[type="submit"],
-  input[type="submit"] {
-    @apply bg-transparent border-0 p-0 m-0 font-normal;
-    appearance: none;
-    -webkit-appearance: none;
-  }
-  
+
+  /* Form controls inherit dark theme */
   input[type="text"],
   input[type="email"],
-  input[type="password"] {
-    @apply bg-transparent;
+  input[type="password"],
+  input[type="number"],
+  input[type="search"],
+  textarea,
+  select {
+    background-color: var(--color-sunken);
+    color: var(--color-ink);
+    border: 1px solid var(--color-edge);
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-family: var(--font-sans);
+    width: 100%;
   }
-  
-  input:focus {
+
+  input:focus, textarea:focus, select:focus {
     outline: none;
+    border-color: var(--color-brand);
+    box-shadow: 0 0 0 3px rgb(79 140 255 / 0.18);
+  }
+
+  input::placeholder { color: var(--color-ink-mute); }
+
+  ::selection {
+    background-color: var(--color-brand-mute);
+    color: var(--color-ink);
   }
 }
 
 @layer utilities {
-  /* Dotted background pattern */
-  .bg-dotted {
-    background-image: radial-gradient(circle, var(--color-dots) 1px, transparent 1px);
-    background-size: 20px 20px;
-    background-color: var(--color-board-bg);
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-colors;
+    border: 1px solid transparent;
   }
-  
-  /* Sticky note card base */
-  .sticky-card {
-    @apply bg-white rounded-sm shadow-md relative;
-    border: 1px solid rgba(0,0,0,0.05);
-  }
-  
-  /* Push pin effect (top) */
-  .pin-top::before {
-    content: '';
-    position: absolute;
-    top: -8px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 16px;
-    height: 16px;
-    background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
-    border-radius: 50%;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2), inset 0 1px 2px rgba(255,255,255,0.3);
-  }
-  
-  /* Tape effect (top corners) */
-  .tape-corners::before,
-  .tape-corners::after {
-    content: '';
-    position: absolute;
-    top: -6px;
-    width: 40px;
-    height: 20px;
-    background: rgba(250, 204, 21, 0.7);
-    transform: rotate(-3deg);
-  }
-  .tape-corners::before { left: 10px; }
-  .tape-corners::after { right: 10px; transform: rotate(3deg); }
-  
-  /* Single tape strip */
-  .tape-top::before {
-    content: '';
-    position: absolute;
-    top: -8px;
-    left: 50%;
-    transform: translateX(-50%) rotate(-2deg);
-    width: 60px;
-    height: 24px;
-    background: rgba(250, 204, 21, 0.75);
-    border-radius: 1px;
-  }
-  
-  /* Diagonal stripes for card bottoms */
-  .stripes-purple {
-    background: repeating-linear-gradient(
-      135deg,
-      var(--color-retro-purple) 0px,
-      var(--color-retro-purple) 4px,
-      var(--color-retro-purple-light) 4px,
-      var(--color-retro-purple-light) 8px
-    );
-  }
-  
-  .stripes-orange {
-    background: repeating-linear-gradient(
-      135deg,
-      var(--color-retro-orange) 0px,
-      var(--color-retro-orange) 4px,
-      var(--color-retro-orange-light) 4px,
-      var(--color-retro-orange-light) 8px
-    );
-  }
-  
-  .stripes-blue {
-    background: repeating-linear-gradient(
-      135deg,
-      var(--color-retro-blue) 0px,
-      var(--color-retro-blue) 4px,
-      var(--color-retro-blue-light) 4px,
-      var(--color-retro-blue-light) 8px
-    );
-  }
-  
-  .stripes-green {
-    background: repeating-linear-gradient(
-      135deg,
-      var(--color-retro-green) 0px,
-      var(--color-retro-green) 4px,
-      var(--color-retro-green-light) 4px,
-      var(--color-retro-green-light) 8px
-    );
-  }
-  
-  .stripes-yellow {
-    background: repeating-linear-gradient(
-      135deg,
-      var(--color-retro-yellow) 0px,
-      var(--color-retro-yellow) 4px,
-      var(--color-retro-yellow-light) 4px,
-      var(--color-retro-yellow-light) 8px
-    );
-  }
-  
-  .stripes-red {
-    background: repeating-linear-gradient(
-      135deg,
-      var(--color-retro-red) 0px,
-      var(--color-retro-red) 4px,
-      var(--color-retro-red-light) 4px,
-      var(--color-retro-red-light) 8px
-    );
-  }
-  
-  .stripes-pink {
-    background: repeating-linear-gradient(
-      135deg,
-      var(--color-retro-pink) 0px,
-      var(--color-retro-pink) 4px,
-      var(--color-retro-pink-light) 4px,
-      var(--color-retro-pink-light) 8px
-    );
-  }
-  
-  /* Slight rotation variations for organic feel */
-  .rotate-subtle-left { transform: rotate(-1deg); }
-  .rotate-subtle-right { transform: rotate(1deg); }
-  .rotate-subtle-left-2 { transform: rotate(-2deg); }
-  .rotate-subtle-right-2 { transform: rotate(2deg); }
-  
-  /* Retro button styles */
-  .btn-retro {
-    @apply inline-flex items-center gap-2 px-6 py-3 bg-black text-white font-bold rounded-lg shadow-md;
-    @apply hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200;
-  }
-  
-  .btn-retro-yellow {
-    @apply inline-flex items-center gap-2 px-6 py-3 font-bold rounded-lg shadow-md;
-    background: var(--color-retro-yellow);
-    color: black;
-    @apply hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200;
-  }
-  
-  .btn-retro-outline {
-    @apply inline-flex items-center gap-2 px-6 py-3 bg-white text-black font-bold rounded-lg border-2 border-black;
-    @apply hover:bg-black hover:text-white transition-all duration-200;
-  }
-  
-  .btn-retro-purple {
-    @apply inline-flex items-center gap-2 px-6 py-3 font-bold rounded-lg shadow-md;
-    background: var(--color-retro-purple);
+
+  .btn-primary {
+    background-color: var(--color-brand);
     color: white;
-    @apply hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200;
   }
-  
-  /* Column header styling (retro board columns) */
-  .column-header {
-    @apply text-lg font-bold px-4 py-3 rounded-t-lg text-center uppercase tracking-wide;
+  .btn-primary:hover { background-color: var(--color-brand-strong); }
+
+  .btn-ghost {
+    background-color: transparent;
+    color: var(--color-ink-dim);
+    border-color: var(--color-edge);
   }
-  
-  /* Status indicator dots with glow */
-  .status-dot-healthy {
-    @apply w-3 h-3 rounded-full bg-retro-green;
-    box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+  .btn-ghost:hover {
+    background-color: var(--color-elevated);
+    color: var(--color-ink);
   }
-  
-  .status-dot-warning {
-    @apply w-3 h-3 rounded-full bg-retro-orange;
-    box-shadow: 0 0 8px rgba(249, 115, 22, 0.5);
+
+  .btn-danger {
+    background-color: rgb(239 68 68 / 0.12);
+    color: var(--color-danger);
+    border-color: rgb(239 68 68 / 0.25);
   }
-  
-  .status-dot-critical {
-    @apply w-3 h-3 rounded-full bg-retro-red;
-    box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+  .btn-danger:hover { background-color: rgb(239 68 68 / 0.22); }
+
+  /* Cards */
+  .card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-edge);
+    border-radius: 0.75rem;
   }
-  
-  .status-dot-info {
-    @apply w-3 h-3 rounded-full bg-retro-blue;
-    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
-  }
-  
-  /* Card hover effect */
   .card-hover {
-    @apply transition-all duration-200;
+    transition: border-color 150ms ease, transform 150ms ease, background-color 150ms ease;
   }
   .card-hover:hover {
-    @apply shadow-lg -translate-y-1;
+    border-color: var(--color-edge-strong);
+    background-color: var(--color-elevated);
   }
-  
-  /* Hand-drawn border effect (subtle) */
-  .hand-drawn {
-    border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+
+  /* Severity badges */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide;
+    border: 1px solid transparent;
+  }
+  .badge-critical { background-color: rgb(239 68 68 / 0.14); color: var(--color-danger); border-color: rgb(239 68 68 / 0.30); }
+  .badge-warning  { background-color: rgb(245 158 11 / 0.14); color: var(--color-warning); border-color: rgb(245 158 11 / 0.30); }
+  .badge-info     { background-color: rgb(56 189 248 / 0.14); color: var(--color-info); border-color: rgb(56 189 248 / 0.30); }
+  .badge-success  { background-color: rgb(34 197 94 / 0.14); color: var(--color-success); border-color: rgb(34 197 94 / 0.30); }
+  .badge-neutral  { background-color: var(--color-elevated); color: var(--color-ink-dim); border-color: var(--color-edge); }
+
+  /* Status dots */
+  .dot { @apply inline-block w-2 h-2 rounded-full; }
+  .dot-success { background-color: var(--color-success); box-shadow: 0 0 8px rgb(34 197 94 / 0.6); }
+  .dot-warning { background-color: var(--color-warning); box-shadow: 0 0 8px rgb(245 158 11 / 0.6); }
+  .dot-danger  { background-color: var(--color-danger);  box-shadow: 0 0 8px rgb(239 68 68 / 0.6); }
+  .dot-info    { background-color: var(--color-info);    box-shadow: 0 0 8px rgb(56 189 248 / 0.6); }
+  .dot-muted   { background-color: var(--color-ink-mute); }
+
+  /* Pre/code wells */
+  .code-well {
+    background-color: var(--color-sunken);
+    border: 1px solid var(--color-edge);
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--color-ink-dim);
+    overflow-x: auto;
+  }
+
+  /* Sidebar nav link */
+  .nav-link {
+    @apply flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors;
+    color: var(--color-ink-dim);
+  }
+  .nav-link:hover {
+    color: var(--color-ink);
+    background-color: var(--color-elevated);
+  }
+  .nav-link.active {
+    color: var(--color-ink);
+    background-color: var(--color-elevated);
+    border-left: 2px solid var(--color-brand);
+  }
+
+  /* Spinner */
+  .spinner {
+    @apply inline-block w-4 h-4 rounded-full border-2 border-transparent;
+    border-top-color: var(--color-brand);
+    animation: spin 0.7s linear infinite;
   }
 }
 
-/* Animation for processing states */
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(1.1); }
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
-.animate-pulse-dot {
-  animation: pulse-dot 1.5s ease-in-out infinite;
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
 }
 
-/* Board column card container scroll styling */
-.card-column {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-dots) transparent;
-}
-
-.card-column::-webkit-scrollbar {
-  width: 6px;
-}
-
-.card-column::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.card-column::-webkit-scrollbar-thumb {
-  background: var(--color-dots);
-  border-radius: 3px;
+.animate-pulse-soft {
+  animation: pulse-soft 1.8s ease-in-out infinite;
 }

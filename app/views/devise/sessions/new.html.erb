@@ -1,66 +1,42 @@
-<div class="max-w-md mx-auto">
-  <%# Welcome card %>
-  <div class="sticky-card tape-top p-8 pt-12">
-    <div class="absolute bottom-0 left-0 right-0 h-3 stripes-purple rounded-b-sm"></div>
-    
-    <div class="text-center mb-8">
-      <div class="w-16 h-16 mx-auto mb-4 bg-black rounded-xl flex items-center justify-center">
-        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+<div class="w-full max-w-md">
+  <div class="card p-8">
+    <div class="text-center mb-7">
+      <div class="w-12 h-12 mx-auto mb-4 rounded-lg bg-brand-mute flex items-center justify-center">
+        <svg class="w-6 h-6 text-brand" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M11 5h2a2 2 0 012 2v2M5 11h14M9 5h2v14H9z"/>
         </svg>
       </div>
-      <h1 class="text-3xl font-extrabold tracking-tight mb-2">Welcome back!</h1>
-      <p class="text-gray-600">Sign in to your SiteProbe account</p>
+      <h1 class="text-2xl font-bold mb-1">Sign in to ToolHarness</h1>
+      <p class="text-sm text-ink-dim">Local-first diagnostic harness for Tier 2 support</p>
     </div>
 
-    <%= form_for(resource, as: resource_name, url: session_path(resource_name), html: { class: "space-y-6" }) do |f| %>
+    <%= form_for(resource, as: resource_name, url: session_path(resource_name), html: { class: "space-y-4" }) do |f| %>
       <%= render "devise/shared/error_messages", resource: resource %>
 
       <div>
-        <label class="block text-sm font-bold text-gray-700 mb-2">
-          <span class="flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-            </svg>
-            Email
-          </span>
-        </label>
-        <%= f.email_field :email, autofocus: true, autocomplete: "email", 
-            class: "w-full text-lg font-mono border-2 border-gray-200 focus:border-black rounded-lg px-4 py-3 bg-cream placeholder:text-gray-400 transition-colors",
-            placeholder: "you@example.com" %>
+        <%= f.label :email, class: "block text-sm font-medium text-ink-dim mb-1.5" %>
+        <%= f.email_field :email, autofocus: true, autocomplete: "email", placeholder: "you@example.com" %>
       </div>
 
       <div>
-        <label class="block text-sm font-bold text-gray-700 mb-2">
-          <span class="flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-            </svg>
-            Password
-          </span>
-        </label>
-        <%= f.password_field :password, autocomplete: "current-password",
-            class: "w-full text-lg border-2 border-gray-200 focus:border-black rounded-lg px-4 py-3 bg-cream placeholder:text-gray-400 transition-colors",
-            placeholder: "••••••••" %>
+        <%= f.label :password, class: "block text-sm font-medium text-ink-dim mb-1.5" %>
+        <%= f.password_field :password, autocomplete: "current-password", placeholder: "••••••••" %>
       </div>
 
       <% if devise_mapping.rememberable? %>
-        <div class="flex items-center gap-3 p-3 bg-retro-blue-light rounded-lg">
-          <%= f.check_box :remember_me, class: "w-5 h-5 text-retro-purple border-2 border-gray-300 rounded focus:ring-retro-purple cursor-pointer" %>
-          <%= f.label :remember_me, class: "text-sm font-semibold text-gray-700 cursor-pointer" do %>
-            Remember me on this device
-          <% end %>
-        </div>
+        <label class="flex items-center gap-2 text-sm text-ink-dim cursor-pointer select-none">
+          <%= f.check_box :remember_me, class: "w-4 h-4 rounded accent-brand", style: "width: 1rem;" %>
+          Remember me on this device
+        </label>
       <% end %>
 
       <div class="pt-2">
-        <%= f.submit "Sign in →", class: "btn-retro w-full justify-center text-lg py-4 cursor-pointer" %>
+        <%= f.submit "Sign in", class: "btn btn-primary w-full cursor-pointer" %>
       </div>
     <% end %>
   </div>
 
-  <%# Links %>
-  <div class="mt-6 text-center space-y-3">
+  <div class="mt-4 text-center text-sm">
     <%= render "devise/shared/links" %>
   </div>
 </div>

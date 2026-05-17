@@ -226,8 +226,6 @@ class DnsChecker
       rescue Dnsruby::NXDomain
         result[:nxdomain] = true
         result[:error] = "Domain does not exist (NXDomain)"
-      rescue Dnsruby::NoError
-        # No records of this type, but domain exists
       rescue StandardError => e
         result[:error] = "A record query failed: #{e.message}" unless result[:error]
       end
@@ -240,7 +238,7 @@ class DnsChecker
           result[:aaaa_records] = aaaa_response.answer
             .select { |r| r.type == Dnsruby::Types::AAAA }
             .map(&:address).map(&:to_s)
-        rescue Dnsruby::NXDomain, Dnsruby::NoError
+        rescue Dnsruby::NXDomain
           # No AAAA records
         rescue StandardError
           # Ignore AAAA errors, not critical
@@ -252,7 +250,7 @@ class DnsChecker
           result[:mx_records] = mx_response.answer
             .select { |r| r.type == Dnsruby::Types::MX }
             .map { |r| { priority: r.preference, host: r.exchange.to_s } }
-        rescue Dnsruby::NXDomain, Dnsruby::NoError
+        rescue Dnsruby::NXDomain
           # No MX records
         rescue StandardError => e
           result[:error] = "MX record query failed: #{e.message}" unless result[:error]
@@ -264,7 +262,7 @@ class DnsChecker
           result[:cname_records] = cname_response.answer
             .select { |r| r.type == Dnsruby::Types::CNAME }
             .map { |r| r.rdata.to_s }
-        rescue Dnsruby::NXDomain, Dnsruby::NoError
+        rescue Dnsruby::NXDomain
           # No CNAME records
         rescue StandardError
           # Ignore CNAME errors, not critical
@@ -276,7 +274,7 @@ class DnsChecker
           result[:ns_records] = ns_response.answer
             .select { |r| r.type == Dnsruby::Types::NS }
             .map { |r| r.nsdname.to_s.downcase }
-        rescue Dnsruby::NXDomain, Dnsruby::NoError
+        rescue Dnsruby::NXDomain
           # No NS records
         rescue StandardError
           # Ignore NS errors, not critical
@@ -288,7 +286,7 @@ class DnsChecker
           result[:txt_records] = txt_response.answer
             .select { |r| r.type == Dnsruby::Types::TXT }
             .map { |r| r.strings.join }
-        rescue Dnsruby::NXDomain, Dnsruby::NoError
+        rescue Dnsruby::NXDomain
           # No TXT records
         rescue StandardError
           # Ignore TXT errors, not critical
@@ -296,7 +294,7 @@ class DnsChecker
       end
 
       result[:success] = !result[:nxdomain] || result[:error].nil?
-    rescue Dnsruby::Timeout => e
+    rescue Dnsruby::ResolvTimeout => e
       result[:error] = "DNS query timed out: #{e.message}"
     rescue StandardError => e
       result[:error] = "DNS resolution failed: #{e.message}"

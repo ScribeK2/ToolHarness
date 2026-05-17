@@ -1,24 +1,7 @@
 # Recurring jobs for Solid Queue
-# These jobs run automatically at the specified intervals
 # Schedule uses cron syntax: "minute hour day month weekday"
+#
+# Currently no scheduled jobs — add entries here as needed.
 
-production:
-  weekly_expiration_summary:
-    class: ExpirationNotificationJob
-    args:
-      - weekly_summary
-    schedule: "0 9 * * 1"  # Every Monday at 9:00 AM
-
-  daily_urgent_alerts:
-    class: ExpirationNotificationJob
-    args:
-      - urgent_alerts
-    schedule: "0 8 * * *"  # Every day at 8:00 AM
-
-development:
-  # For testing - uncomment to enable recurring jobs in development
-  # test_weekly_summary:
-  #   class: ExpirationNotificationJob
-  #   args:
-  #     - weekly_summary
-  #   schedule: "0 * * * *"  # Every hour at minute 0
+production: {}
+development: {}

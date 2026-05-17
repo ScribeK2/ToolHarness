@@ -1,0 +1,91 @@
+<% content_for :title, "Recent Runs · ToolHarness" %>
+
+<div class="flex items-baseline justify-between mb-6">
+  <div>
+    <h1 class="text-3xl font-bold mb-1">Recent Runs</h1>
+    <p class="text-ink-dim text-sm">Every tool execution, newest first.</p>
+  </div>
+  <%= link_to "New run", tools_path, class: "btn btn-primary" %>
+</div>
+
+<%# Filter bar (no global hotkey — / is owned by the sidebar quick-search) %>
+<%= form_with url: tool_runs_path, method: :get, scope: nil, local: true,
+      class: "card p-4 mb-6 flex flex-wrap items-end gap-3" do %>
+  <div class="flex-1 min-w-[200px]">
+    <label class="block text-xs font-medium text-ink-mute uppercase tracking-wider mb-1">Search</label>
+    <%= search_field_tag :q, params[:q], placeholder: "domain, IP, ticket…" %>
+  </div>
+
+  <div>
+    <label class="block text-xs font-medium text-ink-mute uppercase tracking-wider mb-1">Category</label>
+    <%= select_tag :category,
+          options_for_select([["All categories", ""]] + @categories.map { |c| [c.to_s.tr("_", " "), c.to_s] }, params[:category]),
+          class: "min-w-[150px]" %>
+  </div>
+
+  <div>
+    <label class="block text-xs font-medium text-ink-mute uppercase tracking-wider mb-1">Tool</label>
+    <%= select_tag :tool,
+          options_for_select([["All tools", ""]] + @tools.map { |key, klass| [klass.tool_name, key.to_s] }, params[:tool]),
+          class: "min-w-[200px]" %>
+  </div>
+
+  <div>
+    <label class="block text-xs font-medium text-ink-mute uppercase tracking-wider mb-1">Status</label>
+    <%= select_tag :filter,
+          options_for_select([["All", ""], ["Successful only", "successful"], ["Failed only", "failed"]], params[:filter]),
+          class: "min-w-[140px]" %>
+  </div>
+
+  <div class="flex gap-2">
+    <%= submit_tag "Apply", class: "btn btn-primary cursor-pointer", name: nil %>
+    <% if params[:q].present? || params[:category].present? || params[:tool].present? || params[:filter].present? %>
+      <%= link_to "Clear", tool_runs_path, class: "btn btn-ghost" %>
+    <% end %>
+  </div>
+<% end %>
+
+<% if @tool_runs.empty? %>
+  <div class="card p-10 text-center">
+    <p class="text-ink-dim mb-4">
+      <% if params[:q].present? || params[:category].present? || params[:tool].present? || params[:filter].present? %>
+        No runs match those filters.
+      <% else %>
+        No tool runs yet.
+      <% end %>
+    </p>
+    <%= link_to "Browse the tool catalog", tools_path, class: "btn btn-ghost" %>
+  </div>
+<% else %>
+  <div class="card overflow-hidden">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-left text-ink-mute uppercase text-xs bg-sunken">
+          <th class="px-4 py-3 font-semibold tracking-wider">Tool</th>
+          <th class="px-4 py-3 font-semibold tracking-wider">Input</th>
+          <th class="px-4 py-3 font-semibold tracking-wider">Status</th>
+          <th class="px-4 py-3 font-semibold tracking-wider">Summary</th>
+          <th class="px-4 py-3 font-semibold tracking-wider text-right">When</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @tool_runs.each do |run| %>
+          <tr class="border-t border-edge hover:bg-elevated transition-colors cursor-pointer"
+              onclick="window.location='<%= tool_run_path(run) %>'">
+            <td class="px-4 py-3">
+              <%= link_to run.tool_name, tool_run_path(run), class: "font-medium hover:text-brand" %>
+              <div class="text-xs text-ink-mute"><%= run.category %></div>
+            </td>
+            <td class="px-4 py-3 font-mono text-xs text-ink-dim truncate max-w-xs"><%= run.input_summary %></td>
+            <td class="px-4 py-3"><%= render "tool_runs/status_badge", tool_run: run %></td>
+            <td class="px-4 py-3 text-ink-dim truncate max-w-md"><%= run.summary %></td>
+            <td class="px-4 py-3 text-right text-xs text-ink-mute whitespace-nowrap">
+              <%= time_ago_in_words(run.created_at) %> ago
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <p class="text-xs text-ink-mute text-center mt-3">Showing latest <%= @tool_runs.size %> runs.</p>
+<% end %>

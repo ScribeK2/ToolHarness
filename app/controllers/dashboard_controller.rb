@@ -1,103 +1,94 @@
 class DashboardController < ApplicationController
-  def index
-    @recent_checks = current_user.domain_checks
-      .order(created_at: :desc)
-      .limit(10)
+  RECENT_LIMIT     = 8
+  EXPIRY_THRESHOLD = 90  # days
+  EXPIRY_LIMIT     = 5
 
-    @stats = calculate_stats
+  def index
+    @recent_runs       = current_user.tool_runs.recent.limit(RECENT_LIMIT)
+    @stats             = compute_stats
+    @expiring_domains  = expiring_domains
+    @expiring_certs    = expiring_certs
   end
 
   private
 
-  def calculate_stats
-    checks = current_user.domain_checks
+  def compute_stats
+    runs = current_user.tool_runs
+    completed = runs.where(status: "completed")
 
-    total_checks = checks.count
-    completed_checks = checks.where(status: :completed).count
-
-    # Count issues across all completed checks
-    critical_count = 0
-    warning_count = 0
-    info_count = 0
-
-    checks.where(status: :completed).find_each do |check|
-      issues = collect_issues(check)
-      issues.each do |issue|
-        severity = issue[:severity] || issue["severity"]
+    critical = warning = info = 0
+    completed.find_each do |run|
+      (run.issues || []).each do |issue|
+        severity = (issue["severity"] || issue[:severity]).to_s
         case severity
-        when "critical" then critical_count += 1
-        when "warning" then warning_count += 1
-        when "info" then info_count += 1
+        when "critical" then critical += 1
+        when "warning"  then warning  += 1
+        when "info"     then info     += 1
         end
       end
     end
 
-    # Domains expiring soon
-    expiring_soon = []
-    checks.where(status: :completed).find_each do |check|
-      next unless check.whois_data.present?
-
-      whois = check.whois_data.with_indifferent_access
-      next unless whois[:success] && whois[:expiration_date].present?
-
-      begin
-        expiry = Date.parse(whois[:expiration_date])
-        days_until = (expiry - Date.today).to_i
-        if days_until <= 90 && days_until >= 0
-          expiring_soon << {
-            domain: check.domain,
-            check_id: check.id,
-            expiry_date: expiry,
-            days_until: days_until
-          }
-        end
-      rescue ArgumentError
-        # Skip invalid dates
-      end
-    end
-
-    # SSL certificates expiring soon
-    ssl_expiring = []
-    checks.where(status: :completed).find_each do |check|
-      next unless check.ssl_data.present?
-
-      ssl = check.ssl_data.with_indifferent_access
-      next unless ssl[:success] && ssl[:certificate].present?
-
-      cert = ssl[:certificate].with_indifferent_access
-      days_until = cert[:days_until_expiry]
-      if days_until && days_until <= 90 && days_until >= 0
-        ssl_expiring << {
-          domain: check.domain,
-          check_id: check.id,
-          days_until: days_until
-        }
-      end
-    end
+    total            = runs.count
+    success_count    = runs.where(success: true).count
+    success_rate_pct = total.positive? ? ((success_count.to_f / total) * 100).round : nil
 
     {
-      total_checks: total_checks,
-      completed_checks: completed_checks,
-      critical_issues: critical_count,
-      warning_issues: warning_count,
-      info_issues: info_count,
-      domains_expiring_soon: expiring_soon.sort_by { |d| d[:days_until] }.first(5),
-      ssl_expiring_soon: ssl_expiring.sort_by { |d| d[:days_until] }.first(5)
+      total_runs:    total,
+      successful:    success_count,
+      success_rate:  success_rate_pct,
+      critical:      critical,
+      warning:       warning,
+      info:          info
     }
   end
 
-  def collect_issues(check)
-    issues = []
+  # SSL Inspect runs whose certificate.days_until_expiry is within EXPIRY_THRESHOLD days.
+  def expiring_certs
+    list = []
+    current_user.tool_runs
+      .for_tool("ssl_inspect")
+      .successful
+      .find_each do |run|
+        cert = run.result_data&.dig("certificate")
+        next unless cert
+        days = cert["days_until_expiry"]
+        next unless days.is_a?(Numeric) && days >= 0 && days <= EXPIRY_THRESHOLD
 
-    %i[whois_data dns_data ssl_data http_data].each do |data_field|
-      data = check.send(data_field)
-      next unless data.present?
+        list << {
+          target:     run.input_summary,
+          days_until: days.to_i,
+          run:        run
+        }
+      end
+    list.sort_by { |e| e[:days_until] }.first(EXPIRY_LIMIT)
+  end
 
-      data = data.with_indifferent_access
-      issues.concat(data[:issues] || [])
-    end
+  # WHOIS runs whose result_data.expiration_date parses to a date within EXPIRY_THRESHOLD.
+  def expiring_domains
+    list = []
+    current_user.tool_runs
+      .for_tool("whois_lookup")
+      .successful
+      .find_each do |run|
+        date_str = run.result_data&.dig("expiration_date")
+        next if date_str.blank?
 
-    issues
+        days = days_until(date_str)
+        next unless days && days >= 0 && days <= EXPIRY_THRESHOLD
+
+        list << {
+          target:     run.input_summary,
+          days_until: days,
+          expiry:     date_str[0, 10],
+          run:        run
+        }
+      end
+    list.sort_by { |e| e[:days_until] }.first(EXPIRY_LIMIT)
+  end
+
+  def days_until(date_str)
+    (Date.parse(date_str.to_s) - Date.today).to_i
+  rescue ArgumentError, TypeError
+    nil
   end
 end
-

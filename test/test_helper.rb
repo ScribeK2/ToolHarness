@@ -1,6 +1,7 @@
 ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
 require "rails/test_help"
+require "minitest/mock"  # Object#stub for class-method stubbing in tests
 
 module ActiveSupport
   class TestCase
@@ -12,4 +13,9 @@ module ActiveSupport
 
     # Add more helper methods to be used by all tests here...
   end
+end
+
+# Wire up Devise's sign_in / sign_out helpers for integration tests.
+class ActionDispatch::IntegrationTest
+  include Devise::Test::IntegrationHelpers
 end
