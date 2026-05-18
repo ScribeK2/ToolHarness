@@ -53,7 +53,7 @@ if [ ! -x "$APP_DIR/usr/bin/ruby" ]; then
   if [ ! -d ruby-build ]; then
     git clone --depth=1 https://github.com/rbenv/ruby-build.git
   fi
-  RUBY_CONFIGURE_OPTS="--enable-shared --disable-install-doc --disable-install-rdoc" \
+  RUBY_CONFIGURE_OPTS="--enable-shared --enable-load-relative --disable-install-doc --disable-install-rdoc" \
   CFLAGS="-O2 -pipe" \
   LDFLAGS="-Wl,-rpath,\$\$ORIGIN/../lib" \
     PREFIX="$APP_DIR/usr" ./ruby-build/bin/ruby-build "$RUBY_VERSION" "$APP_DIR/usr"
