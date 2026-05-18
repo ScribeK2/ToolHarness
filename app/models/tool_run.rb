@@ -1,6 +1,4 @@
 class ToolRun < ApplicationRecord
-  belongs_to :user
-
   STATUSES = %w[pending processing completed failed].freeze
 
   enum :status, STATUSES.zip(STATUSES).to_h
@@ -14,9 +12,8 @@ class ToolRun < ApplicationRecord
   scope :for_tool,       ->(key) { where(tool_key: key.to_s) }
   scope :search_input,   ->(q) { q.present? ? where("input_summary LIKE ?", "%#{sanitize_sql_like(q)}%") : all }
 
-  def self.create_pending!(user:, tool_class:, params:)
+  def self.create_pending!(tool_class:, params:)
     create!(
-      user: user,
       tool_key: tool_class.name.demodulize.underscore,
       tool_name: tool_class.tool_name,
       category: tool_class.category.to_s,
@@ -27,8 +24,8 @@ class ToolRun < ApplicationRecord
     )
   end
 
-  def self.record(user:, tool_class:, params:, result:, started_at: nil, completed_at: nil)
-    run = create_pending!(user: user, tool_class: tool_class, params: params)
+  def self.record(tool_class:, params:, result:, started_at: nil, completed_at: nil)
+    run = create_pending!(tool_class: tool_class, params: params)
     run.apply_result!(result, started_at: started_at, completed_at: completed_at)
     run
   end

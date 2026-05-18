@@ -3,9 +3,7 @@ require "tool_harness/result_presenter"
 
 class ToolHarness::ResultPresenterTest < ActiveSupport::TestCase
   def make_run(result_data: {}, issues: [], status: "completed", error: nil)
-    user = User.create!(email: "rp-#{rand(1e9)}@test", password: "password123")
     ToolRun.create!(
-      user: user,
       tool_key: "test_tool",
       tool_name: "Test Tool",
       category: "diagnostics",

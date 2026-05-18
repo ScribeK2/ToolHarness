@@ -3,11 +3,10 @@ require "tool_harness/run_filter"
 
 class ToolHarness::RunFilterTest < ActiveSupport::TestCase
   setup do
-    @user = User.create!(email: "rf@test", password: "password123")
     make_run(tool: "whois_lookup", success: true, expires_in: 5)
     make_run(tool: "ssl_inspect",  success: true, expires_in: 60)
     make_run(tool: "dns_lookup",   success: false)
-    @scope = @user.tool_runs.all
+    @scope = ToolRun.all
   end
 
   def make_run(tool:, success:, expires_in: nil)
@@ -18,7 +17,7 @@ class ToolHarness::RunFilterTest < ActiveSupport::TestCase
     if tool == "ssl_inspect" && expires_in
       data["certificate"] = { "days_until_expiry" => expires_in }
     end
-    @user.tool_runs.create!(
+    ToolRun.create!(
       tool_key: tool, tool_name: tool.humanize, category: "domain",
       status: success ? "completed" : "failed",
       success: success, result_data: data,
@@ -32,7 +31,7 @@ class ToolHarness::RunFilterTest < ActiveSupport::TestCase
   end
 
   test "target~ matches input_summary substring" do
-    run = @user.tool_runs.first
+    run = ToolRun.first
     run.update!(input_summary: "acme.io")
     result = ToolHarness::RunFilter.apply(@scope, "target~acme")
     assert_includes result, run

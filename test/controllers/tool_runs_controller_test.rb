@@ -1,22 +1,14 @@
 require "test_helper"
 
 class ToolRunsControllerTest < ActionDispatch::IntegrationTest
-  setup do
-    @user = users(:one)
-    @other_user = users(:two)
-    sign_in @user
-  end
-
-  # ---- create ----
-
   test "POST creates a pending ToolRun and enqueues ToolRunJob" do
-    assert_difference -> { @user.tool_runs.count }, 1 do
+    assert_difference -> { ToolRun.count }, 1 do
       assert_enqueued_with(job: ToolRunJob) do
         post tool_run_create_path(:dns_lookup), params: { tool_run: { domain: "example.com" } }
       end
     end
 
-    run = @user.tool_runs.order(created_at: :desc).first
+    run = ToolRun.order(created_at: :desc).first
     assert_equal "dns_lookup", run.tool_key
     assert_equal "pending",    run.status
     assert_equal "example.com", run.input["domain"]
@@ -37,7 +29,7 @@ class ToolRunsControllerTest < ActionDispatch::IntegrationTest
     post tool_run_create_path(:dns_lookup),
       params: { tool_run: { domain: "example.com", malicious: "x" } }
 
-    run = @user.tool_runs.order(created_at: :desc).first
+    run = ToolRun.order(created_at: :desc).first
     assert_equal({ "domain" => "example.com" }, run.input)
   end
 

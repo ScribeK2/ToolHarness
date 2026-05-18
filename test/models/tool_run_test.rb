@@ -1,48 +1,38 @@
 require "test_helper"
 
 class ToolRunTest < ActiveSupport::TestCase
-  setup do
-    @user = users(:one)
-  end
-
-  # ---- validations & associations ----
+  # ---- validations ----
 
   test "valid with required fields" do
     run = ToolRun.new(
-      user: @user, tool_key: "dns_lookup", tool_name: "DNS Lookup",
+      tool_key: "dns_lookup", tool_name: "DNS Lookup",
       category: "dns", status: "pending"
     )
     assert run.valid?, run.errors.full_messages.inspect
   end
 
   test "requires tool_key, tool_name, category" do
-    run = ToolRun.new(user: @user, status: "pending")
+    run = ToolRun.new(status: "pending")
     assert_not run.valid?
     assert_includes run.errors[:tool_key], "can't be blank"
     assert_includes run.errors[:tool_name], "can't be blank"
     assert_includes run.errors[:category], "can't be blank"
   end
 
-  test "belongs_to :user is required" do
-    run = ToolRun.new(tool_key: "x", tool_name: "x", category: "x", status: "pending")
-    assert_not run.valid?
-    assert_includes run.errors[:user], "must exist"
-  end
-
   # ---- scopes ----
 
   test "recent orders newest first" do
-    older  = ToolRun.create!(user: @user, tool_key: "a", tool_name: "A", category: "x", status: "completed", success: true, created_at: 2.days.ago)
-    newer  = ToolRun.create!(user: @user, tool_key: "b", tool_name: "B", category: "x", status: "completed", success: true, created_at: 1.hour.ago)
+    older = ToolRun.create!(tool_key: "a", tool_name: "A", category: "x", status: "completed", success: true, created_at: 2.days.ago)
+    newer = ToolRun.create!(tool_key: "b", tool_name: "B", category: "x", status: "completed", success: true, created_at: 1.hour.ago)
 
-    recent = ToolRun.recent.where(user: @user).to_a
+    recent = ToolRun.recent.to_a
     assert_equal newer, recent.first
     assert_equal older, recent.last
   end
 
   test "successful and failed_runs scopes" do
-    ok   = ToolRun.create!(user: @user, tool_key: "a", tool_name: "A", category: "x", status: "completed", success: true)
-    bad  = ToolRun.create!(user: @user, tool_key: "b", tool_name: "B", category: "x", status: "failed", success: false)
+    ok  = ToolRun.create!(tool_key: "a", tool_name: "A", category: "x", status: "completed", success: true)
+    bad = ToolRun.create!(tool_key: "b", tool_name: "B", category: "x", status: "failed", success: false)
 
     assert_includes ToolRun.successful, ok
     assert_not_includes ToolRun.successful, bad
@@ -51,8 +41,8 @@ class ToolRunTest < ActiveSupport::TestCase
   end
 
   test "for_category and for_tool filters" do
-    dns_run = ToolRun.create!(user: @user, tool_key: "dns_lookup", tool_name: "DNS Lookup", category: "dns", status: "completed", success: true)
-    ssl_run = ToolRun.create!(user: @user, tool_key: "ssl_inspect", tool_name: "SSL Inspect", category: "ssl", status: "completed", success: true)
+    dns_run = ToolRun.create!(tool_key: "dns_lookup", tool_name: "DNS Lookup", category: "dns", status: "completed", success: true)
+    ssl_run = ToolRun.create!(tool_key: "ssl_inspect", tool_name: "SSL Inspect", category: "ssl", status: "completed", success: true)
 
     assert_includes     ToolRun.for_category(:dns), dns_run
     assert_not_includes ToolRun.for_category(:dns), ssl_run
@@ -61,8 +51,8 @@ class ToolRunTest < ActiveSupport::TestCase
   end
 
   test "search_input matches input_summary substring; passthrough on blank" do
-    match    = ToolRun.create!(user: @user, tool_key: "a", tool_name: "A", category: "x", status: "completed", success: true, input_summary: "example.com")
-    no_match = ToolRun.create!(user: @user, tool_key: "b", tool_name: "B", category: "x", status: "completed", success: true, input_summary: "other.org")
+    match    = ToolRun.create!(tool_key: "a", tool_name: "A", category: "x", status: "completed", success: true, input_summary: "example.com")
+    no_match = ToolRun.create!(tool_key: "b", tool_name: "B", category: "x", status: "completed", success: true, input_summary: "other.org")
 
     assert_includes     ToolRun.search_input("example"), match
     assert_not_includes ToolRun.search_input("example"), no_match
@@ -99,7 +89,7 @@ class ToolRunTest < ActiveSupport::TestCase
   # ---- create_pending! / apply_result! lifecycle ----
 
   test "create_pending! creates a row in pending state from a tool class" do
-    run = ToolRun.create_pending!(user: @user, tool_class: Tools::DnsLookup, params: { domain: "example.com" })
+    run = ToolRun.create_pending!(tool_class: Tools::DnsLookup, params: { domain: "example.com" })
 
     assert run.persisted?
     assert_equal "pending", run.status
@@ -112,7 +102,7 @@ class ToolRunTest < ActiveSupport::TestCase
   end
 
   test "apply_result! merges a Result and flips status to completed/failed" do
-    run    = ToolRun.create_pending!(user: @user, tool_class: Tools::DnsLookup, params: { domain: "example.com" })
+    run    = ToolRun.create_pending!(tool_class: Tools::DnsLookup, params: { domain: "example.com" })
     result = ToolHarness::Result.new(
       success: true,
       tool: "DNS Lookup",
@@ -135,7 +125,7 @@ class ToolRunTest < ActiveSupport::TestCase
   end
 
   test "apply_result! with failed Result marks status failed" do
-    run    = ToolRun.create_pending!(user: @user, tool_class: Tools::DnsLookup, params: { domain: "example.com" })
+    run    = ToolRun.create_pending!(tool_class: Tools::DnsLookup, params: { domain: "example.com" })
     result = ToolHarness::Result.new(success: false, tool: "DNS Lookup", error: "boom")
 
     run.apply_result!(result)

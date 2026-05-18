@@ -1,20 +1,15 @@
 require "test_helper"
 
 class CommandsControllerTest < ActionDispatch::IntegrationTest
-  setup do
-    @user = User.create!(email: "cmd@test", password: "password123")
-    sign_in @user
-  end
-
   test "POST /commands with :run dispatches a tool run" do
     post "/commands", params: { cmd: "run whois_lookup example.com" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :success
     assert_match /turbo-stream/, response.body
-    assert ToolRun.exists?(user: @user, tool_key: "whois_lookup"), "expected a ToolRun created"
+    assert ToolRun.exists?(tool_key: "whois_lookup"), "expected a ToolRun created"
   end
 
   test "POST /commands with :export returns a stream that points to a downloadable URL" do
-    run = ToolRun.create!(user: @user, tool_key: "whois_lookup", tool_name: "WHOIS", category: "domain",
+    run = ToolRun.create!(tool_key: "whois_lookup", tool_name: "WHOIS", category: "domain",
                           status: "completed", success: true, result_data: { "x" => 1 })
     post "/commands", params: { cmd: "export json", run_id: run.id }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :success
@@ -22,7 +17,7 @@ class CommandsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test ":export csv escapes embedded quotes and renders a data URL" do
-    run = ToolRun.create!(user: @user, tool_key: "whois_lookup", tool_name: "WHOIS", category: "domain",
+    run = ToolRun.create!(tool_key: "whois_lookup", tool_name: "WHOIS", category: "domain",
                           status: "completed", success: true,
                           result_data: { "note" => %(she said "hi"), "plain" => "ok" })
     post "/commands", params: { cmd: "export csv", run_id: run.id }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
@@ -33,7 +28,7 @@ class CommandsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test ":export md renders a markdown payload with heading and bullets" do
-    run = ToolRun.create!(user: @user, tool_key: "whois_lookup", tool_name: "WHOIS", category: "domain",
+    run = ToolRun.create!(tool_key: "whois_lookup", tool_name: "WHOIS", category: "domain",
                           status: "completed", success: true, input_summary: "example.com",
                           result_data: { "registrar" => "IANA" })
     post "/commands", params: { cmd: "export md", run_id: run.id }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
@@ -45,7 +40,7 @@ class CommandsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test ":export with no format falls back to JSON" do
-    run = ToolRun.create!(user: @user, tool_key: "whois_lookup", tool_name: "WHOIS", category: "domain",
+    run = ToolRun.create!(tool_key: "whois_lookup", tool_name: "WHOIS", category: "domain",
                           status: "completed", success: true, result_data: { "x" => 1 })
     post "/commands", params: { cmd: "export", run_id: run.id }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :success
@@ -74,30 +69,16 @@ class CommandsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test ":purge reports the number of deleted runs older than the cutoff" do
-    old = ToolRun.create!(user: @user, tool_key: "whois_lookup", tool_name: "WHOIS", category: "domain",
+    old = ToolRun.create!(tool_key: "whois_lookup", tool_name: "WHOIS", category: "domain",
                           status: "completed", success: true)
     old.update_column(:created_at, 31.days.ago)
-    fresh = ToolRun.create!(user: @user, tool_key: "whois_lookup", tool_name: "WHOIS", category: "domain",
+    fresh = ToolRun.create!(tool_key: "whois_lookup", tool_name: "WHOIS", category: "domain",
                             status: "completed", success: true)
     post "/commands", params: { cmd: "purge older=30d" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :success
     assert_match /purged 1 runs older than 30d/, response.body
     refute ToolRun.exists?(old.id)
     assert ToolRun.exists?(fresh.id)
-  end
-
-  test ":purge only deletes the current user's runs" do
-    other = User.create!(email: "cmd-other@test", password: "password123")
-    mine  = ToolRun.create!(user: @user, tool_key: "whois_lookup", tool_name: "WHOIS", category: "domain",
-                            status: "completed", success: true)
-    mine.update_column(:created_at, 31.days.ago)
-    theirs = ToolRun.create!(user: other, tool_key: "whois_lookup", tool_name: "WHOIS", category: "domain",
-                             status: "completed", success: true)
-    theirs.update_column(:created_at, 31.days.ago)
-    post "/commands", params: { cmd: "purge older=30d" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
-    assert_response :success
-    refute ToolRun.exists?(mine.id)
-    assert  ToolRun.exists?(theirs.id), "other user's old run should not be purged"
   end
 
   test "POST /commands with an unknown command returns an inline error stream" do

@@ -25,7 +25,6 @@ class CommandsController < ApplicationController
     return error_stream("unknown tool '#{args[:tool]}'") unless tool_class
 
     run = ToolRun.create_pending!(
-      user: current_user,
       tool_class: tool_class,
       params: { tool_class.form_fields.keys.first => args[:target] }
     )
@@ -39,7 +38,7 @@ class CommandsController < ApplicationController
   end
 
   def dispatch_export(args, run_id)
-    run = current_user.tool_runs.find_by(id: run_id)
+    run = ToolRun.find_by(id: run_id)
     return error_stream("no current run to export") unless run
 
     payload = case args[:format]
@@ -62,7 +61,7 @@ class CommandsController < ApplicationController
     older = args[:older].to_s
     return error_stream("usage: :purge older=<N>d") unless older =~ /\A(\d+)d\z/
     days = older.sub(/d\z/, "").to_i
-    n = current_user.tool_runs.purge_older_than!(days.days)
+    n = ToolRun.purge_older_than!(days.days)
     turbo_stream.replace(
       "cmdline_message",
       "<div id='cmdline_message' class='px-3 py-1 text-cyan text-xs'>▸ purged #{n} runs older than #{days}d</div>".html_safe

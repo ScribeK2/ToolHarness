@@ -1,6 +1,4 @@
 Rails.application.routes.draw do
-  devise_for :users, skip: [:registrations]
-
   # Workbench — the front door
   get "workbench", to: "workbench#show", as: :workbench
   root to: "workbench#show"

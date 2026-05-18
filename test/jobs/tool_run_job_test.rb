@@ -1,10 +1,6 @@
 require "test_helper"
 
 class ToolRunJobTest < ActiveJob::TestCase
-  setup do
-    @user = users(:one)
-  end
-
   def teardown
     @added_keys&.each { |k| ToolHarness::Registry.tools.delete(k) }
   end
@@ -13,7 +9,6 @@ class ToolRunJobTest < ActiveJob::TestCase
     register_fake_tool(:fake_ok, success: true, summary: "fake summary", data: { foo: 1 })
 
     run = ToolRun.create_pending!(
-      user: @user,
       tool_class: ToolHarness::Registry.find_tool(:fake_ok),
       params: { domain: "example.com" }
     )
@@ -35,7 +30,6 @@ class ToolRunJobTest < ActiveJob::TestCase
     register_fake_tool(:fake_failure, success: false, summary: "boom", error: "downstream broke")
 
     run = ToolRun.create_pending!(
-      user: @user,
       tool_class: ToolHarness::Registry.find_tool(:fake_failure),
       params: { domain: "example.com" }
     )
@@ -50,7 +44,7 @@ class ToolRunJobTest < ActiveJob::TestCase
   end
 
   test "unknown tool_key: status becomes failed with a clear error" do
-    run = @user.tool_runs.create!(
+    run = ToolRun.create!(
       tool_key:  "ghost_tool",
       tool_name: "Ghost",
       category:  "fake",
@@ -69,7 +63,6 @@ class ToolRunJobTest < ActiveJob::TestCase
   test "broadcast failure does not propagate or mark the run failed" do
     register_fake_tool(:fake_for_broadcast, success: true, summary: "ok")
     run = ToolRun.create_pending!(
-      user: @user,
       tool_class: ToolHarness::Registry.find_tool(:fake_for_broadcast),
       params: { domain: "example.com" }
     )

@@ -46,9 +46,9 @@ bin/rails db:setup
 bin/dev
 ```
 
-The app listens on **http://localhost:3737**. `db:setup` seeds a
-default user — `admin@localhost` / `changeme123` — or override via
-`TOOLHARNESS_DEFAULT_USER_EMAIL` and `TOOLHARNESS_DEFAULT_USER_PASSWORD`.
+The app listens on **http://localhost:3737**. There is no login —
+ToolHarness is single-user local; whoever runs the process is the
+user.
 
 ## Tests
 
@@ -59,4 +59,4 @@ bin/rails test
 ## Stack
 
 Rails 8 · SQLite · Solid Queue / Cable / Cache · Hotwire (Turbo +
-Stimulus) · Tailwind CSS · Devise.
+Stimulus) · Tailwind CSS.

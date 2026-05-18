@@ -1,17 +1,10 @@
 require "application_system_test_case"
 
 class WorkbenchFlowTest < ApplicationSystemTestCase
-  setup do
-    @user = User.create!(email: "sys@test", password: "password123")
-  end
+  test "user opens workbench, runs whois, sees streaming result" do
+    visit root_path
 
-  test "user signs in, runs whois, sees streaming result" do
-    visit new_user_session_path
-    fill_in "email",    with: @user.email
-    fill_in "password", with: "password123"
-    click_button "SIGN IN ⏎"
-
-    assert_text "▸ Ready."
+    assert_text "Ready."
     assert_selector "[data-mode-badge]", text: "NORMAL"
 
     # Switch to whois via rail
