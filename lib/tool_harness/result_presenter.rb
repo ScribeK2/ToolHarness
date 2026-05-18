@@ -6,8 +6,6 @@ module ToolHarness
       end
     end
 
-    LONG_VALUE_HEAD_LINES = 6
-
     def initialize(tool_run)
       @run = tool_run
     end
@@ -31,7 +29,7 @@ module ToolHarness
         when Array
           Section.new(title: titleize(key), kvs: array_to_kvs(value))
         else
-          Section.new(title: titleize(key), kvs: { key.to_s => truncate(value.to_s) })
+          Section.new(title: titleize(key), kvs: { key.to_s => value.to_s })
         end
       end
     end
@@ -59,19 +57,11 @@ module ToolHarness
     end
 
     def stringify(hash)
-      hash.transform_values { |v| truncate(v.to_s) }
+      hash.transform_values { |v| v.to_s }
     end
 
     def array_to_kvs(array)
-      array.each_with_index.to_h { |item, i| ["[#{i}]", truncate(item.to_s)] }
-    end
-
-    def truncate(s)
-      lines = s.to_s.split("\n")
-      return s if lines.length <= LONG_VALUE_HEAD_LINES
-      head = lines.first(LONG_VALUE_HEAD_LINES).join("\n")
-      remaining = lines.length - LONG_VALUE_HEAD_LINES
-      "#{head}\n  … #{remaining} more lines (`:raw` to expand)"
+      array.each_with_index.to_h { |item, i| ["[#{i}]", item.to_s] }
     end
 
     def titleize(key)

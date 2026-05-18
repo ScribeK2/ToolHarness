@@ -97,7 +97,12 @@ export default class extends Controller {
         document.dispatchEvent(new Event("result:clear"))
         break
       case "raw":
-        document.querySelectorAll("[data-truncated]").forEach(el => { el.dataset.expanded = "true" })
+        document.querySelectorAll("[data-truncated]").forEach(el => {
+          const expand = el.dataset.expanded !== "true"
+          el.dataset.expanded = expand ? "true" : "false"
+          el.querySelector("[data-truncated-head]")?.classList.toggle("hidden", expand)
+          el.querySelector("[data-truncated-full]")?.classList.toggle("hidden", !expand)
+        })
         break
       case "tool":
         window.location = "/workbench?tool=" + encodeURIComponent(rest[0] || "")

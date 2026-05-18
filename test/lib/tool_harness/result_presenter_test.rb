@@ -39,11 +39,11 @@ class ToolHarness::ResultPresenterTest < ActiveSupport::TestCase
     assert_equal({ "summary" => "all good" }, sections.first.kvs)
   end
 
-  test "truncates very long string values with a more-lines marker" do
+  test "preserves the full value for long strings; truncation is a view concern" do
     long = (1..100).map { |i| "line #{i}" }.join("\n")
     run = make_run(result_data: { "whois" => long })
     section = ToolHarness::ResultPresenter.new(run).sections.first
-    assert section.kvs["whois"].include?("more lines (`:raw` to expand)")
+    assert_equal long, section.kvs["whois"]
   end
 
   test "appends an Issues section at the end" do
