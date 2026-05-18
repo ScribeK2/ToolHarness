@@ -127,8 +127,11 @@ for so in $NATIVE_EXTS; do
   EXEC_ARGS="$EXEC_ARGS --executable $so"
 done
 
+# LD_LIBRARY_PATH tells linuxdeploy's internal ldd lookup to also consider the
+# in-AppDir libraries we just compiled — notably libruby.so.3.4 from --enable-shared.
+# Without this, linuxdeploy fails with "Could not find dependency: libruby.so.3.4".
 # shellcheck disable=SC2086
-$LINUXDEPLOY \
+LD_LIBRARY_PATH="$APP_DIR/usr/lib:${LD_LIBRARY_PATH:-}" $LINUXDEPLOY \
   --appdir "$APP_DIR" \
   --desktop-file "$APP_DIR/toolharness.desktop" \
   --icon-file "$APP_DIR/toolharness.png" \
