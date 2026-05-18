@@ -72,7 +72,7 @@ class CommandsController < ApplicationController
   def error_stream(msg)
     turbo_stream.replace(
       "cmdline_message",
-      "<div id='cmdline_message' class='px-3 py-1 text-red text-xs'>#{msg}</div>".html_safe
+      helpers.tag.div(msg, id: "cmdline_message", class: "px-3 py-1 text-red text-xs")
     )
   end
 

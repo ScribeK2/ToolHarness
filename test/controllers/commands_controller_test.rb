@@ -64,13 +64,13 @@ class CommandsControllerTest < ActionDispatch::IntegrationTest
   test ":purge without an older= argument returns a usage error" do
     post "/commands", params: { cmd: "purge" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :success
-    assert_match /usage: :purge older=/, response.body
+    assert_match /usage: :purge older=&lt;N&gt;d/, response.body
   end
 
   test ":purge with a malformed older= argument returns a usage error" do
     post "/commands", params: { cmd: "purge older=garbage" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :success
-    assert_match /usage: :purge older=/, response.body
+    assert_match /usage: :purge older=&lt;N&gt;d/, response.body
   end
 
   test ":purge reports the number of deleted runs older than the cutoff" do
@@ -104,6 +104,13 @@ class CommandsControllerTest < ActionDispatch::IntegrationTest
     post "/commands", params: { cmd: "nope" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :success
     assert_match /no command/i, response.body
+  end
+
+  test "error_stream escapes HTML characters in the message" do
+    post "/commands", params: { cmd: "nope <script>alert(1)</script>" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    assert_response :success
+    assert_no_match /<script>alert\(1\)<\/script>/, response.body
+    assert_match    /&lt;script&gt;alert\(1\)&lt;\/script&gt;/, response.body
   end
 
   private
