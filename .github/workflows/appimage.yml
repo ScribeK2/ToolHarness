@@ -1,0 +1,89 @@
+name: Build AppImage
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version_override:
+        description: "Override VERSION (otherwise read from VERSION file)"
+        required: false
+        default: ""
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04   # locks our glibc 2.35 floor
+    permissions:
+      contents: write       # needed to create the release
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version_override }}" ]; then
+            VER="${{ github.event.inputs.version_override }}"
+          elif [ "${{ github.ref_type }}" = "tag" ]; then
+            VER="${GITHUB_REF_NAME#v}"
+          else
+            VER="$(cat VERSION)"
+          fi
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
+
+      - name: Install build prereqs
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential curl git pkg-config rsync ca-certificates \
+            libssl-dev libyaml-dev libffi-dev libsqlite3-dev libreadline-dev \
+            zlib1g-dev libgmp-dev patchelf file fuse libfuse2 imagemagick
+
+      - name: Build AppImage
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: bash script/build-appimage.sh
+
+      - name: Smoke-test the AppImage
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          chmod +x "ToolHarness-${VERSION}-x86_64.AppImage"
+          ./"ToolHarness-${VERSION}-x86_64.AppImage" --appimage-extract-and-run &
+          APP_PID=$!
+          # Wait up to 30s for /up to come back 200
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:3000/up >/dev/null; then
+              echo "AppImage responded to /up"
+              kill $APP_PID 2>/dev/null || true
+              exit 0
+            fi
+            sleep 0.5
+          done
+          echo "AppImage did NOT respond to /up within 30s" >&2
+          kill $APP_PID 2>/dev/null || true
+          exit 1
+
+      - name: Compute SHA256SUMS
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: sha256sum "ToolHarness-${VERSION}-x86_64.AppImage" > SHA256SUMS
+
+      - name: Create GitHub Release
+        if: github.event_name == 'push' && github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ToolHarness-${{ steps.version.outputs.version }}-x86_64.AppImage
+            SHA256SUMS
+
+      - name: Upload artifact (non-tag runs)
+        if: github.event_name != 'push' || github.ref_type != 'tag'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ToolHarness-${{ steps.version.outputs.version }}
+          path: |
+            ToolHarness-${{ steps.version.outputs.version }}-x86_64.AppImage
+            SHA256SUMS
