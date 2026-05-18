@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=ToolHarness
+GenericName=Support Tool Harness
+Comment=Local tool harness for diagnostics and lookups
+Exec=ToolHarness %u
+Icon=toolharness
+Categories=Network;Development;
+Terminal=false
+StartupNotify=true
+X-AppImage-Version=0.1.0
