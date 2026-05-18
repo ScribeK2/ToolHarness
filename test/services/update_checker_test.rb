@@ -47,4 +47,52 @@ class UpdateCheckerTest < ActiveSupport::TestCase
     end
     assert_nil Rails.cache.read(UpdateChecker::CACHE_KEY)
   end
+
+  test "refresh! caches appimage_url from the first .AppImage asset" do
+    response_body = {
+      "tag_name" => "v99.0.0",
+      "html_url" => "https://github.com/ScribeK2/ToolHarness/releases/tag/v99.0.0",
+      "assets" => [
+        { "name" => "SHA256SUMS",                         "browser_download_url" => "https://example.com/SHA256SUMS" },
+        { "name" => "ToolHarness-99.0.0-x86_64.AppImage", "browser_download_url" => "https://example.com/TH.AppImage" }
+      ]
+    }.to_json
+
+    fake_resp = Net::HTTPSuccess.allocate
+    fake_resp.define_singleton_method(:body) { response_body }
+
+    fake_http = Object.new
+    fake_http.define_singleton_method(:request) { |_req| fake_resp }
+
+    Net::HTTP.stub(:start, ->(*_a, **_k, &blk) { blk.call(fake_http) }) do
+      UpdateChecker.refresh!
+    end
+
+    cached = Rails.cache.read(UpdateChecker::CACHE_KEY)
+    assert_equal "v99.0.0",                         cached["tag_name"]
+    assert_equal "https://example.com/TH.AppImage", cached["appimage_url"]
+  end
+
+  test "refresh! caches nil appimage_url when no .AppImage asset is present" do
+    response_body = {
+      "tag_name" => "v99.0.0",
+      "html_url" => "https://github.com/ScribeK2/ToolHarness/releases/tag/v99.0.0",
+      "assets" => [
+        { "name" => "SHA256SUMS", "browser_download_url" => "https://example.com/SHA256SUMS" }
+      ]
+    }.to_json
+
+    fake_resp = Net::HTTPSuccess.allocate
+    fake_resp.define_singleton_method(:body) { response_body }
+
+    fake_http = Object.new
+    fake_http.define_singleton_method(:request) { |_req| fake_resp }
+
+    Net::HTTP.stub(:start, ->(*_a, **_k, &blk) { blk.call(fake_http) }) do
+      UpdateChecker.refresh!
+    end
+
+    cached = Rails.cache.read(UpdateChecker::CACHE_KEY)
+    assert_nil cached["appimage_url"]
+  end
 end

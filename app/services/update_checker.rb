@@ -31,8 +31,18 @@ class UpdateChecker
         resp = http.request(req)
         return unless resp.is_a?(Net::HTTPSuccess)
 
-        body = JSON.parse(resp.body)
-        Rails.cache.write(CACHE_KEY, body.slice("tag_name", "html_url"), expires_in: CACHE_TTL)
+        body     = JSON.parse(resp.body)
+        appimage = Array(body["assets"]).find { |a| a["name"].to_s.end_with?(".AppImage") }
+
+        Rails.cache.write(
+          CACHE_KEY,
+          {
+            "tag_name"     => body["tag_name"],
+            "html_url"     => body["html_url"],
+            "appimage_url" => appimage && appimage["browser_download_url"]
+          },
+          expires_in: CACHE_TTL
+        )
       end
     rescue StandardError => e
       Rails.logger.info("UpdateChecker.refresh! skipped: #{e.class}: #{e.message}")
