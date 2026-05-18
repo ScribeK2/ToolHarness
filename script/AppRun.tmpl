@@ -137,6 +137,7 @@ trap 'kill -TERM "$PUMA_PID" 2>/dev/null; kill -TERM "$JOBS_PID" 2>/dev/null; wa
 ) &
 
 # 12. Run Puma in foreground (NOT exec — we need the trap to fire on signal)
-bundle exec puma -e production -p "$port" >>"$LOG_OUT" 2>>"$LOG_ERR" &
+bind_addr="${TOOLHARNESS_BIND:-127.0.0.1}"
+bundle exec puma -e production -b "tcp://${bind_addr}:$port" >>"$LOG_OUT" 2>>"$LOG_ERR" &
 PUMA_PID=$!
 wait "$PUMA_PID"
