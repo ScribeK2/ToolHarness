@@ -42,6 +42,54 @@ export SSL_CERT_FILE="$HERE/usr/etc/ssl/certs/ca-certificates.crt"
 export LD_LIBRARY_PATH="$HERE/usr/lib:${LD_LIBRARY_PATH:-}"
 cd "$HERE/usr/share/toolharness"
 
+# 1a. Browser launcher cascade.
+# Returns 0 on first launcher that exits 0 within 3 seconds.
+# Tries $BROWSER first (user override), then the standard cascade.
+# `timeout` defends against launchers that hang on broken DBus / missing session daemon.
+try_open_browser() {
+  local url="$1" launcher rc
+
+  if [ -n "${BROWSER:-}" ]; then
+    timeout 3 sh -c "$BROWSER '$url'" >/dev/null 2>&1
+    rc=$?
+    [ $rc -eq 0 ] && return 0
+  fi
+
+  for launcher in xdg-open "gio open" gnome-open kde-open sensible-browser; do
+    case "$launcher" in
+      "gio open") command -v gio >/dev/null || continue ;;
+      *)          command -v "$launcher" >/dev/null || continue ;;
+    esac
+    timeout 3 sh -c "$launcher '$url'" >/dev/null 2>&1
+    rc=$?
+    [ $rc -eq 0 ] && return 0
+  done
+
+  return 1
+}
+
+# 1b. surface_url — the canonical "tell the user where the app is" routine.
+# Always writes the URL to $TH_STATE/url so a user can always recover it.
+# Tries the browser cascade unless suppressed; falls back to notify-send.
+# Callers: the polling subshell (after /up is ready) and the second-launch path.
+# Requires: $TH_STATE, $HERE, $NO_BROWSER in scope.
+surface_url() {
+  local port="$1" url
+  url="http://localhost:$port"
+  echo "$url" > "$TH_STATE/url"
+
+  [ "$NO_BROWSER" -eq 1 ] && return 0
+  try_open_browser "$url" && return 0
+
+  if command -v notify-send >/dev/null; then
+    notify-send -a ToolHarness \
+      -i "$HERE/usr/share/icons/hicolor/256x256/apps/toolharness.png" \
+      "ToolHarness is running" \
+      "Open $url in your browser" \
+      >/dev/null 2>&1 || true
+  fi
+}
+
 # 2. Resolve XDG paths
 TH_DATA="${XDG_DATA_HOME:-$HOME/.local/share}/toolharness"
 TH_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/toolharness"
