@@ -36,8 +36,8 @@ fi
 
 # 4. Persist SECRET_KEY_BASE (once per machine)
 if [ ! -f "$TH_CONFIG/secret_key_base" ]; then
-  head -c 64 /dev/urandom | xxd -p -c 128 > "$TH_CONFIG/secret_key_base"
-  chmod 600 "$TH_CONFIG/secret_key_base"
+  # Write at mode 600 from byte 0 (subshell umask), and use POSIX od+tr (no xxd dependency).
+  (umask 077; head -c 64 /dev/urandom | od -An -tx1 | tr -d ' \n' > "$TH_CONFIG/secret_key_base")
 fi
 SECRET_KEY_BASE=$(cat "$TH_CONFIG/secret_key_base")
 export SECRET_KEY_BASE
@@ -55,11 +55,18 @@ while [ "$port" -lt 3010 ]; do
   fi
   port=$((port + 1))
 done
+if [ "$port" -ge 3010 ]; then
+  echo "ToolHarness: no free port found in 3000-3009. Set TOOLHARNESS_PORT to choose a specific port." >&2
+  exit 1
+fi
 echo "$port" > "$TH_STATE/port"
 export PORT="$port"
 
 # 7. First-run setup (idempotent)
-bundle exec rails db:prepare
+bundle exec rails db:prepare || {
+  echo "ToolHarness: database setup failed. Check $TH_STATE/log/server.err for details." >&2
+  exit 1
+}
 
 # 8. Log routing
 if [ -t 1 ]; then
@@ -74,8 +81,8 @@ fi
 bundle exec bin/jobs >>"$LOG_OUT" 2>>"$LOG_ERR" &
 JOBS_PID=$!
 
-# 10. Trap shutdown
-trap 'kill -TERM "$JOBS_PID" 2>/dev/null; wait "$JOBS_PID" 2>/dev/null; exit' INT TERM
+# 10. Trap shutdown — clean up both jobs and puma on signal
+trap 'kill -TERM "$PUMA_PID" 2>/dev/null; kill -TERM "$JOBS_PID" 2>/dev/null; wait 2>/dev/null; exit' INT TERM
 
 # 11. Auto-open browser (background subshell, polls /up)
 (
@@ -90,5 +97,7 @@ trap 'kill -TERM "$JOBS_PID" 2>/dev/null; wait "$JOBS_PID" 2>/dev/null; exit' IN
   done
 ) &
 
-# 12. Exec Puma in foreground (replaces this shell)
-exec bundle exec puma -e production -p "$port" >>"$LOG_OUT" 2>>"$LOG_ERR"
+# 12. Run Puma in foreground (NOT exec — we need the trap to fire on signal)
+bundle exec puma -e production -p "$port" >>"$LOG_OUT" 2>>"$LOG_ERR" &
+PUMA_PID=$!
+wait "$PUMA_PID"
