@@ -12,9 +12,14 @@
 
 set -euo pipefail
 
-VERSION="${VERSION:-$(cat VERSION)}"
+# Resolve REPO_ROOT once, before any cd, using BASH_SOURCE to handle relative invocations.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$REPO_ROOT"
+
+VERSION="${VERSION:-$(cat "$REPO_ROOT/VERSION")}"
 ARCH="x86_64"
-WORK="${WORK:-$(pwd)/build/appimage}"
+WORK="${WORK:-$REPO_ROOT/build/appimage}"
 APP_DIR="$WORK/AppDir"
 RUBY_VERSION="3.4.7"
 OUT="ToolHarness-${VERSION}-${ARCH}.AppImage"
@@ -71,7 +76,6 @@ fi
 
 # ---- Stage the Rails app ----
 echo "==> Staging Rails app"
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 APP_STAGE="$APP_DIR/usr/share/toolharness"
 rsync -a --delete \
   --exclude=".git" \
