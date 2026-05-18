@@ -49,6 +49,7 @@ jobs:
       - name: Smoke-test the AppImage
         env:
           VERSION: ${{ steps.version.outputs.version }}
+          TOOLHARNESS_PORT: "3000"
         run: |
           chmod +x "ToolHarness-${VERSION}-x86_64.AppImage"
           ./"ToolHarness-${VERSION}-x86_64.AppImage" --appimage-extract-and-run &
