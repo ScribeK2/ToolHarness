@@ -61,6 +61,24 @@ fi
 
 export PATH="$APP_DIR/usr/bin:$PATH"
 
+# ---- Rewrite ruby-build's absolute-path shebangs to relocatable form ----
+# ruby-build/rubygems writes wrapper scripts in usr/bin (bundle, gem, rake, etc.)
+# with a hardcoded shebang pointing at the build-time absolute path:
+#   #!/home/runner/.../AppDir/usr/bin/ruby
+# That path won't exist when the AppImage is extracted on a user's machine, so
+# any direct exec of bundle/gem/rake fails with "bad interpreter". Rewriting to
+# #!/usr/bin/env ruby makes them PATH-relative — AppRun already puts our ruby first.
+echo "==> Rewriting gem-wrapper shebangs to /usr/bin/env ruby"
+for script in "$APP_DIR/usr/bin"/*; do
+  [ -f "$script" ] || continue
+  first_line=$(head -n1 "$script" 2>/dev/null || true)
+  case "$first_line" in
+    "#!"*"/ruby"|"#!"*"/ruby "*)
+      sed -i '1c\#!/usr/bin/env ruby' "$script"
+      ;;
+  esac
+done
+
 # ---- Install bundled CA bundle ----
 # Source from the host (the ca-certificates apt package is installed by the workflow's
 # prereqs step, or by the local user before invoking this script). Mozilla's curated
