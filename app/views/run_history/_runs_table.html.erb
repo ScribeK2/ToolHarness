@@ -1,7 +1,7 @@
 <section id="result_panel" class="flex-1 min-h-0 overflow-y-auto px-3 py-2 text-xs"
          data-controller="history">
   <div class="flex items-center justify-between mb-2 text-mute">
-    <span>▸ Runs · <%= @runs.size %> shown<%= " (max 200)" if @runs.size == 200 %></span>
+    <span><span aria-hidden="true">▸ </span>Runs · <%= @runs.size %> shown<%= " (max 200)" if @runs.size == 200 %></span>
   </div>
 
   <% if @runs.empty? %>

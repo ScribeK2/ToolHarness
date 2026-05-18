@@ -160,3 +160,8 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes pulse-soft { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
 .animate-pulse-soft { animation: pulse-soft 1.5s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation: none; }
+  .animate-pulse-soft { animation: none; }
+}

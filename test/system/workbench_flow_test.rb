@@ -19,7 +19,7 @@ class WorkbenchFlowTest < ApplicationSystemTestCase
 
     # Type target and run
     fill_in "tool_run[domain]", with: "example.com"
-    click_button "RUN ⏎"
+    find("button[type=submit]", text: /RUN/).click
 
     # Result begins streaming
     assert_text "running", wait: 5

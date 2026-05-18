@@ -2,6 +2,6 @@
   <% if @run %>
     <%= render "results/result", tool_run: @run %>
   <% else %>
-    <div class="text-mute">▸ Ready.  type a target, then Enter or :r</div>
+    <div class="text-mute"><span aria-hidden="true">▸ </span>Ready.  type a target, then Enter or :r</div>
   <% end %>
 </section>

@@ -5,13 +5,13 @@
      role="dialog">
   <div class="max-w-4xl mx-auto py-6 px-6">
     <div class="flex items-center justify-between mb-4">
-      <h2 class="text-fg font-bold tracking-[0.18em]">▸ HELP</h2>
+      <h2 class="text-fg font-bold tracking-[0.18em]"><span aria-hidden="true">▸ </span>HELP</h2>
       <button type="button" data-action="click->help-overlay#close" class="text-mute hover:text-fg">[Esc]</button>
     </div>
 
     <div class="grid grid-cols-2 gap-x-12 gap-y-6">
       <section>
-        <h3 class="text-fg font-bold mb-2">▸ MODES</h3>
+        <h3 class="text-fg font-bold mb-2"><span aria-hidden="true">▸ </span>MODES</h3>
         <div><span class="text-mute">NORMAL</span>  default — keys do things</div>
         <div><span class="text-mute">INSERT</span>  typing in any input (Esc to return)</div>
         <div><span class="text-mute">CMD</span>     after `:` (Esc to return)</div>
@@ -19,7 +19,7 @@
       </section>
 
       <section>
-        <h3 class="text-fg font-bold mb-2">▸ KEYS (NORMAL)</h3>
+        <h3 class="text-fg font-bold mb-2"><span aria-hidden="true">▸ </span>KEYS (NORMAL)</h3>
         <div><span class="text-cyan">j k</span>     rail next / prev</div>
         <div><span class="text-cyan">1–9</span>     pinned slot jump</div>
         <div><span class="text-cyan">t</span>       focus rail filter</div>
@@ -36,7 +36,7 @@
       </section>
 
       <section>
-        <h3 class="text-fg font-bold mb-2">▸ COMMANDS</h3>
+        <h3 class="text-fg font-bold mb-2"><span aria-hidden="true">▸ </span>COMMANDS</h3>
         <div>:run &lt;tool&gt; &lt;target&gt;</div>
         <div>:tool &lt;name&gt;</div>
         <div>:target &lt;value&gt;</div>
@@ -53,7 +53,7 @@
       </section>
 
       <section>
-        <h3 class="text-fg font-bold mb-2">▸ HISTORY FILTER</h3>
+        <h3 class="text-fg font-bold mb-2"><span aria-hidden="true">▸ </span>HISTORY FILTER</h3>
         <div>tool=whois</div>
         <div>target~acme</div>
         <div>status=done|err|running</div>

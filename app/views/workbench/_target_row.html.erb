@@ -8,12 +8,12 @@
                 data: { turbo: true, action: "submit->mode#enterInsert" },
                 class: "flex flex-col" do |f| %>
     <div class="h-10 px-3 flex items-center gap-3">
-      <span class="mono-label">target ›</span>
+      <span class="mono-label">target<span aria-hidden="true"> ›</span></span>
       <%= f.text_field primary, value: @target,
             autocomplete: "off", spellcheck: "false",
             class: "flex-1",
             data: { workbench_target: "input" } %>
-      <%= f.submit "RUN ⏎", class: "btn btn-primary cursor-pointer" %>
+      <button type="submit" class="btn btn-primary cursor-pointer" aria-label="Run">RUN<span aria-hidden="true"> ⏎</span></button>
     </div>
 
     <% extras = fields.except(primary) %>

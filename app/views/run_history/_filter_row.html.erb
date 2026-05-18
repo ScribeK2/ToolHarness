@@ -1,12 +1,12 @@
 <section class="h-10 px-3 border-b border-line bg-surface flex items-center gap-3">
   <%= form_with url: workbench_path, method: :get, scope: nil, local: true,
                 class: "flex items-center gap-3 w-full" do %>
-    <span class="mono-label">filter ›</span>
+    <span class="mono-label">filter<span aria-hidden="true"> ›</span></span>
     <%= hidden_field_tag :view, "history" %>
     <%= text_field_tag :filter, @filter,
           placeholder: "tool=ssl target~acme expires<30d",
           class: "flex-1" %>
-    <%= submit_tag "GO ⏎", class: "btn btn-primary cursor-pointer" %>
+    <button type="submit" class="btn btn-primary cursor-pointer" aria-label="Go">GO<span aria-hidden="true"> ⏎</span></button>
   <% end %>
 </section>
 

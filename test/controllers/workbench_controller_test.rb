@@ -27,7 +27,7 @@ class WorkbenchControllerTest < ActionDispatch::IntegrationTest
 
   test "rail groups tools by category" do
     get "/workbench"
-    assert_match %r{// domain}, response.body
+    assert_match %r{>domain</span>}, response.body
     assert_match /whois_lookup|WHOIS Lookup/i, response.body
   end
 
@@ -40,7 +40,7 @@ class WorkbenchControllerTest < ActionDispatch::IntegrationTest
   test "view=history renders the filter row and runs table" do
     @user.tool_runs.create!(tool_key: "whois_lookup", tool_name: "WHOIS", category: "domain", status: "completed", success: true, input_summary: "example.com")
     get "/workbench", params: { view: "history" }
-    assert_match /filter ›/, response.body
+    assert_match /name="filter"/, response.body
     assert_match /whois_lookup/, response.body
   end
 

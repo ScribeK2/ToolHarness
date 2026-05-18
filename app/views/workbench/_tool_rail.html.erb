@@ -9,21 +9,21 @@
   <% (category_order + unknown).each do |cat| %>
     <% tools = by_cat[cat] %>
     <% next if tools.blank? %>
-    <div class="pt-2 px-3"><span class="mono-label">// <%= cat.to_s.tr('_', ' ') %></span></div>
+    <div class="pt-2 px-3"><span class="mono-label"><span aria-hidden="true">// </span><%= cat.to_s.tr('_', ' ') %></span></div>
     <% tools.sort_by(&:tool_name).each do |klass| %>
       <% key = klass.name.demodulize.underscore %>
       <% active = @view != "history" && key == @tool_key.to_s %>
       <%= link_to workbench_path(tool: key, target: @target),
                   class: "rail-item flex items-center gap-2 px-3 py-[3px] text-[11.5px] #{active ? 'bg-elevated text-fg border-l-2 border-purple pl-[10px]' : 'text-fg-dim hover:bg-elevated'}",
                   data: { active: active, rail_target: "item", tool_key: key } do %>
-        <span class="w-3 inline-block text-purple"><%= "▸" if active %></span>
+        <span class="w-3 inline-block text-purple" aria-hidden="true"><%= "▸" if active %></span>
         <span><%= klass.tool_name.downcase %></span>
       <% end %>
     <% end %>
   <% end %>
 
   <div class="pt-3 px-3 mt-2 border-t border-line">
-    <span class="mono-label">─── system ───</span>
+    <span class="mono-label"><span aria-hidden="true">─── </span>system<span aria-hidden="true"> ───</span></span>
   </div>
   <%= link_to "history", workbench_path(view: "history"),
               class: "rail-item flex px-3 py-[3px] text-[11.5px] text-fg-dim hover:bg-elevated",
