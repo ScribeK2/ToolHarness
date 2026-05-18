@@ -95,12 +95,24 @@ JOBS_PID=$!
 # 10. Trap shutdown — clean up both jobs and puma on signal
 trap 'kill -TERM "$PUMA_PID" 2>/dev/null; kill -TERM "$JOBS_PID" 2>/dev/null; wait 2>/dev/null; exit' INT TERM
 
-# 11. Auto-open browser (background subshell, polls /up)
+# 11. Auto-open browser + always print the URL clearly (background subshell, polls /up).
+# Tries multiple launchers because Fedora's xdg-open silently no-ops in some setups
+# (missing DBus session, unset BROWSER, etc.). The URL print is the reliable signal —
+# if no launcher works, the user has the URL right there in the terminal.
 (
   i=0
-  while [ "$i" -lt 30 ]; do
+  while [ "$i" -lt 60 ]; do
     if curl -sf "http://localhost:$port/up" >/dev/null 2>&1; then
-      command -v xdg-open >/dev/null && xdg-open "http://localhost:$port" >/dev/null 2>&1 &
+      printf '\n\033[1;36m=== ToolHarness ready: http://localhost:%s ===\033[0m\n\n' "$port"
+      for launcher in xdg-open gio gnome-open kde-open sensible-browser; do
+        if command -v "$launcher" >/dev/null; then
+          case "$launcher" in
+            gio) "$launcher" open "http://localhost:$port" >/dev/null 2>&1 & ;;
+            *)   "$launcher"      "http://localhost:$port" >/dev/null 2>&1 & ;;
+          esac
+          break
+        fi
+      done
       break
     fi
     sleep 0.5
