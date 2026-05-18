@@ -16,6 +16,7 @@
   <body class="h-screen overflow-hidden text-fg bg-bg flex flex-col font-mono"
         data-controller="tour mode"
         data-mode-state-value="NORMAL">
+    <%= render "layouts/update_banner" %>
     <%= render "workbench/flash_strip" if notice.present? || alert.present? %>
     <%= render "workbench/top_bar" %>
 
