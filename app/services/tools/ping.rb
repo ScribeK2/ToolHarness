@@ -1,21 +1,22 @@
-require "open3"
+require "socket"
 require "ipaddr"
 
 module Tools
   class Ping
     include ToolHarness::Tool
 
-    PACKET_COUNT     = 4
-    PACKET_TIMEOUT_S = 2
-    MAX_OUTPUT_BYTES = 16_384
+    PACKET_COUNT      = 4
+    PACKET_TIMEOUT_S  = 2
+    PROBE_PORTS       = [443, 80].freeze   # try 443 first; fall back to 80
+    MAX_OUTPUT_BYTES  = 16_384
 
-    def self.tool_name = "Ping"
-    def self.category = :diagnostics
-    def self.description = "Sends #{PACKET_COUNT} ICMP echo requests to a host and reports packet loss and round-trip times. Safe shell-out via Open3 with strict input validation."
+    def self.tool_name   = "Ping"
+    def self.category    = :diagnostics
+    def self.description = "Measures TCP reachability and round-trip time to a host by opening #{PACKET_COUNT} TCP connections (port 443 with port 80 fallback). No ICMP, no host ping binary, no elevated privileges required."
     def self.form_fields = { domain: :text }
-    def self.input_type = :host
-    def self.cacheable? = false
-    def self.timeout = 15
+    def self.input_type  = :host
+    def self.cacheable?  = false
+    def self.timeout     = 15
 
     def execute(params)
       target = params[:domain].to_s.strip
@@ -29,46 +30,64 @@ module Tools
         )
       end
 
-      stdout, stderr, status = run_command("ping", "-c", PACKET_COUNT.to_s, "-W", PACKET_TIMEOUT_S.to_s, target)
+      probes = []
+      port = nil
+      PROBE_PORTS.each do |candidate|
+        probes = run_probes(target, candidate)
+        if probes.any? { |p| p[:rtt_ms] }
+          port = candidate
+          break
+        end
+      end
+      port ||= PROBE_PORTS.first
 
-      if stdout.nil?
-        return ToolHarness::Result.new(
-          success: false,
-          tool: self.class.tool_name,
-          error: stderr.presence || "Ping failed to execute",
-          summary: "Ping execution failed"
-        )
+      received = probes.count { |p| p[:rtt_ms] }
+      sent     = probes.size
+      loss     = sent.zero? ? 100.0 : ((sent - received).to_f / sent * 100).round(1)
+      rtts     = probes.map { |p| p[:rtt_ms] }.compact
+      rtt_stats = if rtts.any?
+        { min: rtts.min.round(2), avg: (rtts.sum / rtts.size).round(2), max: rtts.max.round(2) }
+      else
+        { min: nil, avg: nil, max: nil }
       end
 
-      parsed   = parse_ping(stdout, target)
-      received = parsed[:received].to_i
       reachable = received.positive?
-
       issues = []
       if !reachable
         issues << {
           severity: "critical",
           code: "host_unreachable",
-          title: "Host did not respond",
-          message: "All #{parsed[:sent]} packets lost (exit status #{status}).",
-          recommendation: "Verify the host is up and ICMP is not blocked by a firewall."
+          title: "Host did not accept TCP connections",
+          message: "All #{sent} TCP probes to port #{port} failed.",
+          recommendation: "Verify the host is up and ports 443/80 are not blocked by a firewall."
         }
-      elsif parsed[:loss_percent].to_f > 0
+      elsif loss > 0
         issues << {
           severity: "warning",
           code: "packet_loss",
-          title: "Packet loss detected",
-          message: "#{parsed[:loss_percent]}% packet loss (#{received}/#{parsed[:sent]} received).",
+          title: "Connection loss detected",
+          message: "#{loss}% of TCP probes failed (#{received}/#{sent} succeeded) on port #{port}.",
           recommendation: "Investigate network reliability between this host and the target."
         }
       end
 
+      data = {
+        target:       target,
+        port:         port,
+        method:       "tcp-connect",
+        sent:         sent,
+        received:     received,
+        loss_percent: loss,
+        rtt:          rtt_stats,
+        raw_output:   build_raw_output(target, port, probes).byteslice(0, MAX_OUTPUT_BYTES)
+      }
+
       ToolHarness::Result.new(
         success: reachable,
         tool: self.class.tool_name,
-        data: parsed.merge(raw_output: stdout.byteslice(0, MAX_OUTPUT_BYTES)),
+        data: data,
         issues: issues,
-        summary: build_summary(parsed)
+        summary: build_summary(data)
       )
     end
 
@@ -77,7 +96,6 @@ module Tools
     def valid_target?(s)
       return false if s.empty? || s.size > 253
       return true if valid_ip?(s)
-      # Domain pattern — alnum start/end, hyphens/dots inside, must contain at least one dot
       s.match?(/\A[a-zA-Z0-9](?:[a-zA-Z0-9\-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9\-]*[a-zA-Z0-9])?)+\z/)
     end
 
@@ -87,47 +105,44 @@ module Tools
       false
     end
 
-    def run_command(*cmd)
-      stdout, stderr, status = Open3.capture3(*cmd)
-      [stdout, stderr, status.exitstatus]
-    rescue Errno::ENOENT
-      [nil, "ping command not available in this environment", nil]
+    def run_probes(host, port)
+      Array.new(PACKET_COUNT) { single_probe(host, port) }
     end
 
-    def parse_ping(out, target)
-      result = {
-        target: target,
-        sent: nil,
-        received: nil,
-        loss_percent: nil,
-        rtt: { min: nil, avg: nil, max: nil }
-      }
-
-      # Linux ping summary line
-      if (m = out.match(/(\d+)\s+packets?\s+transmitted,\s+(\d+)\s+(?:packets?\s+)?received,\s+([\d.]+)%\s+packet\s+loss/))
-        result[:sent] = m[1].to_i
-        result[:received] = m[2].to_i
-        result[:loss_percent] = m[3].to_f
-      end
-
-      # rtt line (Linux) or round-trip (macOS/BSD)
-      if (m = out.match(%r{(?:rtt|round-trip)\s+min/avg/max[^=]*=\s+([\d.]+)/([\d.]+)/([\d.]+)}))
-        result[:rtt] = { min: m[1].to_f, avg: m[2].to_f, max: m[3].to_f }
-      end
-
-      result
+    def single_probe(host, port)
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      socket = Socket.tcp(host, port, connect_timeout: PACKET_TIMEOUT_S)
+      elapsed_ms = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000.0
+      socket.close
+      { port: port, rtt_ms: elapsed_ms.round(2) }
+    rescue Errno::ETIMEDOUT, Errno::ECONNREFUSED, Errno::EHOSTUNREACH, Errno::ENETUNREACH, SocketError
+      { port: port, rtt_ms: nil }
+    rescue StandardError
+      { port: port, rtt_ms: nil }
     end
 
-    def build_summary(p)
-      received = p[:received].to_i
+    def build_raw_output(target, port, probes)
+      lines = ["TCP-connect probe to #{target}:#{port}"]
+      probes.each_with_index do |p, i|
+        if p[:rtt_ms]
+          lines << "probe #{i + 1}: connected in #{p[:rtt_ms]} ms"
+        else
+          lines << "probe #{i + 1}: failed"
+        end
+      end
+      lines.join("\n")
+    end
+
+    def build_summary(d)
+      received = d[:received]
       if received.positive?
-        avg = p[:rtt][:avg]
-        base = "#{received}/#{p[:sent]} packets received"
-        base += ", avg #{avg.round(1)}ms RTT" if avg
-        base += " (#{p[:loss_percent]}% loss)" if p[:loss_percent].to_f.positive?
+        avg = d[:rtt][:avg]
+        base = "#{received}/#{d[:sent]} TCP probes succeeded on port #{d[:port]}"
+        base += ", avg #{avg}ms RTT" if avg
+        base += " (#{d[:loss_percent]}% loss)" if d[:loss_percent] > 0
         "#{base}."
       else
-        "All #{p[:sent] || PACKET_COUNT} packets lost — host unreachable."
+        "All #{d[:sent]} TCP probes failed — host unreachable on ports #{PROBE_PORTS.join('/')}."
       end
     end
   end

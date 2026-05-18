@@ -1,0 +1,114 @@
+#!/bin/bash
+# AppRun for ToolHarness — see .internal/specs/2026-05-18-appimage-runtime-design.md §3
+# bash is required for /dev/tcp port-collision check; bash is present on every
+# supported Linux distro (Ubuntu 22.04+, Fedora 38+).
+set -e
+
+# 1. Bootstrap environment
+HERE="$(dirname "$(readlink -f "$0")")"
+# Sanitize PATH: our bundled bin first, then standard system paths only.
+# Dropping the inherited PATH avoids user-installed shim systems (mise, asdf, rbenv)
+# from intercepting `rails`/`ruby`/etc. with shims that assume a host-managed Ruby.
+export PATH="$HERE/usr/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+export GEM_HOME="$HERE/usr/lib/ruby/bundle/ruby/3.4.0"
+export GEM_PATH="$GEM_HOME"
+export BUNDLE_GEMFILE="$HERE/usr/share/toolharness/Gemfile"
+export BUNDLE_PATH="$HERE/usr/lib/ruby/bundle"
+export BUNDLE_DEPLOYMENT=1
+export BUNDLE_WITHOUT="development:test"
+export RAILS_ENV=production
+export RAILS_LOG_TO_STDOUT=1
+export SSL_CERT_FILE="$HERE/usr/etc/ssl/certs/ca-certificates.crt"
+# Force the dynamic linker to find bundled libs (libssl, libcrypto, libyaml, etc.)
+# before any host-installed equivalents. Critical on Fedora/RHEL, which compile
+# libssl WITHOUT EC_GROUP_new_curve_GF2m — Ubuntu's libssl (and our bundle) have it,
+# so without LD_LIBRARY_PATH, openssl.so loads Fedora's libssl and fails on load.
+export LD_LIBRARY_PATH="$HERE/usr/lib:${LD_LIBRARY_PATH:-}"
+cd "$HERE/usr/share/toolharness"
+
+# 2. Resolve XDG paths
+TH_DATA="${XDG_DATA_HOME:-$HOME/.local/share}/toolharness"
+TH_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/toolharness"
+TH_STATE="${XDG_STATE_HOME:-$HOME/.local/state}/toolharness"
+mkdir -p "$TH_DATA" "$TH_CONFIG" "$TH_STATE" "$TH_STATE/log" "$TH_STATE/tmp"
+
+# 3. Single-instance lock
+LOCK_FILE="$TH_STATE/toolharness.lock"
+exec 9>"$LOCK_FILE"
+if ! flock -n 9; then
+  existing_port=$(cat "$TH_STATE/port" 2>/dev/null || echo 3000)
+  echo "ToolHarness already running on http://localhost:$existing_port"
+  command -v xdg-open >/dev/null && xdg-open "http://localhost:$existing_port" >/dev/null 2>&1 &
+  exit 0
+fi
+
+# 4. Persist SECRET_KEY_BASE (once per machine)
+if [ ! -f "$TH_CONFIG/secret_key_base" ]; then
+  # Write at mode 600 from byte 0 (subshell umask), and use POSIX od+tr (no xxd dependency).
+  (umask 077; head -c 64 /dev/urandom | od -An -tx1 | tr -d ' \n' > "$TH_CONFIG/secret_key_base")
+fi
+SECRET_KEY_BASE=$(cat "$TH_CONFIG/secret_key_base")
+export SECRET_KEY_BASE
+
+# 5. Point Rails at writable storage
+export TOOLHARNESS_DATA_DIR="$TH_DATA"
+export TOOLHARNESS_STATE_DIR="$TH_STATE"
+export TOOLHARNESS_CONFIG_DIR="$TH_CONFIG"
+
+# 6. Pick a port (default 3000, scan upward to 3010 on collision)
+port=${TOOLHARNESS_PORT:-3000}
+while [ "$port" -lt 3010 ]; do
+  if ! (echo >/dev/tcp/127.0.0.1/$port) 2>/dev/null; then
+    break
+  fi
+  port=$((port + 1))
+done
+if [ "$port" -ge 3010 ]; then
+  echo "ToolHarness: no free port found in 3000-3009. Set TOOLHARNESS_PORT to choose a specific port." >&2
+  exit 1
+fi
+echo "$port" > "$TH_STATE/port"
+export PORT="$port"
+
+# 7. First-run setup (idempotent)
+# Use the local bin/rails binstub directly — it's a #!/usr/bin/env ruby script
+# that loads via the bundled Gemfile. Avoids `bundle exec rails` which does a
+# PATH lookup for `rails` and would hit mise/asdf/rbenv shims if they're around.
+bin/rails db:prepare || {
+  echo "ToolHarness: database setup failed. Check $TH_STATE/log/server.err for details." >&2
+  exit 1
+}
+
+# 8. Log routing
+if [ -t 1 ]; then
+  LOG_OUT="/dev/stdout"
+  LOG_ERR="/dev/stderr"
+else
+  LOG_OUT="$TH_STATE/log/server.log"
+  LOG_ERR="$TH_STATE/log/server.err"
+fi
+
+# 9. Spawn jobs worker in background
+bundle exec bin/jobs >>"$LOG_OUT" 2>>"$LOG_ERR" &
+JOBS_PID=$!
+
+# 10. Trap shutdown — clean up both jobs and puma on signal
+trap 'kill -TERM "$PUMA_PID" 2>/dev/null; kill -TERM "$JOBS_PID" 2>/dev/null; wait 2>/dev/null; exit' INT TERM
+
+# 11. Auto-open browser (background subshell, polls /up)
+(
+  i=0
+  while [ "$i" -lt 30 ]; do
+    if curl -sf "http://localhost:$port/up" >/dev/null 2>&1; then
+      command -v xdg-open >/dev/null && xdg-open "http://localhost:$port" >/dev/null 2>&1 &
+      break
+    fi
+    sleep 0.5
+    i=$((i + 1))
+  done
+) &
+
+# 12. Run Puma in foreground (NOT exec — we need the trap to fire on signal)
+bundle exec puma -e production -p "$port" >>"$LOG_OUT" 2>>"$LOG_ERR" &
+PUMA_PID=$!
+wait "$PUMA_PID"

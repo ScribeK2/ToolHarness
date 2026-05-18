@@ -18,7 +18,7 @@ keyboard-first interface. You pick a tool from the rail (or by command),
 type a target, hit Enter — results are stored, filterable from a history
 view, and exportable.
 
-Bundled tools:
+## Bundled tools
 
 - **Domain:** WHOIS lookup
 - **DNS:** DNS lookup, subdomain scan
@@ -31,12 +31,23 @@ The UI is modal (NORMAL / INSERT / CMD / SEARCH), with `:` for a
 cmdline, `/` for target search, `?` for a help overlay, and `j`/`k` /
 `1`–`9` for tool-rail navigation.
 
-## Running it locally
+## Installation (end users)
+
+ToolHarness ships as a single Linux x86_64 AppImage. No Ruby, no Docker, no system packages required.
+
+**Supported distros:** Ubuntu 22.04+, Fedora 38+ (anything with glibc ≥ 2.35).
+
+1. Download the latest `ToolHarness-<version>-x86_64.AppImage` from [Releases](https://github.com/ScribeK2/ToolHarness/releases/latest).
+2. Mark it executable: `chmod +x ToolHarness-*.AppImage`
+3. Run it: `./ToolHarness-*.AppImage`
+
+The AppImage starts a local web server on `http://localhost:3000` and opens it in your browser. Data is stored under `~/.local/share/toolharness/`. The AppImage is fully self-contained — no host installs.
+
+## Running it for development
 
 Requirements:
 
 - Ruby 3.4.7 (see `.ruby-version`)
-- A working `whois` system command (used as a fallback)
 
 ```bash
 git clone https://github.com/ScribeK2/ToolHarness.git
@@ -46,7 +57,7 @@ bin/rails db:setup
 bin/dev
 ```
 
-The app listens on **http://localhost:3737**. There is no login —
+The app listens on **http://localhost:3000**. There is no login —
 ToolHarness is single-user local; whoever runs the process is the
 user.
 
@@ -60,3 +71,9 @@ bin/rails test
 
 Rails 8 · SQLite · Solid Queue / Cable / Cache · Hotwire (Turbo +
 Stimulus) · Tailwind CSS.
+
+## Releasing
+
+1. Bump the `VERSION` file (semver).
+2. Commit and tag: `git tag v$(cat VERSION) && git push --tags`
+3. GitHub Actions builds the AppImage, runs a smoke test, and publishes it to the matching GitHub Release.

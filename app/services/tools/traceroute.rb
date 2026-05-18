@@ -4,7 +4,11 @@ require "timeout"
 
 module Tools
   class Traceroute
-    include ToolHarness::Tool
+    # AppImage builds cannot carry CAP_NET_RAW or rely on the host's
+    # net.ipv4.ping_group_range. Until we ship a pure-userspace traceroute,
+    # this tool is feature-flagged off. Set TOOLHARNESS_TRACEROUTE_ENABLED=1
+    # to re-enable (development on a host with `traceroute` installed).
+    include ToolHarness::Tool if ENV["TOOLHARNESS_TRACEROUTE_ENABLED"] == "1"
 
     MAX_HOPS         = 30
     WAIT_PER_PROBE_S = 1
