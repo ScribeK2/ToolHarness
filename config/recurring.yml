@@ -3,5 +3,9 @@
 #
 # Currently no scheduled jobs — add entries here as needed.
 
-production: {}
+production:
+  update_check:
+    class: UpdateCheckJob
+    queue: default
+    schedule: every 24 hours
 development: {}
