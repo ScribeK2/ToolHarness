@@ -19,6 +19,11 @@ export BUNDLE_WITHOUT="development:test"
 export RAILS_ENV=production
 export RAILS_LOG_TO_STDOUT=1
 export SSL_CERT_FILE="$HERE/usr/etc/ssl/certs/ca-certificates.crt"
+# Force the dynamic linker to find bundled libs (libssl, libcrypto, libyaml, etc.)
+# before any host-installed equivalents. Critical on Fedora/RHEL, which compile
+# libssl WITHOUT EC_GROUP_new_curve_GF2m — Ubuntu's libssl (and our bundle) have it,
+# so without LD_LIBRARY_PATH, openssl.so loads Fedora's libssl and fails on load.
+export LD_LIBRARY_PATH="$HERE/usr/lib:${LD_LIBRARY_PATH:-}"
 cd "$HERE/usr/share/toolharness"
 
 # 2. Resolve XDG paths

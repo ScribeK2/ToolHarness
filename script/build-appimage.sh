@@ -157,8 +157,13 @@ cp "$REPO_ROOT/script/AppRun.tmpl" "$APP_DIR/AppRun"
 chmod +x "$APP_DIR/AppRun"
 
 # ---- Walk ELF deps with linuxdeploy ----
+# Walk the entire ruby tree so that BOTH Ruby's built-in extensions
+# (usr/lib/ruby/3.4.0/x86_64-linux/openssl.so, etc.) AND gem-installed native
+# extensions (usr/lib/ruby/bundle/ruby/3.4.0/gems/.../...so) get their rpaths set.
+# Missing this caused Fedora to load /usr/lib64/libssl.so.3 (which lacks
+# EC_GROUP_new_curve_GF2m) instead of our bundled libssl.
 echo "==> linuxdeploy (walking native deps)"
-NATIVE_EXTS=$(find "$APP_DIR/usr/lib/ruby/bundle" -name "*.so" -type f)
+NATIVE_EXTS=$(find "$APP_DIR/usr/lib/ruby" -name "*.so" -type f)
 EXEC_ARGS="--executable $APP_DIR/usr/bin/ruby"
 for so in $NATIVE_EXTS; do
   EXEC_ARGS="$EXEC_ARGS --executable $so"
