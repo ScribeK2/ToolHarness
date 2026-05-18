@@ -97,7 +97,7 @@ cd "$APP_STAGE"
 export BUNDLE_PATH="$APP_DIR/usr/lib/ruby/bundle"
 export BUNDLE_DEPLOYMENT=1
 export BUNDLE_WITHOUT="development:test"
-gem install bundler --no-document
+# Ruby 3.4 ships with bundler as a default gem — no `gem install bundler` needed.
 bundle config set --local path "$APP_DIR/usr/lib/ruby/bundle"
 bundle config set --local deployment 'true'
 bundle config set --local without 'development test'
