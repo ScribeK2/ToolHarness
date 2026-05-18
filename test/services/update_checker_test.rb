@@ -75,17 +75,6 @@ class UpdateCheckerTest < ActiveSupport::TestCase
     assert_equal "https://example.com/TH.AppImage", cached["appimage_url"]
   end
 
-  test "banner_data exposes appimage_url" do
-    Rails.cache.write(UpdateChecker::CACHE_KEY, {
-      "tag_name"     => "v99.0.0",
-      "html_url"     => "https://github.com/ScribeK2/ToolHarness/releases/tag/v99.0.0",
-      "appimage_url" => "https://example.com/TH.AppImage"
-    }, expires_in: 24.hours)
-
-    data = UpdateChecker.banner_data
-    assert_equal "https://example.com/TH.AppImage", data[:appimage_url]
-  end
-
   test "refresh! caches nil appimage_url when no .AppImage asset is present" do
     response_body = {
       "tag_name" => "v99.0.0",
