@@ -133,14 +133,6 @@ export default class extends Controller {
       case "set":
         if (rest[0] && rest[1] !== undefined) Prefs.set(rest[0], rest.slice(1).join(" "))
         break
-      case "purge":
-        // Forward to server — purge is not actually client-only; remove from CLIENT_ONLY in production
-        const form = new FormData()
-        form.append("cmd", raw)
-        form.append("authenticity_token", document.querySelector("meta[name='csrf-token']")?.content || "")
-        fetch("/commands", { method: "POST", body: form, headers: { Accept: "text/vnd.turbo-stream.html" } })
-          .then(r => r.text()).then(html => Turbo.renderStreamMessage(html))
-        break
     }
     this.close()
   }
