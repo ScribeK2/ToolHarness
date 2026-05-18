@@ -24,10 +24,6 @@ export default class extends Controller {
   open() {
     const wrap = document.getElementById("cmdline_wrap")
     wrap.classList.remove("hidden")
-    document.documentElement.dataset.modeStateValue = "CMD"
-    // Notify mode controller
-    const modeEl = document.documentElement
-    modeEl.dispatchEvent(new CustomEvent("modeSetRequest", { detail: { state: "CMD" } }))
     const runEl = document.querySelector("[id^='tool_run_']")
     if (runEl && this.hasRunIdTarget) this.runIdTarget.value = runEl.id.replace("tool_run_", "")
     this.inputTarget.value = ""

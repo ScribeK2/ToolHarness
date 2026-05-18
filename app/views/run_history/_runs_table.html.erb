@@ -1,5 +1,4 @@
-<section id="result_panel" class="flex-1 min-h-0 overflow-y-auto px-3 py-2 text-xs"
-         data-controller="history">
+<section id="result_panel" class="flex-1 min-h-0 overflow-y-auto px-3 py-2 text-xs">
   <div class="flex items-center justify-between mb-2 text-mute">
     <span><span aria-hidden="true">▸ </span>Runs · <%= @runs.size %> shown<%= " (max 200)" if @runs.size == 200 %></span>
   </div>
@@ -14,8 +13,7 @@
       <% @runs.each_with_index do |run, i| %>
         <% sev = (run.issues || []).group_by { |x| (x["severity"] || x[:severity]).to_s }.transform_values(&:size) %>
         <%= link_to workbench_path(tool: run.tool_key, target: run.input_summary, run: run.id),
-                    class: "grid grid-cols-[80px_120px_1fr_80px_100px_60px] gap-3 px-2 py-[2px] border-b border-line/50 hover:bg-elevated text-fg",
-                    data: { history_target: "row", row_index: i } do %>
+                    class: "grid grid-cols-[80px_120px_1fr_80px_100px_60px] gap-3 px-2 py-[2px] border-b border-line/50 hover:bg-elevated text-fg" do %>
           <span class="text-mute"><%= run.created_at.strftime("%H:%M") %></span>
           <span><%= run.tool_key %></span>
           <span class="text-fg-dim truncate"><%= run.input_summary %></span>

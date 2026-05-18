@@ -5,7 +5,7 @@
 <section class="border-b border-line bg-surface" data-controller="target-row">
   <%= form_with url: tool_key ? tool_run_create_path(tool_key) : "#",
                 method: :post, scope: :tool_run,
-                data: { turbo: true, action: "submit->mode#enterInsert" },
+                data: { turbo: true },
                 class: "flex flex-col" do |f| %>
     <div class="h-10 px-3 flex items-center gap-3">
       <span class="mono-label">target<span aria-hidden="true"> ›</span></span>

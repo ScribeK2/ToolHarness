@@ -1,16 +1,8 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Attached to <html>. Tracks NORMAL / INSERT / CMD / SEARCH.
-// Captures global keydown and dispatches events on `document`:
-//   modeChange   detail: { from, to }
-//   keyAction    detail: { key, code, prevented(): true } in NORMAL mode
-//   cmdRequest   detail: {} when ":" is pressed
-//   searchRequest detail: {} when "/" is pressed
-//   helpToggle   detail: {} when "?" is pressed in NORMAL
-//   runRequest   detail: {} when "r" is pressed in NORMAL
-//   yankRequest  detail: { sequence } when "y..." is pressed in NORMAL
-//
-// Other controllers (cmdline, rail, copy) listen for these events.
+// Attached to <body>. Tracks NORMAL / INSERT / CMD / SEARCH.
+// Captures global keydown and dispatches events on `document` consumed
+// by cmdline, rail, copy, and similar controllers.
 export default class extends Controller {
   static values = { state: { type: String, default: "NORMAL" } }
 
@@ -21,7 +13,7 @@ export default class extends Controller {
     document.addEventListener("keydown", this.boundKey)
     document.addEventListener("focusin", this.boundFocus)
     document.addEventListener("cmd:close", this.boundCmdClose)
-    this.applyMode("NORMAL", { silent: true })
+    this.applyMode("NORMAL")
     this.pending = "" // for multi-key sequences like "yy", "gh", "dd"
   }
 
@@ -36,8 +28,7 @@ export default class extends Controller {
     this.applyMode(next)
   }
 
-  applyMode(next, { silent = false } = {}) {
-    const prev = this.stateValue
+  applyMode(next) {
     this.stateValue = next
     const root = this.element
     root.classList.remove("mode-normal", "mode-insert", "mode-cmd", "mode-search")
@@ -46,9 +37,6 @@ export default class extends Controller {
     if (badge) {
       badge.textContent = next
       badge.className = "px-1.5 font-bold mr-2 text-bg " + this.badgeBgClass(next)
-    }
-    if (!silent) {
-      document.dispatchEvent(new CustomEvent("modeChange", { detail: { from: prev, to: next } }))
     }
   }
 
@@ -103,15 +91,11 @@ export default class extends Controller {
       if (seq === "gg") return document.dispatchEvent(new Event("rail:top"))
       if (seq === "gh") return Turbo.visit("/workbench?view=history")
       if (seq === "ge") return Turbo.visit("/workbench?view=history&filter=" + encodeURIComponent("severity>=warn expires<30d"))
-      if (seq === "dd") return document.dispatchEvent(new Event("history:delete"))
-      if (seq === "ej") return document.dispatchEvent(new CustomEvent("history:export", { detail: { format: "json" } }))
-      if (seq === "ec") return document.dispatchEvent(new CustomEvent("history:export", { detail: { format: "csv" } }))
-      if (seq === "em") return document.dispatchEvent(new CustomEvent("history:export", { detail: { format: "md" } }))
       return
     }
 
     // Start of a multi-key sequence
-    if (["y", "g", "d", "e"].includes(k)) {
+    if (["y", "g"].includes(k)) {
       this.pending = k
       event.preventDefault()
       // clear pending if no follow-up within 1s

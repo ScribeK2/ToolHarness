@@ -1,8 +1,7 @@
-<header class="h-6 px-3 flex items-center justify-between border-b border-line text-[11px] bg-surface"
-        data-controller="prefs">
+<header class="h-6 px-3 flex items-center justify-between border-b border-line text-[11px] bg-surface">
   <div class="flex items-center gap-4">
     <span class="font-bold tracking-[0.14em] text-fg">[ TOOLHARNESS ]</span>
-    <nav class="flex items-center gap-3 text-mute" data-prefs-target="slots" data-default-slots="<%= @default_slots.to_json %>">
+    <nav class="flex items-center gap-3 text-mute" data-default-slots="<%= @default_slots.to_json %>">
       <% @default_slots.each_with_index do |slot_key, i| %>
         <% klass = ToolHarness::Registry.find_tool(slot_key) %>
         <% next unless klass %>
