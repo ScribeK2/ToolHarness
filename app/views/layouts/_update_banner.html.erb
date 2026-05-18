@@ -1,0 +1,14 @@
+<% if (data = UpdateChecker.banner_data) %>
+  <div id="th-update-banner"
+       data-controller="update-banner"
+       data-update-banner-version-value="<%= data[:version] %>"
+       data-update-banner-hidden-class="hidden">
+    <span>
+      ToolHarness <strong><%= data[:version] %></strong> is available.
+    </span>
+    <a href="<%= data[:url] %>" target="_blank" rel="noopener">Download</a>
+    <button type="button" data-action="update-banner#dismiss" aria-label="Dismiss update notice">
+      ×
+    </button>
+  </div>
+<% end %>

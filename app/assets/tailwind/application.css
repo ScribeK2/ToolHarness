@@ -165,3 +165,24 @@
   .spinner { animation: none; }
   .animate-pulse-soft { animation: none; }
 }
+
+#th-update-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: var(--color-sunken);
+  color: var(--color-fg);
+  border-bottom: 1px solid var(--color-line);
+  font-size: 0.875rem;
+}
+#th-update-banner.hidden { display: none; }
+#th-update-banner a { color: var(--color-blue); text-decoration: underline; }
+#th-update-banner button {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 1.25rem;
+  cursor: pointer;
+}
