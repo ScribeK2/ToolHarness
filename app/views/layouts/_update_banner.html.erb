@@ -2,13 +2,38 @@
   <div id="th-update-banner"
        data-controller="update-banner"
        data-update-banner-version-value="<%= data[:version] %>"
-       data-update-banner-hidden-class="hidden">
-    <span>
-      ToolHarness <strong><%= data[:version] %></strong> is available.
-    </span>
-    <a href="<%= data[:url] %>" target="_blank" rel="noopener">Download</a>
-    <button type="button" data-action="update-banner#dismiss" aria-label="Dismiss update notice">
-      ×
-    </button>
+       data-update-banner-hidden-class="hidden"
+       class="bg-surface text-fg border-b border-line font-mono text-[13px]">
+
+    <div class="flex items-center gap-4 px-4 py-2">
+      <span class="text-cyan font-bold w-[4ch] shrink-0">INFO</span>
+      <span class="grow">
+        ToolHarness <strong class="text-fg"><%= data[:version] %></strong> is available.
+      </span>
+      <a href="<%= data[:appimage_url] %>"
+         class="text-cyan hover:text-fg border border-cyan hover:border-fg px-2 py-0.5"
+         rel="noopener">
+        download .AppImage
+      </a>
+      <button type="button"
+              data-action="update-banner#toggle"
+              aria-expanded="false"
+              aria-controls="th-update-howto"
+              aria-label="Show install instructions"
+              class="text-mute hover:text-fg w-6">⌄</button>
+      <button type="button"
+              data-action="update-banner#dismiss"
+              aria-label="Dismiss update notice"
+              class="text-mute hover:text-fg w-6">×</button>
+    </div>
+
+    <div id="th-update-howto"
+         class="hidden border-t border-line px-4 py-3 text-mute leading-relaxed">
+      <ol class="list-decimal list-inside space-y-1">
+        <li>Quit this running ToolHarness (Ctrl+C in the terminal, or close the window).</li>
+        <li><code class="text-cyan">chmod +x ToolHarness-<%= data[:version] %>-x86_64.AppImage</code></li>
+        <li>Move it over your old AppImage and run it.</li>
+      </ol>
+    </div>
   </div>
 <% end %>
