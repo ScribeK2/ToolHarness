@@ -58,11 +58,6 @@ class WhoisChecker
         sleep(1)  # Brief pause before retry
         retry
       end
-      # Fallback to system whois command which handles partial timeouts better
-      fallback_result = try_system_whois
-      if fallback_result[:success]
-        return fallback_result
-      end
       result[:error] = "WHOIS lookup timed out after #{MAX_RETRIES} attempts"
       result[:issues] << {
         severity: SEVERITY_WARNING,
@@ -305,62 +300,6 @@ class WhoisChecker
     registrant_match ? registrant_match[1].strip : nil
   rescue StandardError
     nil
-  end
-
-  # Fallback to system whois command when Ruby gem times out
-  # The system command handles partial timeouts better and returns registry data
-  def try_system_whois
-    result = {
-      success: false,
-      registrar: nil,
-      expiration_date: nil,
-      creation_date: nil,
-      updated_date: nil,
-      nameservers: [],
-      registrant: nil,
-      raw_data: nil,
-      error: nil,
-      issues: []
-    }
-
-    # Check if whois command is available
-    return result unless system("which whois > /dev/null 2>&1")
-
-    # Run system whois with timeout
-    output = `timeout 15 whois #{Shellwords.escape(@domain)} 2>&1`
-    return result if output.blank?
-
-    result[:raw_data] = output
-    result[:success] = true
-
-    # Extract data from raw output
-    result[:registrar] = extract_field_from_raw(output, /Registrar:\s*(.+)/i)
-    result[:expiration_date] = extract_date_from_raw(output, /(?:Registry Expiry Date|Expir(?:ation|y) Date):\s*(.+)/i)
-    result[:creation_date] = extract_date_from_raw(output, /Creation Date:\s*(.+)/i)
-    result[:updated_date] = extract_date_from_raw(output, /Updated Date:\s*(.+)/i)
-    result[:nameservers] = extract_nameservers_from_raw(output)
-    result[:registrant] = extract_field_from_raw(output, /Registrant(?:\s+Organization)?:\s*(.+)/i)
-
-    # Add info about fallback
-    result[:issues] << {
-      severity: SEVERITY_INFO,
-      code: "whois_fallback",
-      title: "Registry Data Only",
-      message: "WHOIS data was retrieved from the registry. Registrar-specific details may be limited.",
-      recommendation: "For complete WHOIS data, try again later or use whois.domaintools.com."
-    }
-
-    # Detect additional issues
-    result[:issues].concat(detect_issues(result))
-
-    # Cache successful fallback results
-    cache_key = "whois:#{@domain}"
-    Rails.cache.write(cache_key, result, expires_in: 24.hours)
-
-    result
-  rescue StandardError => e
-    Rails.logger.warn("System WHOIS fallback failed: #{e.message}")
-    { success: false }
   end
 
   def extract_field_from_raw(content, pattern)
