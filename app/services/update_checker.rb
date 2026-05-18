@@ -19,7 +19,12 @@ class UpdateChecker
       latest = cached["tag_name"].to_s.sub(/\Av/, "")
       return nil if latest.empty? || !newer?(latest, current_version)
 
-      { available: true, version: latest, url: cached["html_url"] }
+      {
+        available:    true,
+        version:      latest,
+        url:          cached["html_url"],
+        appimage_url: cached["appimage_url"]
+      }
     end
 
     def refresh!
