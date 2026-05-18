@@ -4,6 +4,22 @@
 # supported Linux distro (Ubuntu 22.04+, Fedora 38+).
 set -e
 
+# 0. Argument parsing + headless detection
+# --no-browser   : start the server, skip the browser-open attempt
+# Anything else  : ignored silently (forward-compat for future flags)
+NO_BROWSER=0
+for arg in "$@"; do
+  case "$arg" in
+    --no-browser) NO_BROWSER=1 ;;
+  esac
+done
+
+# Headless = no graphical session. Either an SSH login or a container shell.
+# Equivalent to passing --no-browser.
+if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
+  NO_BROWSER=1
+fi
+
 # 1. Bootstrap environment
 HERE="$(dirname "$(readlink -f "$0")")"
 # Sanitize PATH: our bundled bin first, then standard system paths only.
