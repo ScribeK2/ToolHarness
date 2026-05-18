@@ -61,24 +61,6 @@ fi
 
 export PATH="$APP_DIR/usr/bin:$PATH"
 
-# ---- Rewrite ruby-build's absolute-path shebangs to relocatable form ----
-# ruby-build/rubygems writes wrapper scripts in usr/bin (bundle, gem, rake, etc.)
-# with a hardcoded shebang pointing at the build-time absolute path:
-#   #!/home/runner/.../AppDir/usr/bin/ruby
-# That path won't exist when the AppImage is extracted on a user's machine, so
-# any direct exec of bundle/gem/rake fails with "bad interpreter". Rewriting to
-# #!/usr/bin/env ruby makes them PATH-relative — AppRun already puts our ruby first.
-echo "==> Rewriting gem-wrapper shebangs to /usr/bin/env ruby"
-for script in "$APP_DIR/usr/bin"/*; do
-  [ -f "$script" ] || continue
-  first_line=$(head -n1 "$script" 2>/dev/null || true)
-  case "$first_line" in
-    "#!"*"/ruby"|"#!"*"/ruby "*)
-      sed -i '1c\#!/usr/bin/env ruby' "$script"
-      ;;
-  esac
-done
-
 # ---- Install bundled CA bundle ----
 # Source from the host (the ca-certificates apt package is installed by the workflow's
 # prereqs step, or by the local user before invoking this script). Mozilla's curated
@@ -124,6 +106,36 @@ bundle install --jobs 4
 # ---- Precompile assets ----
 echo "==> assets:precompile"
 RAILS_ENV=production SECRET_KEY_BASE=dummy bundle exec rails assets:precompile
+
+# ---- Rewrite absolute-path shebangs to relocatable form ----
+# ruby-build/rubygems write wrapper scripts (bundle, gem, rake, plus any gem-provided
+# binaries) with a shebang hardcoded to the build-time absolute path:
+#   #!/home/runner/.../AppDir/usr/bin/ruby
+# That path won't exist on a user's machine after AppImage extraction, so any direct
+# exec of those wrappers fails with "bad interpreter". Rewrite to /usr/bin/env ruby
+# so they pick up Ruby from PATH (AppRun puts $HERE/usr/bin first).
+#
+# MUST run AFTER bundle install — gem install bundler and bundle install both write
+# scripts that would otherwise re-introduce the bad shebang.
+echo "==> Rewriting build-path shebangs to /usr/bin/env ruby"
+shebang_dirs=("$APP_DIR/usr/bin")
+for gembin in "$APP_DIR/usr/lib/ruby/bundle/ruby/"*/bin; do
+  [ -d "$gembin" ] && shebang_dirs+=("$gembin")
+done
+fixed_count=0
+for dir in "${shebang_dirs[@]}"; do
+  for script in "$dir"/*; do
+    [ -f "$script" ] || continue
+    first_line=$(head -c 200 "$script" 2>/dev/null | head -n1 || true)
+    case "$first_line" in
+      "#!"*"/ruby"|"#!"*"/ruby "*)
+        sed -i '1c\#!/usr/bin/env ruby' "$script"
+        fixed_count=$((fixed_count + 1))
+        ;;
+    esac
+  done
+done
+echo "==> Rewrote $fixed_count shebangs across ${#shebang_dirs[@]} bin dirs"
 
 # ---- Place desktop file and icon ----
 sed "s/X-AppImage-Version=.*/X-AppImage-Version=${VERSION}/" \
