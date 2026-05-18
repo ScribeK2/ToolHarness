@@ -301,25 +301,5 @@ class WhoisChecker
   rescue StandardError
     nil
   end
-
-  def extract_field_from_raw(content, pattern)
-    match = content.match(pattern)
-    match ? match[1].strip : nil
-  end
-
-  def extract_date_from_raw(content, pattern)
-    match = content.match(pattern)
-    return nil unless match
-    date_str = match[1].strip
-    Date.parse(date_str).iso8601 rescue date_str
-  end
-
-  def extract_nameservers_from_raw(content)
-    nameservers = []
-    content.scan(/Name Server:\s*(\S+)/i).each do |match|
-      nameservers << match[0].strip.downcase
-    end
-    nameservers.uniq
-  end
 end
 
