@@ -56,16 +56,18 @@ fi
 
 export PATH="$APP_DIR/usr/bin:$PATH"
 
-# ---- Install bundled CA bundle (extract from Debian's ca-certificates deb) ----
-cd "$WORK"
-if [ ! -f ca-certificates.crt ]; then
-  CA_DEB_URL="http://archive.ubuntu.com/ubuntu/pool/main/c/ca-certificates/ca-certificates_20230311ubuntu0.22.04.1_all.deb"
-  curl -L -o ca-cert.deb "$CA_DEB_URL"
-  mkdir -p ca-extract && cd ca-extract && ar x ../ca-cert.deb && tar -xf data.tar.zst
-  cp etc/ssl/certs/ca-certificates.crt ../ca-certificates.crt
-  cd ..
+# ---- Install bundled CA bundle ----
+# Source from the host (the ca-certificates apt package is installed by the workflow's
+# prereqs step, or by the local user before invoking this script). Mozilla's curated
+# bundle, ~200 KB, refreshed automatically by the host distribution. Drop falls back to
+# downloading from curl.se if the host file isn't present (covers non-Ubuntu dev hosts).
+if [ -f /etc/ssl/certs/ca-certificates.crt ]; then
+  cp /etc/ssl/certs/ca-certificates.crt "$APP_DIR/usr/etc/ssl/certs/ca-certificates.crt"
+elif [ -f /etc/pki/tls/certs/ca-bundle.crt ]; then
+  cp /etc/pki/tls/certs/ca-bundle.crt "$APP_DIR/usr/etc/ssl/certs/ca-certificates.crt"
+else
+  curl -L -o "$APP_DIR/usr/etc/ssl/certs/ca-certificates.crt" https://curl.se/ca/cacert.pem
 fi
-cp ca-certificates.crt "$APP_DIR/usr/etc/ssl/certs/ca-certificates.crt"
 
 # ---- Stage the Rails app ----
 echo "==> Staging Rails app"
