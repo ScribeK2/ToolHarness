@@ -51,4 +51,15 @@ class WorkbenchControllerTest < ActionDispatch::IntegrationTest
     assert_match /x\.com/, response.body
     assert_no_match /y\.com/, response.body
   end
+
+  test "view=history does not leak runs from another user" do
+    other = User.create!(email: "wb-other@test", password: "password123")
+    other.tool_runs.create!(tool_key: "whois_lookup", tool_name: "WHOIS", category: "domain",
+                            status: "completed", success: true, input_summary: "secret.example")
+    @user.tool_runs.create!(tool_key: "dns_lookup", tool_name: "DNS", category: "dns",
+                            status: "completed", success: true, input_summary: "mine.example")
+    get "/workbench", params: { view: "history" }
+    assert_match    /mine\.example/,   response.body
+    assert_no_match /secret\.example/, response.body
+  end
 end

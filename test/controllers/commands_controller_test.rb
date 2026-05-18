@@ -21,9 +21,98 @@ class CommandsControllerTest < ActionDispatch::IntegrationTest
     assert_match /download/i, response.body
   end
 
+  test ":export csv escapes embedded quotes and renders a data URL" do
+    run = ToolRun.create!(user: @user, tool_key: "whois_lookup", tool_name: "WHOIS", category: "domain",
+                          status: "completed", success: true,
+                          result_data: { "note" => %(she said "hi"), "plain" => "ok" })
+    post "/commands", params: { cmd: "export csv", run_id: run.id }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    assert_response :success
+    payload = decode_data_url(response.body)
+    assert_equal %(key,value\nnote,"she said ""hi"""\nplain,"ok"), payload
+    assert_match %r{toolrun-#{run.id}\.csv}, response.body
+  end
+
+  test ":export md renders a markdown payload with heading and bullets" do
+    run = ToolRun.create!(user: @user, tool_key: "whois_lookup", tool_name: "WHOIS", category: "domain",
+                          status: "completed", success: true, input_summary: "example.com",
+                          result_data: { "registrar" => "IANA" })
+    post "/commands", params: { cmd: "export md", run_id: run.id }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    assert_response :success
+    payload = decode_data_url(response.body)
+    assert_includes payload, "# WHOIS — example.com"
+    assert_includes payload, "- **registrar**: IANA"
+    assert_match %r{toolrun-#{run.id}\.md}, response.body
+  end
+
+  test ":export with no format falls back to JSON" do
+    run = ToolRun.create!(user: @user, tool_key: "whois_lookup", tool_name: "WHOIS", category: "domain",
+                          status: "completed", success: true, result_data: { "x" => 1 })
+    post "/commands", params: { cmd: "export", run_id: run.id }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    assert_response :success
+    payload = decode_data_url(response.body)
+    parsed = JSON.parse(payload)
+    assert_equal run.id, parsed["id"]
+    assert_match %r{toolrun-#{run.id}\.json}, response.body
+  end
+
+  test ":export with a missing run_id returns a no-current-run error" do
+    post "/commands", params: { cmd: "export json", run_id: 999_999 }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    assert_response :success
+    assert_match /no current run to export/i, response.body
+  end
+
+  test ":purge without an older= argument returns a usage error" do
+    post "/commands", params: { cmd: "purge" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    assert_response :success
+    assert_match /usage: :purge older=/, response.body
+  end
+
+  test ":purge with a malformed older= argument returns a usage error" do
+    post "/commands", params: { cmd: "purge older=garbage" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    assert_response :success
+    assert_match /usage: :purge older=/, response.body
+  end
+
+  test ":purge reports the number of deleted runs older than the cutoff" do
+    old = ToolRun.create!(user: @user, tool_key: "whois_lookup", tool_name: "WHOIS", category: "domain",
+                          status: "completed", success: true)
+    old.update_column(:created_at, 31.days.ago)
+    fresh = ToolRun.create!(user: @user, tool_key: "whois_lookup", tool_name: "WHOIS", category: "domain",
+                            status: "completed", success: true)
+    post "/commands", params: { cmd: "purge older=30d" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    assert_response :success
+    assert_match /purged 1 runs older than 30d/, response.body
+    refute ToolRun.exists?(old.id)
+    assert ToolRun.exists?(fresh.id)
+  end
+
+  test ":purge only deletes the current user's runs" do
+    other = User.create!(email: "cmd-other@test", password: "password123")
+    mine  = ToolRun.create!(user: @user, tool_key: "whois_lookup", tool_name: "WHOIS", category: "domain",
+                            status: "completed", success: true)
+    mine.update_column(:created_at, 31.days.ago)
+    theirs = ToolRun.create!(user: other, tool_key: "whois_lookup", tool_name: "WHOIS", category: "domain",
+                             status: "completed", success: true)
+    theirs.update_column(:created_at, 31.days.ago)
+    post "/commands", params: { cmd: "purge older=30d" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    assert_response :success
+    refute ToolRun.exists?(mine.id)
+    assert  ToolRun.exists?(theirs.id), "other user's old run should not be purged"
+  end
+
   test "POST /commands with an unknown command returns an inline error stream" do
     post "/commands", params: { cmd: "nope" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :success
     assert_match /no command/i, response.body
+  end
+
+  private
+
+  # Extracts the URL-encoded payload from a `data:text/plain;charset=utf-8,...`
+  # href emitted by dispatch_export and returns the decoded string.
+  def decode_data_url(body)
+    href = body[/href="data:text\/plain;charset=utf-8,([^"]+)"/, 1]
+    refute_nil href, "expected a data: URL in the turbo stream body"
+    CGI.unescape(href)
   end
 end
