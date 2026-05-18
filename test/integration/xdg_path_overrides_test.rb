@@ -1,16 +1,27 @@
 require "test_helper"
+require "tmpdir"
 
 class XdgPathOverridesTest < ActiveSupport::TestCase
-  test "config.paths['log'] honors TOOLHARNESS_STATE_DIR" do
-    # paths are set during Rails boot from ENV; this test asserts the
-    # current process's resolved paths match the env we expect in production.
-    # In test env, TOOLHARNESS_STATE_DIR is not set, so this is a no-op assertion
-    # that the default in-tree path is used.
+  test "config.paths['log'] defaults to in-tree when TOOLHARNESS_STATE_DIR is unset" do
     log_path = Rails.application.config.paths["log"].existent.first || Rails.application.config.paths["log"].first
-    if ENV["TOOLHARNESS_STATE_DIR"]
-      assert_includes log_path, ENV["TOOLHARNESS_STATE_DIR"]
-    else
-      assert_includes log_path, Rails.root.to_s
+    assert_includes log_path, Rails.root.to_s
+  end
+
+  test "config.paths['log'] redirects under TOOLHARNESS_STATE_DIR in a fresh Rails process" do
+    Dir.mktmpdir do |dir|
+      cmd = %(TOOLHARNESS_STATE_DIR=#{dir} bin/rails runner 'puts Rails.application.config.paths["log"].to_a.first' 2>&1)
+      out = `#{cmd}`
+      assert_match Regexp.new(Regexp.escape(dir)), out,
+        "log path should be redirected under #{dir}; got: #{out.inspect}"
+    end
+  end
+
+  test "config.paths['tmp'] redirects under TOOLHARNESS_STATE_DIR in a fresh Rails process" do
+    Dir.mktmpdir do |dir|
+      cmd = %(TOOLHARNESS_STATE_DIR=#{dir} bin/rails runner 'puts Rails.application.config.paths["tmp"].to_a.first' 2>&1)
+      out = `#{cmd}`
+      assert_match Regexp.new(Regexp.escape(dir)), out,
+        "tmp path should be redirected under #{dir}; got: #{out.inspect}"
     end
   end
 
