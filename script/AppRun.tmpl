@@ -6,7 +6,10 @@ set -e
 
 # 1. Bootstrap environment
 HERE="$(dirname "$(readlink -f "$0")")"
-export PATH="$HERE/usr/bin:$PATH"
+# Sanitize PATH: our bundled bin first, then standard system paths only.
+# Dropping the inherited PATH avoids user-installed shim systems (mise, asdf, rbenv)
+# from intercepting `rails`/`ruby`/etc. with shims that assume a host-managed Ruby.
+export PATH="$HERE/usr/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 export GEM_HOME="$HERE/usr/lib/ruby/bundle/ruby/3.4.0"
 export GEM_PATH="$GEM_HOME"
 export BUNDLE_GEMFILE="$HERE/usr/share/toolharness/Gemfile"
@@ -63,7 +66,10 @@ echo "$port" > "$TH_STATE/port"
 export PORT="$port"
 
 # 7. First-run setup (idempotent)
-bundle exec rails db:prepare || {
+# Use the local bin/rails binstub directly — it's a #!/usr/bin/env ruby script
+# that loads via the bundled Gemfile. Avoids `bundle exec rails` which does a
+# PATH lookup for `rails` and would hit mise/asdf/rbenv shims if they're around.
+bin/rails db:prepare || {
   echo "ToolHarness: database setup failed. Check $TH_STATE/log/server.err for details." >&2
   exit 1
 }
