@@ -103,6 +103,13 @@ bundle config set --local deployment 'true'
 bundle config set --local without 'development test'
 bundle install --jobs 4
 
+# Drop .bundle/config — it baked in the build-time absolute path under
+# BUNDLE_PATH, and modern bundler treats local config as higher precedence
+# than the BUNDLE_PATH env var AppRun exports at runtime. Without this,
+# bundler at runtime looks in /home/runner/.../bundle (nonexistent) and
+# falls back to "locally installed gems" mode → all gems "missing".
+rm -rf "$APP_STAGE/.bundle"
+
 # ---- Precompile assets ----
 echo "==> assets:precompile"
 RAILS_ENV=production SECRET_KEY_BASE=dummy bundle exec rails assets:precompile
