@@ -51,3 +51,8 @@
 /.playwright-mcp/
 /smoke-*.png
 
+# AppImage build artifacts
+/build/
+/ToolHarness-*.AppImage
+/ToolHarness-*.AppImage.sig
+
