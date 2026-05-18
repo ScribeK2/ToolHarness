@@ -16,6 +16,16 @@ module ToolHarness
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
 
+    # AppImage runtime: when launched via AppRun, writes are redirected
+    # off the read-only squashfs to XDG-anchored locations. In dev these
+    # env vars are unset and Rails uses the in-tree defaults.
+    if (state_dir = ENV["TOOLHARNESS_STATE_DIR"])
+      config.paths["log"].clear
+      config.paths["log"] << File.join(state_dir, "log", "#{Rails.env}.log")
+      config.paths["tmp"].clear
+      config.paths["tmp"] << File.join(state_dir, "tmp")
+    end
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files
