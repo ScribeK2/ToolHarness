@@ -78,8 +78,17 @@ module ToolHarness
 
       IDLE_REAP_AFTER = 15 * 60 # seconds
 
+      # Class-level pool so all ConnectionStore instances share the same open clients.
+      def self.pool
+        @pool ||= {}
+      end
+
+      def self.pool=(h)
+        @pool = h
+      end
+
       def client_for(name)
-        cache = (@clients ||= {})
+        cache = self.class.pool
         entry = cache[name]
         if entry.nil? || idle?(entry)
           close_entry(entry) if entry
@@ -91,13 +100,14 @@ module ToolHarness
       end
 
       def disconnect(name)
-        return unless (@clients ||= {})[name]
-        close_entry(@clients.delete(name))
+        cache = self.class.pool
+        return unless cache[name]
+        close_entry(cache.delete(name))
       end
 
       def disconnect_all
-        (@clients ||= {}).each_value { |e| close_entry(e) }
-        @clients = {}
+        self.class.pool.each_value { |e| close_entry(e) }
+        self.class.pool = {}
       end
 
       def reset_pool!
