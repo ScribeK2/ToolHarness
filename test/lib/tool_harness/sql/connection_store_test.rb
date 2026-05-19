@@ -65,6 +65,7 @@ class ToolHarness::Sql::ConnectionStoreTest < ActiveSupport::TestCase
   end
   teardown_pool = lambda do |t|
     ToolHarness::Sql::ConnectionStore.client_factory = nil
+    ToolHarness::Sql::ConnectionStore.pool = {}
   end
 
   test "client_for opens a Mysql2::Client with the profile's options" do
