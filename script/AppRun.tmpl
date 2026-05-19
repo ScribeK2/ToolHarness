@@ -90,6 +90,26 @@ surface_url() {
   fi
 }
 
+# 1c. http_ready — pure-bash readiness check for the Rails /up endpoint.
+# Uses bash's /dev/tcp instead of host curl. The AppRun forces LD_LIBRARY_PATH
+# to the bundled libssl; on hosts whose libssl is newer than the bundled one
+# (Arch, recent Fedora), host curl fails to load because of OPENSSL_3.x symbol
+# version mismatches, so curl-based polling never detects readiness.
+# Returns 0 only on a 2xx HTTP response from /up.
+http_ready() {
+  local port="$1" proto status rest
+  exec 3<>"/dev/tcp/127.0.0.1/$port" 2>/dev/null || return 1
+  printf 'GET /up HTTP/1.0\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 2>/dev/null
+  if ! read -r -t 2 proto status rest <&3; then
+    exec 3<&- 2>/dev/null
+    exec 3>&- 2>/dev/null
+    return 1
+  fi
+  exec 3<&- 2>/dev/null
+  exec 3>&- 2>/dev/null
+  [[ "$status" == 2?? ]]
+}
+
 # 2. Resolve XDG paths
 TH_DATA="${XDG_DATA_HOME:-$HOME/.local/share}/toolharness"
 TH_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/toolharness"
@@ -166,7 +186,7 @@ trap 'kill -TERM "$PUMA_PID" 2>/dev/null; kill -TERM "$JOBS_PID" 2>/dev/null; wa
 (
   i=0
   while [ "$i" -lt 240 ]; do
-    if curl -sf "http://localhost:$port/up" >/dev/null 2>&1; then
+    if http_ready "$port"; then
       printf '\n\033[1;36m=== ToolHarness ready: http://localhost:%s ===\033[0m\n\n' "$port"
       surface_url "$port"
       exit 0
