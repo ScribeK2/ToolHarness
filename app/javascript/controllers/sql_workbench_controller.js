@@ -44,9 +44,53 @@ export default class extends Controller {
 
     // NORMAL
     if (e.target && e.target.tagName === "INPUT") return
+
+    const grid = this.hasGridTarget ? this.gridTarget : null
+    const rows = grid ? this.rowTargets : []
+    const currentRow = rows[this.activeRowValue]
+    const cellsInRow = () => currentRow ? currentRow.querySelectorAll("[data-cell]") : []
+
     switch (e.key) {
       case "i": e.preventDefault(); this.setMode("INSERT"); break
       case "Enter": e.preventDefault(); this.openCellDetail(); break
+      case "j":
+        if (rows.length === 0) break
+        e.preventDefault()
+        this.activeRowValue = Math.min(rows.length - 1, this.activeRowValue + 1)
+        this.repaintActive(rows); break
+      case "k":
+        if (rows.length === 0) break
+        e.preventDefault()
+        this.activeRowValue = Math.max(0, this.activeRowValue - 1)
+        this.repaintActive(rows); break
+      case "l":
+        if (rows.length === 0) break
+        e.preventDefault()
+        this.activeColValue = Math.min(cellsInRow().length - 1, this.activeColValue + 1)
+        this.repaintActive(rows); break
+      case "h":
+        if (rows.length === 0) break
+        e.preventDefault()
+        this.activeColValue = Math.max(0, this.activeColValue - 1)
+        this.repaintActive(rows); break
+      case "0":
+        if (rows.length === 0) break
+        e.preventDefault(); this.activeColValue = 0; this.repaintActive(rows); break
+      case "$":
+        if (rows.length === 0) break
+        e.preventDefault(); this.activeColValue = cellsInRow().length - 1; this.repaintActive(rows); break
+      case "G":
+        if (rows.length === 0) break
+        e.preventDefault(); this.activeRowValue = rows.length - 1; this.repaintActive(rows); break
+      case "g":
+        // simple gg double-tap
+        if (rows.length === 0) break
+        this._lastG = (Date.now() - (this._lastGAt || 0) < 400)
+        this._lastGAt = Date.now()
+        if (this._lastG) {
+          e.preventDefault(); this.activeRowValue = 0; this.repaintActive(rows)
+        }
+        break
     }
   }
 
@@ -66,5 +110,17 @@ export default class extends Controller {
     fetch(`/workbench/sql/cells/${runId}?row=${row}&col=${col}`, {
       headers: { "Accept": "text/vnd.turbo-stream.html" }
     }).then(r => r.text()).then(html => Turbo.renderStreamMessage(html))
+  }
+
+  repaintActive(rows) {
+    rows.forEach((r) => r.classList.remove("bg-elevated"))
+    rows.forEach((r) => r.querySelectorAll("[data-cell]").forEach((c) => c.classList.remove("outline", "outline-1", "outline-cyan")))
+    const row = rows[this.activeRowValue]
+    if (!row) return
+    row.classList.add("bg-elevated")
+    const cells = row.querySelectorAll("[data-cell]")
+    const cell = cells[this.activeColValue]
+    if (cell) cell.classList.add("outline", "outline-1", "outline-cyan")
+    row.scrollIntoView({ block: "nearest" })
   }
 }
