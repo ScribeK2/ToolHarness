@@ -1,1 +1,15 @@
-<div id="sql_result_panel"></div>
+<%# locals: result, run, state %>
+<% local_run    = local_assigns[:run] %>
+<% local_result = local_assigns[:result] %>
+
+<% if local_result && !local_result.success? %>
+  <%= render "workbench/sql/error_block", message: local_result.error_message, code: local_result.error_code %>
+<% end %>
+
+<% if local_run.present? && local_run.result_data.present? %>
+  <%= render "workbench/sql/result_grid", run: local_run %>
+<% elsif state.blank? %>
+  <div class="text-mute px-3 py-2"><span aria-hidden="true">▸ </span>no connection — type :c to open the picker</div>
+<% else %>
+  <div class="text-mute px-3 py-2"><span aria-hidden="true">▸ </span>ready — write a query above and press Ctrl+⏎</div>
+<% end %>
