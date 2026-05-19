@@ -1,4 +1,4 @@
-<% if (data = UpdateChecker.banner_data) %>
+<% if (data = UpdateChecker.banner_data) && data[:appimage_url] %>
   <div id="th-update-banner"
        data-controller="update-banner"
        data-update-banner-version-value="<%= data[:version] %>"
