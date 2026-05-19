@@ -9,7 +9,8 @@ class WorkbenchController < ApplicationController
     @tool_class    = ToolHarness::Registry.find_tool(@tool_key) if @tool_key
     @target        = params[:target].to_s
     @run           = ToolRun.find_by(id: params[:run]) if params[:run].present?
-    @default_slots = DEFAULT_SLOTS
+    @default_slots  = DEFAULT_SLOTS
+    @custom_partial = (@tool_class.respond_to?(:custom_partial) ? @tool_class.custom_partial : nil)
 
     if @view == "history"
       @filter = params[:filter].to_s
