@@ -1,1 +1,70 @@
-<div id="sql_connection_picker"></div>
+<%# locals: profiles, state ("list" | "form" | "active"), error %>
+<div id="sql_connection_picker"
+     class="<%= local_assigns[:state] == "active" ? "hidden" : "" %> fixed inset-0 bg-bg/95 z-50 flex items-center justify-center"
+     data-controller="sql-picker"
+     aria-modal="true"
+     role="dialog">
+  <div class="bg-sunken border border-mute max-w-md w-full p-4 text-xs font-mono">
+    <% if local_assigns[:state] == "form" %>
+      <h4 class="text-purple uppercase tracking-[0.18em] text-[10px] font-bold mb-2"><span aria-hidden="true">// </span>new connection</h4>
+      <%= form_with url: sql_profiles_path, method: :post, data: { turbo: true } do |f| %>
+        <% %w[name host port user password default_database].each do |field| %>
+          <div class="grid grid-cols-[110px_1fr] gap-2 mb-1 items-center">
+            <label class="mono-label"><%= field.tr("_", " ") %></label>
+            <% if field == "password" %>
+              <%= f.password_field "profile[#{field}]", autocomplete: "off" %>
+            <% else %>
+              <%= f.text_field "profile[#{field}]", autocomplete: "off", spellcheck: "false", value: (field == "port" ? 4000 : nil) %>
+            <% end %>
+          </div>
+        <% end %>
+        <div class="grid grid-cols-[110px_1fr] gap-2 mb-1 items-center">
+          <label class="mono-label">mode</label>
+          <div>
+            <label class="mr-3"><input type="radio" name="profile[default_mode]" value="ro" checked> ro</label>
+            <label><input type="radio" name="profile[default_mode]" value="rw"> rw</label>
+          </div>
+        </div>
+        <div class="grid grid-cols-[110px_1fr] gap-2 mb-1 items-center">
+          <label class="mono-label">tls</label>
+          <div>
+            <label class="mr-3"><input type="radio" name="profile[tls_mode]" value="disabled"> disable</label>
+            <label class="mr-3"><input type="radio" name="profile[tls_mode]" value="prefer" checked> prefer</label>
+            <label><input type="radio" name="profile[tls_mode]" value="required"> require</label>
+          </div>
+        </div>
+        <div class="flex justify-between border-t border-line mt-3 pt-2 text-mute">
+          <span>Tab/⇧Tab · ESC cancel</span>
+          <button type="submit" class="text-green">⏎ save &amp; connect</button>
+        </div>
+      <% end %>
+    <% else %>
+      <h4 class="text-purple uppercase tracking-[0.18em] text-[10px] font-bold mb-2"><span aria-hidden="true">// </span>connect</h4>
+      <% if local_assigns[:error].present? %>
+        <div class="text-red mb-2"><%= local_assigns[:error] %></div>
+      <% end %>
+      <% if profiles.empty? %>
+        <div class="text-mute italic mb-2">no saved connections — press n to add one</div>
+      <% else %>
+        <% profiles.each_with_index do |p, i| %>
+          <%= button_to sql_session_path, method: :post, params: { profile_name: p[:name] },
+                data: { turbo: true },
+                form_class: "block",
+                class: "w-full text-left grid grid-cols-[14px_1fr_auto] gap-2 px-2 py-1 hover:bg-elevated #{'bg-elevated' if i == 0}" do %>
+            <span class="text-purple"><%= i == 0 ? "▸" : " " %></span>
+            <span>
+              <span class="text-fg"><%= p[:name] %></span>
+              <span class="text-mute text-[10px]">· <%= p[:host] %>:<%= p[:port] %> / <%= p[:default_database] %></span>
+            </span>
+            <span class="<%= p[:default_mode] == "rw" ? "text-yellow" : "text-green" %> text-[10px]">[<%= p[:default_mode] %>]</span>
+          <% end %>
+        <% end %>
+      <% end %>
+      <div class="text-cyan border-t border-line/50 mt-2 pt-2">+ new connection (n)</div>
+      <div class="text-mute text-[10px] mt-2 leading-relaxed">
+        ⏎ connect · n new · e edit · dd delete · ESC close<br>
+        :c host=10.x port=4000 user=foo — ad-hoc connect, not saved
+      </div>
+    <% end %>
+  </div>
+</div>
