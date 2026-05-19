@@ -2,6 +2,7 @@
 <% data = run.result_data %>
 <% cols = (data["columns"] || []) %>
 <% rows = (data["sample"]  || []) %>
+<div data-run-id="<%= run.id %>">
 <% if cols.empty? && data["write_affected"] %>
   <div class="px-3 py-2 text-green">
     ✓ <%= data["write_affected"] %> row<%= "s" unless data["write_affected"] == 1 %> affected · <%= data["time_ms"] %> ms
@@ -45,3 +46,4 @@
     </tbody>
   </table>
 <% end %>
+</div>

@@ -55,7 +55,9 @@ class Sql::SessionsController < ApplicationController
   def run_use_database(s)
     store  = ToolHarness::Sql::ConnectionStore.new
     client = store.client_for(s[:connection])
-    client.query("USE #{ActiveRecord::Base.connection.quote_column_name(s[:database])}")
+    bt     = "\x60"
+    quoted = "#{bt}#{s[:database].to_s.gsub(bt, bt * 2)}#{bt}"
+    client.query("USE #{quoted}")
   rescue StandardError
     # Surfaced in pane via the next query attempt.
   end

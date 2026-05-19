@@ -107,7 +107,7 @@ module ToolHarness
       end
 
       def run_once(sql)
-        @client.query(sql, as: :array, cast_booleans: true, symbolize_keys: false)
+        @client.query(sql, as: :array, cast_booleans: true, symbolize_keys: false, read_timeout: @timeout)
       end
 
       def normalize(raw, elapsed_ms, injected, klass)
