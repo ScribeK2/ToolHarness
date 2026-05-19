@@ -1,5 +1,23 @@
-<div id="sql_history_overlay" class="hidden">
-  <% (local_assigns[:runs] || []).each do |r| %>
-    <div data-run-id="<%= r.id %>"><%= r.input_summary %></div>
-  <% end %>
+<%# locals: runs %>
+<div id="sql_history_overlay" class="<%= local_assigns[:runs].present? ? '' : 'hidden' %> fixed inset-0 bg-bg/95 z-50 flex items-center justify-center" role="dialog">
+  <div class="bg-sunken border border-mute max-w-2xl w-full p-4 text-xs font-mono">
+    <h4 class="text-purple uppercase tracking-[0.18em] text-[10px] font-bold mb-2"><span aria-hidden="true">// </span>recent queries</h4>
+    <% if runs.empty? %>
+      <div class="text-mute italic">no recent SQL runs</div>
+    <% else %>
+      <% runs.each_with_index do |r, i| %>
+        <div class="grid grid-cols-[24px_120px_1fr_60px_60px] gap-2 px-2 py-[3px] <%= 'bg-elevated' if i == 0 %>"
+             data-sql-history-target="row"
+             data-run-id="<%= r.id %>"
+             data-sql="<%= r.input&.dig('sql') %>">
+          <span class="text-mute">[<%= i %>]</span>
+          <span class="text-cyan"><%= r.input&.dig("connection") || "ad-hoc" %></span>
+          <span class="truncate"><%= r.input_summary %></span>
+          <span class="text-<%= r.status == 'completed' ? 'green' : 'red' %>"><%= r.status[0,4] %></span>
+          <span class="text-mute"><%= time_ago_in_words(r.created_at) rescue "" %></span>
+        </div>
+      <% end %>
+    <% end %>
+    <div class="text-mute text-[10px] mt-2">⏎ load · e load+edit · r load+rerun · ESC close</div>
+  </div>
 </div>

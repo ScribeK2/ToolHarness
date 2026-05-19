@@ -1,1 +1,20 @@
-<div id="sql_confirm_overlay"></div>
+<%# locals: sql, classification, database %>
+<% present = local_assigns[:sql].present? %>
+<div id="sql_confirm_overlay" class="<%= 'hidden' unless present %> fixed inset-0 bg-bg/95 z-50 flex items-center justify-center" role="dialog">
+  <div class="bg-sunken border border-yellow max-w-xl w-full p-4 text-xs font-mono">
+    <h4 class="text-yellow uppercase tracking-[0.18em] text-[10px] font-bold mb-2"><span aria-hidden="true">⚠ </span>confirm <%= local_assigns[:classification] %></h4>
+    <% if present %>
+      <div class="text-mute mb-1">on database <span class="text-cyan"><%= local_assigns[:database] %></span></div>
+      <pre class="whitespace-pre-wrap text-fg border border-line p-2 mb-2"><%= local_assigns[:sql] %></pre>
+      <%= form_with url: sql_queries_path, method: :post, data: { turbo: true } do |f| %>
+        <%= hidden_field_tag :sql, local_assigns[:sql] %>
+        <%= hidden_field_tag :confirmed, "true" %>
+        <div class="flex justify-between text-mute">
+          <span>type <span class="text-yellow font-bold">yes</span> then ⏎</span>
+          <span><input name="confirm_word" autocomplete="off" autofocus class="bg-bg border border-line w-20" pattern="yes" required></span>
+          <button type="submit" class="text-yellow">⏎ run</button>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+</div>

@@ -1,1 +1,17 @@
-<div id="sql_cell_detail" class="hidden"></div>
+<%# locals: column, value %>
+<div id="sql_cell_detail" class="<%= local_assigns[:value].present? ? '' : 'hidden' %> fixed inset-0 bg-bg/95 z-50 flex items-center justify-center" role="dialog">
+  <div class="bg-sunken border border-mute max-w-3xl w-full max-h-[70vh] overflow-auto p-4 text-xs font-mono">
+    <div class="flex items-center justify-between mb-2">
+      <h4 class="text-purple uppercase tracking-[0.18em] text-[10px] font-bold">
+        <span aria-hidden="true">// </span>cell · <%= local_assigns[:column] %>
+      </h4>
+      <span class="text-mute text-[10px]">y c copy · ESC close</span>
+    </div>
+    <% v = local_assigns[:value].to_s %>
+    <pre class="whitespace-pre-wrap text-fg leading-relaxed"><%= begin
+                                                                JSON.pretty_generate(JSON.parse(v))
+                                                              rescue JSON::ParserError
+                                                                v
+                                                              end %></pre>
+  </div>
+</div>
