@@ -17,4 +17,13 @@ Rails.application.routes.draw do
 
   # Health
   get "up" => "rails/health#show", as: :rails_health_check
+
+  # SQL Workbench
+  namespace :sql, path: "workbench/sql" do
+    resources :profiles, only: %i[create update destroy], param: :name
+    resource  :session,  only: %i[create destroy update]
+    resources :queries,  only: %i[create]
+    resources :history,  only: %i[index]
+    resources :cells,    only: %i[show], param: :id
+  end
 end
