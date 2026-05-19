@@ -1,4 +1,11 @@
 class Sql::ProfilesController < ApplicationController
+  def new
+    s = store
+    render turbo_stream: turbo_stream.replace("sql_connection_picker",
+             partial: "workbench/sql/connection_picker",
+             locals:  { profiles: s.profiles, state: "form", error: nil })
+  end
+
   def create
     s = store
     s.save(**profile_params)

@@ -20,7 +20,7 @@ Rails.application.routes.draw do
 
   # SQL Workbench
   namespace :sql, path: "workbench/sql" do
-    resources :profiles, only: %i[create update destroy], param: :name
+    resources :profiles, only: %i[new create update destroy], param: :name
     resource  :session,  only: %i[create destroy update]
     resources :queries,  only: %i[create]
     resources :history,  only: %i[index]

@@ -13,6 +13,13 @@ class Sql::ProfilesControllerTest < ActionDispatch::IntegrationTest
     FileUtils.remove_entry(@tmp_config)
   end
 
+  test "GET new returns the picker in form state" do
+    get new_sql_profile_path, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    assert_response :success
+    assert_match(/profile\[name\]/, response.body)
+    assert_match(/profile\[host\]/, response.body)
+  end
+
   test "POST /workbench/sql/profiles creates a profile" do
     post sql_profiles_path, params: {
       profile: { name: "prod-ops", host: "10.1.2.3", port: 4000, user: "ro",

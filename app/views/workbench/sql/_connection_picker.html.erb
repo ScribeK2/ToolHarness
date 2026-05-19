@@ -48,7 +48,7 @@
       <% else %>
         <% profiles.each_with_index do |p, i| %>
           <%= button_to sql_session_path, method: :post, params: { profile_name: p[:name] },
-                data: { turbo: true },
+                data: { turbo: true, sql_picker_target: "row" },
                 form_class: "block",
                 class: "w-full text-left grid grid-cols-[14px_1fr_auto] gap-2 px-2 py-1 hover:bg-elevated #{'bg-elevated' if i == 0}" do %>
             <span class="text-purple"><%= i == 0 ? "▸" : " " %></span>
