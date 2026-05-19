@@ -6,10 +6,10 @@
 
 Rails.application.config.after_initialize do
   next unless Rails.env.production?
-  next if Rails.cache.read(UpdateChecker::CACHE_KEY)
 
   Thread.new do
     sleep 2
+    next if Rails.cache.read(UpdateChecker::CACHE_KEY)
     UpdateChecker.refresh!
   rescue StandardError => e
     Rails.logger.info("UpdateChecker first-run thread failed: #{e.class}: #{e.message}")
