@@ -4,7 +4,7 @@ module ToolHarness
   module Sql
     class LimitInjector
       # Returns { sql: String, injected: Boolean }.
-      # Appends `LIMIT <n>` to plain SELECTs (or CTE-then-SELECT) that don't
+      # Appends LIMIT <n> to plain SELECTs (or CTE-then-SELECT) that don't
       # already have a LIMIT clause. Leaves everything else untouched.
       def self.append(sql, limit)
         return { sql: sql, injected: false } unless select_like?(sql)
