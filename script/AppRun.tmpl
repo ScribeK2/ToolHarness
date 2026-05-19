@@ -98,7 +98,10 @@ surface_url() {
 # Returns 0 only on a 2xx HTTP response from /up.
 http_ready() {
   local port="$1" proto status rest
-  exec 3<>"/dev/tcp/127.0.0.1/$port" 2>/dev/null || return 1
+  # `2>/dev/null` on `exec` itself does not suppress bash's connect-failure
+  # messages — they're printed outside the exec's redirection scope. The
+  # `{ ... } 2>/dev/null` group form catches them.
+  { exec 3<>"/dev/tcp/127.0.0.1/$port"; } 2>/dev/null || return 1
   printf 'GET /up HTTP/1.0\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 2>/dev/null
   if ! read -r -t 2 proto status rest <&3; then
     exec 3<&- 2>/dev/null
