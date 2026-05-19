@@ -19,6 +19,7 @@ class Tools::RegistrySweepTest < ActiveSupport::TestCase
     http_inspect
     ping
     spf_check
+    sql_workbench
     ssl_inspect
     subdomain_scan
     ticket_lookup
