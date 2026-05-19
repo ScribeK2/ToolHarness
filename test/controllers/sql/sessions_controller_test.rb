@@ -53,4 +53,23 @@ class Sql::SessionsControllerTest < ActionDispatch::IntegrationTest
     patch sql_session_path, params: { session_timeout: "60" }
     assert_equal 60, session[:sql_workbench][:session_timeout]
   end
+
+  test "POST ad-hoc connect (no profile_name) opens a client and sets session" do
+    post sql_session_path, params: { host: "10.1.2.3", port: 4000, user: "ro", password: "secret", database: "ops" }
+    assert_response :success
+    assert_equal "_adhoc", session[:sql_workbench][:connection]
+    assert_equal "ops",    session[:sql_workbench][:database]
+    assert_equal "ro",     session[:sql_workbench][:write_mode]
+    fake = FakeMysql2Client.instances.last
+    assert_equal "10.1.2.3", fake.init_opts[:host]
+    assert_equal 4000,        fake.init_opts[:port]
+    assert_equal "ro",        fake.init_opts[:username]
+    assert_equal "secret",    fake.init_opts[:password]
+  end
+
+  test "POST ad-hoc with missing host returns picker error" do
+    post sql_session_path, params: { user: "ro", password: "p" }
+    assert_response :success
+    assert_match(/host=/, response.body)
+  end
 end

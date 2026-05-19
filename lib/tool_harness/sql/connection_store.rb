@@ -119,6 +119,33 @@ module ToolHarness
         client_for(name)
       end
 
+      ADHOC_KEY = "_adhoc".freeze
+
+      def client_for_adhoc(host:, port:, user:, password:, database: nil, tls_mode: "prefer")
+        close_entry(self.class.pool[ADHOC_KEY]) if self.class.pool[ADHOC_KEY]
+        opts = {
+          host:            host,
+          port:            port.to_i,
+          username:        user,
+          password:        password.to_s,
+          database:        (database.presence if database),
+          connect_timeout: 5,
+          read_timeout:    30,
+          ssl_mode:        tls_to_ssl_mode(tls_mode)
+        }.compact
+        client = self.class.client_factory.call(opts)
+        self.class.pool[ADHOC_KEY] = { client: client, last_used: Time.current.to_f }
+        client
+      end
+
+      def tls_to_ssl_mode(value)
+        case value.to_s
+        when "required" then :required
+        when "disabled" then :disabled
+        else                 :preferred
+        end
+      end
+
       private
 
       def open_client(name)
@@ -145,14 +172,6 @@ module ToolHarness
 
       def close_entry(entry)
         entry[:client].close rescue nil
-      end
-
-      def tls_to_ssl_mode(value)
-        case value.to_s
-        when "required" then :required
-        when "disabled" then :disabled
-        else                 :preferred
-        end
       end
 
       def load!
