@@ -92,6 +92,23 @@ export default class extends Controller {
         }
         break
     }
+
+    if (e.key === "y" && this.mode === "NORMAL") {
+      e.preventDefault()
+      this._pendingY = true
+      this._pendingYAt = Date.now()
+      return
+    }
+    if (this._pendingY && Date.now() - this._pendingYAt < 800) {
+      e.preventDefault()
+      const verb = e.key
+      this._pendingY = false
+      this.handleYank(verb)
+      return
+    }
+    if (e.key === "Y") {
+      e.preventDefault(); this.handleYank("Y"); return
+    }
   }
 
   run() {
@@ -122,5 +139,38 @@ export default class extends Controller {
     const cell = cells[this.activeColValue]
     if (cell) cell.classList.add("outline", "outline-1", "outline-cyan")
     row.scrollIntoView({ block: "nearest" })
+  }
+
+  handleYank(verb) {
+    const rows = this.rowTargets
+    const row  = rows[this.activeRowValue]
+    if (!row && verb !== "Y" && verb !== "J") return
+    const cellOf = (r, i) => r.querySelectorAll("[data-cell]")[i]?.dataset?.value || ""
+    const rowToTsv  = (r) => Array.from(r.querySelectorAll("[data-cell]")).map(c => c.dataset.value || "").join("\t")
+    const rowToJson = (r) => {
+      const headers = Array.from(document.querySelectorAll("#sql_result_panel th")).map(th => th.textContent.trim())
+      const cells   = Array.from(r.querySelectorAll("[data-cell]")).map(c => c.dataset.value || "")
+      return JSON.stringify(headers.reduce((acc, h, i) => (acc[h] = cells[i], acc), {}))
+    }
+    let text = ""
+    switch (verb) {
+      case "y": text = rowToTsv(row);  break  // y y → row TSV
+      case "j": text = rowToJson(row); break  // y j → row JSON
+      case "c": text = cellOf(row, this.activeColValue); break // y c → cell
+      case "Y": text = rows.map(rowToTsv).join("\n"); break    // Y → full TSV
+      case "J": text = "[" + rows.map(rowToJson).join(",") + "]"; break // y J → full JSON
+      default: return
+    }
+    navigator.clipboard.writeText(text).then(() => {
+      this.flash(`copied ${verb === "Y" || verb === "J" ? "all" : "row"}`)
+    })
+  }
+
+  flash(msg) {
+    if (!this.hasStatusTarget) return
+    const previous = this.statusTarget.textContent
+    this.statusTarget.textContent = `✓ ${msg}`
+    clearTimeout(this._flashT)
+    this._flashT = setTimeout(() => { this.statusTarget.textContent = previous }, 1200)
   }
 }
