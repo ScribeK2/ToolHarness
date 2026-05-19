@@ -67,7 +67,83 @@ module ToolHarness
         persist!
       end
 
+      # Allow tests to swap in a fake client class.
+      def self.client_factory
+        @client_factory ||= ->(opts) { Mysql2::Client.new(opts) }
+      end
+
+      def self.client_factory=(callable)
+        @client_factory = callable
+      end
+
+      IDLE_REAP_AFTER = 15 * 60 # seconds
+
+      def client_for(name)
+        cache = (@clients ||= {})
+        entry = cache[name]
+        if entry.nil? || idle?(entry)
+          close_entry(entry) if entry
+          entry = open_client(name)
+          cache[name] = entry
+        end
+        entry[:last_used] = Time.current.to_f
+        entry[:client]
+      end
+
+      def disconnect(name)
+        return unless (@clients ||= {})[name]
+        close_entry(@clients.delete(name))
+      end
+
+      def disconnect_all
+        (@clients ||= {}).each_value { |e| close_entry(e) }
+        @clients = {}
+      end
+
+      def reset_pool!
+        disconnect_all
+      end
+
+      def reconnect(name)
+        disconnect(name)
+        client_for(name)
+      end
+
       private
+
+      def open_client(name)
+        profile = find(name) or raise ArgumentError, "no such profile: #{name}"
+        password = password_for(name) or raise ArgumentError, "password for #{name} could not be decrypted"
+        opts = {
+          host:            profile[:host],
+          port:            profile[:port],
+          username:        profile[:user],
+          password:        password,
+          database:        (profile[:default_database] unless profile[:default_database].to_s.empty?),
+          connect_timeout: 5,
+          read_timeout:    30,
+          ssl_mode:        tls_to_ssl_mode(profile[:tls_mode])
+        }.compact
+        client = self.class.client_factory.call(opts)
+        touch!(name)
+        { client: client, last_used: Time.current.to_f }
+      end
+
+      def idle?(entry)
+        (Time.current.to_f - entry[:last_used]) > IDLE_REAP_AFTER
+      end
+
+      def close_entry(entry)
+        entry[:client].close rescue nil
+      end
+
+      def tls_to_ssl_mode(value)
+        case value.to_s
+        when "required" then :required
+        when "disabled" then :disabled
+        else                 :preferred
+        end
+      end
 
       def load!
         @profiles = []
