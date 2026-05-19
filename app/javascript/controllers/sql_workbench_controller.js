@@ -109,6 +109,34 @@ export default class extends Controller {
     if (e.key === "Y") {
       e.preventDefault(); this.handleYank("Y"); return
     }
+
+    if (e.key === "/") {
+      e.preventDefault()
+      const q = window.prompt("/")
+      if (!q) return
+      this._searchTerm = q.toLowerCase()
+      this._searchMatches = []
+      this.rowTargets.forEach((r, ri) => {
+        r.querySelectorAll("[data-cell]").forEach((c, ci) => {
+          if ((c.dataset.value || "").toLowerCase().includes(this._searchTerm)) {
+            this._searchMatches.push([ri, ci])
+          }
+        })
+      })
+      this._searchIdx = 0
+      this.jumpToMatch()
+      return
+    }
+    if (e.key === "n" && this._searchMatches?.length) {
+      e.preventDefault()
+      this._searchIdx = (this._searchIdx + 1) % this._searchMatches.length
+      this.jumpToMatch(); return
+    }
+    if (e.key === "N" && this._searchMatches?.length) {
+      e.preventDefault()
+      this._searchIdx = (this._searchIdx - 1 + this._searchMatches.length) % this._searchMatches.length
+      this.jumpToMatch(); return
+    }
   }
 
   run() {
@@ -172,5 +200,14 @@ export default class extends Controller {
     this.statusTarget.textContent = `✓ ${msg}`
     clearTimeout(this._flashT)
     this._flashT = setTimeout(() => { this.statusTarget.textContent = previous }, 1200)
+  }
+
+  jumpToMatch() {
+    if (!this._searchMatches?.length) return
+    const [ri, ci] = this._searchMatches[this._searchIdx]
+    this.activeRowValue = ri
+    this.activeColValue = ci
+    this.repaintActive(this.rowTargets)
+    this.flash(`/${this._searchTerm} (${this._searchIdx + 1}/${this._searchMatches.length})`)
   }
 }
