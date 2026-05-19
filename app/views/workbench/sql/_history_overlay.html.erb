@@ -1,0 +1,5 @@
+<div id="sql_history_overlay" class="hidden">
+  <% (local_assigns[:runs] || []).each do |r| %>
+    <div data-run-id="<%= r.id %>"><%= r.input_summary %></div>
+  <% end %>
+</div>
