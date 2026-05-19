@@ -1,5 +1,5 @@
 <%# locals: runs %>
-<div id="sql_history_overlay" class="<%= local_assigns[:runs].present? ? '' : 'hidden' %> fixed inset-0 bg-bg/95 z-50 flex items-center justify-center" role="dialog">
+<div id="sql_history_overlay" class="<%= local_assigns[:runs].present? ? '' : 'hidden' %> fixed inset-0 bg-bg/95 z-50 flex items-center justify-center" data-controller="sql-history" role="dialog">
   <div class="bg-sunken border border-mute max-w-2xl w-full p-4 text-xs font-mono">
     <h4 class="text-purple uppercase tracking-[0.18em] text-[10px] font-bold mb-2"><span aria-hidden="true">// </span>recent queries</h4>
     <% if runs.empty? %>
