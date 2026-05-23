@@ -38,10 +38,8 @@
               placeholder="SELECT id, domain FROM domains WHERE domain = 'example.com';"></textarea>
   <% end %>
 
-  <%# 3. Result + error region (target of turbo_stream from queries#create) %>
-  <div id="sql_result_panel" class="flex-1 min-h-0 overflow-auto">
-    <%= render "workbench/sql/result_panel", result: nil, run: @run, state: state %>
-  </div>
+  <%# 3. Result + error region (the partial includes its own #sql_result_panel wrapper). %>
+  <%= render "workbench/sql/result_panel", result: nil, run: @run, state: state %>
 
   <%# 4. Status bar (always present) %>
   <div class="border-t border-line bg-sunken px-3 py-1 text-mute flex items-center justify-between">
