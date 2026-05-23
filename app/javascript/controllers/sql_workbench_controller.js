@@ -12,6 +12,7 @@ export default class extends Controller {
   connect() {
     this.onKeydown = (e) => this.handleKeydown(e)
     document.addEventListener("keydown", this.onKeydown)
+    this._cmdBuffer = ""
     this.setMode("NORMAL")
   }
 
@@ -62,6 +63,36 @@ export default class extends Controller {
       return
     }
 
+    if (this.mode === "COMMAND") {
+      if (e.key === "Escape") {
+        e.preventDefault()
+        this._cmdBuffer = ""
+        this.setMode("NORMAL")
+        return
+      }
+      if (e.key === "Enter") {
+        e.preventDefault()
+        const cmd = this._cmdBuffer
+        this._cmdBuffer = ""
+        this.setMode("NORMAL")
+        this._dispatchCmdline(cmd)
+        return
+      }
+      if (e.key === "Backspace") {
+        e.preventDefault()
+        this._cmdBuffer = this._cmdBuffer.slice(0, -1)
+        this._renderCmdEcho()
+        return
+      }
+      // Only printable single-character keys append to the buffer
+      if (e.key.length === 1) {
+        e.preventDefault()
+        this._cmdBuffer += e.key
+        this._renderCmdEcho()
+      }
+      return
+    }
+
     if (this.mode === "INSERT") {
       if (e.key === "Escape") {
         e.preventDefault()
@@ -89,6 +120,12 @@ export default class extends Controller {
     }
 
     switch (e.key) {
+      case ":":
+        e.preventDefault()
+        this._cmdBuffer = ""
+        this.setMode("COMMAND")
+        this._renderCmdEcho()
+        return
       case "i": e.preventDefault(); this.setMode("INSERT"); break
       case "Enter": e.preventDefault(); this.openCellDetail(); break
       case "j":
@@ -242,5 +279,36 @@ export default class extends Controller {
     this.activeColValue = ci
     this.repaintActive(this.rowTargets)
     this.flash(`/${this._searchTerm} (${this._searchIdx + 1}/${this._searchMatches.length})`)
+  }
+
+  _renderCmdEcho() {
+    if (!this.hasStatusTarget) return
+    // The mode pill itself shows -- COMMAND --; the keymap-hint span echoes the buffer.
+    if (this.hasKeymapHintTarget) {
+      this.keymapHintTarget.textContent = `:${this._cmdBuffer}_`
+    }
+  }
+
+  _dispatchCmdline(cmd) {
+    // Trim and split: verb + rest
+    const trimmed = cmd.trim()
+    if (!trimmed) return
+    const m = trimmed.match(/^(\S+)(?:\s+(.*))?$/)
+    if (!m) return
+    const verb = m[1]
+    const args = m[2] || ""
+
+    if (verb === "save-recipe") return this._handleSaveRecipe(args)
+    // Other cmdline verbs (db, w, c, d) are pre-existing — leave their handling
+    // alone; they were not previously routed through this dispatcher. This
+    // dispatcher only owns :save-recipe for now. Pre-existing verbs continue
+    // to be handled via their own form submissions / buttons elsewhere in the
+    // UI. (A future cleanup unifies them; out of scope for this pass.)
+    this.flash(`unknown command: ${verb}`)
+  }
+
+  _handleSaveRecipe(args) {
+    // To be implemented in Task 8.
+    this.flash(":save-recipe (impl pending)")
   }
 }
