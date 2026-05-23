@@ -32,8 +32,7 @@ module ToolHarness
       # Each entry: { name:, sql:, created_at:, source: :starter | :saved }
       def all
         load!
-        starter_names = STARTERS.map { |s| s[:name] }
-        saved_names   = @saved.map  { |s| s[:name] }
+        saved_names = @saved.map { |s| s[:name] }
         starters_visible = STARTERS.reject { |s| saved_names.include?(s[:name]) }
                                    .map    { |s| s.merge(source: :starter) }
         saved_decorated  = @saved.map      { |s| s.merge(source: :saved) }
