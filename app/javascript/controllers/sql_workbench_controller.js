@@ -50,6 +50,16 @@ export default class extends Controller {
     const currentRow = rows[this.activeRowValue]
     const cellsInRow = () => currentRow ? currentRow.querySelectorAll("[data-cell]") : []
 
+    // 1) Consume pending-y if a verb just arrived (must be BEFORE the switch
+    //    so that j/k/h/l don't move the cursor before yank fires)
+    if (this._pendingY && Date.now() - this._pendingYAt < 800) {
+      e.preventDefault()
+      const verb = e.key
+      this._pendingY = false
+      this.handleYank(verb)
+      return
+    }
+
     switch (e.key) {
       case "i": e.preventDefault(); this.setMode("INSERT"); break
       case "Enter": e.preventDefault(); this.openCellDetail(); break
@@ -93,19 +103,14 @@ export default class extends Controller {
         break
     }
 
+    // 2) y starts a pending prefix
     if (e.key === "y" && this.mode === "NORMAL") {
       e.preventDefault()
       this._pendingY = true
       this._pendingYAt = Date.now()
       return
     }
-    if (this._pendingY && Date.now() - this._pendingYAt < 800) {
-      e.preventDefault()
-      const verb = e.key
-      this._pendingY = false
-      this.handleYank(verb)
-      return
-    }
+    // 3) Y is standalone (full-result yank)
     if (e.key === "Y") {
       e.preventDefault(); this.handleYank("Y"); return
     }
