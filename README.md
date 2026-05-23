@@ -25,6 +25,7 @@ view, and exportable.
 - **TLS / HTTP:** SSL/TLS inspection, HTTP &amp; security headers
 - **Email auth:** SPF, DKIM, DMARC, combined email-auth overview
 - **Network:** ping, traceroute, hosting diagnostic
+- **Database:** SQL Workbench &mdash; keyboard-driven ad-hoc SQL against any MySQL-protocol DB (incl. TiDB); read-only by default with a per-connection write toggle
 - **Misc:** blacklist check, bulk domain runner, ticket lookup
 
 The UI is modal (NORMAL / INSERT / CMD / SEARCH), with `:` for a
