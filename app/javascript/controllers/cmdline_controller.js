@@ -2,8 +2,10 @@ import { Controller } from "@hotwired/stimulus"
 import { Prefs } from "lib/prefs"
 
 const KNOWN = ["run", "tool", "target", "copy", "export", "pin", "history",
-               "expiring", "raw", "help", "set", "purge", "q"]
-const CLIENT_ONLY = ["copy", "set", "q", "raw", "tool", "target", "pin", "expiring", "history", "help"]
+               "expiring", "raw", "help", "set", "purge", "q",
+               "c", "d", "db", "w", "h", "limit", "timeout"]
+const CLIENT_ONLY = ["copy", "set", "q", "raw", "tool", "target", "pin", "expiring", "history", "help",
+                     "c", "d", "db", "w", "h", "limit", "timeout"]
 
 export default class extends Controller {
   static targets = ["input", "runId"]
@@ -138,7 +140,65 @@ export default class extends Controller {
       case "set":
         if (rest[0] && rest[1] !== undefined) Prefs.set(rest[0], rest.slice(1).join(" "))
         break
+      case "c": {
+        if (!rest.length) {
+          document.getElementById("sql_connection_picker")?.classList.remove("hidden")
+        } else if (rest[0].includes("=")) {
+          const f = document.createElement("form")
+          f.method = "post"
+          f.action = "/workbench/sql/session"
+          f.dataset.turbo = "true"
+          const csrf = document.querySelector("meta[name=csrf-token]")?.content
+          const fields = { authenticity_token: csrf }
+          rest.forEach(kv => {
+            const [k, v] = kv.split("=", 2)
+            fields[k] = v
+          })
+          fields.profile_name = ""
+          Object.entries(fields).forEach(([k, v]) => {
+            const i = document.createElement("input")
+            i.name = k; i.value = v; i.type = "hidden"
+            f.appendChild(i)
+          })
+          document.body.appendChild(f); f.submit()
+        } else {
+          this.postTo("/workbench/sql/session", { profile_name: rest[0] })
+        }
+        break
+      }
+      case "d":       this.deleteTo("/workbench/sql/session"); break
+      case "db":      this.patchTo("/workbench/sql/session", { database: rest[0] }); break
+      case "w":       this.patchTo("/workbench/sql/session", { write_mode: rest[0] === "on" ? "rw" : "ro" }); break
+      case "limit":   this.patchTo("/workbench/sql/session", { session_limit: rest[0] }); break
+      case "timeout": this.patchTo("/workbench/sql/session", { session_timeout: rest[0] }); break
+      case "h":
+        fetch("/workbench/sql/history", { headers: { "Accept": "text/vnd.turbo-stream.html" } })
+          .then(r => r.text()).then(html => Turbo.renderStreamMessage(html))
+        break
     }
     this.close()
+  }
+
+  postTo(url, params) {
+    return this._send("POST", url, params)
+  }
+  patchTo(url, params) {
+    return this._send("PATCH", url, params)
+  }
+  deleteTo(url, params = {}) {
+    return this._send("DELETE", url, params)
+  }
+  _send(method, url, params) {
+    const token = document.querySelector("meta[name=csrf-token]")?.content
+    const body = new URLSearchParams({ ...params, _method: method, authenticity_token: token || "" })
+    return fetch(url, {
+      method: method === "DELETE" ? "POST" : method,
+      headers: {
+        "Accept": "text/vnd.turbo-stream.html",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRF-Token": token || ""
+      },
+      body
+    }).then(r => r.text()).then(html => Turbo.renderStreamMessage(html))
   }
 }

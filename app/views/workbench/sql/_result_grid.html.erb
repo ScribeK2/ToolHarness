@@ -1,0 +1,49 @@
+<%# locals: run %>
+<% data = run.result_data %>
+<% cols = (data["columns"] || []) %>
+<% rows = (data["sample"]  || []) %>
+<div data-run-id="<%= run.id %>">
+<% if cols.empty? && data["write_affected"] %>
+  <div class="px-3 py-2 text-green">
+    ✓ <%= data["write_affected"] %> row<%= "s" unless data["write_affected"] == 1 %> affected · <%= data["time_ms"] %> ms
+  </div>
+<% elsif cols.empty? %>
+  <div class="px-3 py-2 text-mute">(executed — no result set) · <%= data["time_ms"] %> ms</div>
+<% elsif rows.empty? %>
+  <table class="w-full font-mono text-[11px]">
+    <thead class="bg-sunken sticky top-0">
+      <tr>
+        <% cols.each do |c| %><th class="text-mute uppercase tracking-[0.14em] text-[9.5px] text-left px-2 py-1 border-b border-line"><%= c %></th><% end %>
+      </tr>
+    </thead>
+  </table>
+  <div class="px-3 py-2 text-mute">(no rows)</div>
+<% else %>
+  <table class="w-full font-mono text-[11px]" data-sql-workbench-target="grid">
+    <thead class="bg-sunken sticky top-0">
+      <tr>
+        <% cols.each do |c| %><th class="text-mute uppercase tracking-[0.14em] text-[9.5px] text-left px-2 py-1 border-b border-line"><%= c %></th><% end %>
+      </tr>
+    </thead>
+    <tbody>
+      <% rows.each_with_index do |row, ri| %>
+        <tr data-sql-workbench-target="row" data-row-index="<%= ri %>">
+          <% row.each_with_index do |cell, ci| %>
+            <td class="px-2 py-1 border-b border-line/50" data-cell data-col-index="<%= ci %>" data-value="<%= cell %>">
+              <% if cell.nil? %>
+                <span class="text-mute italic">null</span>
+              <% elsif cell.is_a?(Numeric) %>
+                <span class="text-orange"><%= cell %></span>
+              <% elsif cell.to_s.length > 80 %>
+                <%= cell.to_s[0, 80] %><span class="text-mute">…(+<%= cell.to_s.length - 80 %>)</span>
+              <% else %>
+                <%= cell %>
+              <% end %>
+            </td>
+          <% end %>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>
+</div>

@@ -1,0 +1,5 @@
+<%# locals: message, code %>
+<div class="m-3 border border-red bg-bg px-3 py-2 text-red text-xs font-mono">
+  <div class="mono-label text-red mb-1">// error<% if local_assigns[:code] %> · <%= local_assigns[:code] %><% end %></div>
+  <div class="text-fg"><%= local_assigns[:message] %></div>
+</div>

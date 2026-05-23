@@ -60,6 +60,11 @@ class ToolRun < ApplicationRecord
       return "#{count} domain#{'s' unless count == 1}#{via}"
     end
 
+    if h[:sql].present?
+      one_line = h[:sql].to_s.gsub(/\s+/, " ").strip
+      return one_line.length > 80 ? "#{one_line[0, 79]}…" : one_line
+    end
+
     primary = h[:domain] || h[:email] || h[:ip] || h[:ticket_id] || h[:server] || h[:host]
     return nil if primary.blank?
 

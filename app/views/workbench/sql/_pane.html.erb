@@ -1,0 +1,70 @@
+<%# Top-level pane: connection chip + editor + result grid + status bar. %>
+<%# Locals available: @custom_partial is set when this partial is rendered. %>
+<% state    = session[:sql_workbench] %>
+<% profiles = ToolHarness::Sql::ConnectionStore.new.profiles %>
+<% @custom_data ||= { state: state, profiles: profiles } %>
+
+<section id="sql_pane"
+         class="flex-1 min-h-0 flex flex-col text-xs"
+         data-controller="sql-workbench"
+         data-sql-workbench-active-row-value="0"
+         data-sql-workbench-active-col-value="0">
+
+  <%# 1. Connection chip header %>
+  <div class="px-3 py-1 border-b border-line bg-sunken flex items-center justify-between text-fg-dim">
+    <% if state.present? %>
+      <span class="text-cyan">
+        <span aria-hidden="true">▸ </span>tidb · <%= state[:connection] || state["connection"] || "ad-hoc" %> · <%= state[:database] || state["database"] %>
+        <span class="ml-2 px-1.5 bg-elevated <%= (state[:write_mode] || state["write_mode"]) == "rw" ? "text-yellow" : "text-green" %>">
+          [<%= state[:write_mode] || state["write_mode"] %>]
+        </span>
+      </span>
+      <span class="text-mute">:db &lt;name&gt; · :w on/off · :d disconnect</span>
+    <% else %>
+      <span class="text-mute"><span aria-hidden="true">▸ </span>not connected — :c to open connections</span>
+      <span class="text-mute">press : then c</span>
+    <% end %>
+  </div>
+
+  <%# 2. SQL editor %>
+  <%= form_with url: sql_queries_path, method: :post, data: { turbo: true, sql_workbench_target: "form" } do |f| %>
+    <%= f.hidden_field :confirmed, value: "false", data: { sql_workbench_target: "confirmed" } %>
+    <textarea name="sql"
+              rows="4"
+              autocomplete="off"
+              spellcheck="false"
+              class="w-full bg-bg text-fg font-mono border-0 border-b border-line px-3 py-2 leading-relaxed"
+              data-sql-workbench-target="editor"
+              placeholder="SELECT id, domain FROM domains WHERE domain = 'example.com';"></textarea>
+  <% end %>
+
+  <%# 3. Result + error region (target of turbo_stream from queries#create) %>
+  <div id="sql_result_panel" class="flex-1 min-h-0 overflow-auto">
+    <%= render "workbench/sql/result_panel", result: nil, run: @run, state: state %>
+  </div>
+
+  <%# 4. Status bar (always present) %>
+  <div class="border-t border-line bg-sunken px-3 py-1 text-mute flex items-center justify-between">
+    <span data-sql-workbench-target="status">
+      <% if @run&.result_data&.dig("row_count") %>
+        <span class="text-green">●</span>
+        <%= @run.result_data["row_count"] %> row<%= "s" unless @run.result_data["row_count"] == 1 %>
+        · <%= @run.result_data["time_ms"] %> ms
+        <% if @run.result_data["applied_limit"] %>
+          · LIMIT <%= @run.result_data["applied_limit"] %> appended
+        <% end %>
+      <% else %>
+        ready
+      <% end %>
+    </span>
+    <span class="text-mute text-[10px]">
+      ⏎ run · i edit · j/k row · h/l col · y y row · / search · ? help
+    </span>
+  </div>
+
+  <%# 5. Mounted overlays (hidden by default) %>
+  <%= render "workbench/sql/connection_picker", profiles: profiles, state: state.present? ? "active" : "list", error: nil %>
+  <%= render "workbench/sql/history_overlay", runs: [] %>
+  <%= render "workbench/sql/cell_detail", column: nil, value: nil %>
+  <%= render "workbench/sql/confirm_overlay", sql: nil, classification: nil, database: nil %>
+</section>

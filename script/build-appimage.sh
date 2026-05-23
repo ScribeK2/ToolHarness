@@ -179,6 +179,20 @@ LD_LIBRARY_PATH="$APP_DIR/usr/lib:${LD_LIBRARY_PATH:-}" $LINUXDEPLOY \
   --icon-file "$APP_DIR/toolharness.png" \
   $EXEC_ARGS
 
+# ---- Sanity-check: confirm mysql2's libmariadb shipped and resolves ----
+MYSQL2_SO=$(find "$APP_DIR/usr/lib/ruby" -name 'mysql2.so' | head -1)
+if [ -n "$MYSQL2_SO" ]; then
+  echo "[smoke] checking mysql2.so linkage…"
+  ldd "$MYSQL2_SO" | tee /tmp/ldd-mysql2.txt
+  if grep -q 'not found' /tmp/ldd-mysql2.txt; then
+    echo "ERROR: mysql2.so has unresolved shared library deps — build is broken"
+    exit 1
+  fi
+else
+  echo "WARN: no mysql2.so found in $APP_DIR/usr/lib/ruby — mysql2 gem not installed?"
+  exit 1
+fi
+
 # ---- Pack ----
 echo "==> appimagetool"
 cd "$WORK"
