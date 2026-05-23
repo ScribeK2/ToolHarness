@@ -9,7 +9,7 @@
 <% active_idx = [local_assigns[:active].to_i, [rows.size - 1, 0].max].min %>
 
 <div id="sql_recipe_palette"
-     class="<%= rows.empty? || local_assigns[:auto_open] ? '' : 'hidden' %> fixed inset-0 bg-bg/95 z-50 flex items-center justify-center"
+     class="<%= local_assigns[:auto_open] ? '' : 'hidden' %> fixed inset-0 bg-bg/95 z-50 flex items-center justify-center"
      data-controller="sql-recipes"
      data-sql-recipes-active-value="<%= active_idx %>"
      aria-modal="true"
