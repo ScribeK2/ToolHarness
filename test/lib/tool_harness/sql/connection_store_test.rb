@@ -105,4 +105,13 @@ class ToolHarness::Sql::ConnectionStoreTest < ActiveSupport::TestCase
     assert_equal 2, FakeMysql2Client.instances.size
     instance_exec(self, &teardown_pool)
   end
+
+  test "client_for(_adhoc) raises AdhocSessionExpired when pool is empty" do
+    instance_exec(self, &setup_pool)
+    err = assert_raises(ToolHarness::Sql::ConnectionStore::AdhocSessionExpired) do
+      @store.client_for("_adhoc")
+    end
+    assert_match(/expired/i, err.message)
+    instance_exec(self, &teardown_pool)
+  end
 end

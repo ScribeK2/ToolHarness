@@ -6,6 +6,7 @@ module ToolHarness
   module Sql
     class ConnectionStore
       DEFAULT_PORT = 4000
+      class AdhocSessionExpired < StandardError; end
       attr_reader :last_load_error
 
       def initialize(path: self.class.default_path)
@@ -91,6 +92,9 @@ module ToolHarness
         cache = self.class.pool
         entry = cache[name]
         if entry.nil? || idle?(entry)
+          if name.to_s == ADHOC_KEY
+            raise AdhocSessionExpired, "ad-hoc session expired — reconnect with :c host=... user=..."
+          end
           close_entry(entry) if entry
           entry = open_client(name)
           cache[name] = entry
