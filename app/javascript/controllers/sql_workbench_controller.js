@@ -59,6 +59,19 @@ export default class extends Controller {
     const overlayOpen = document.querySelector("#sql_connection_picker:not(.hidden), #sql_history_overlay:not(.hidden), #sql_cell_detail:not(.hidden), #sql_confirm_overlay:not(.hidden), #help_overlay:not(.hidden), #sql_recipe_palette:not(.hidden), #sql_welcome_card:not(.hidden)")
     if (overlayOpen) return
 
+    // Pending overwrite-confirm for :save-recipe — [y] confirms, anything else cancels.
+    if (this._pendingOverwrite) {
+      e.preventDefault()
+      const name = this._pendingOverwrite
+      this._pendingOverwrite = null
+      if (e.key === "y") {
+        this._confirmOverwriteSave(name)
+      } else {
+        this.flash("cancelled — original recipe preserved")
+      }
+      return
+    }
+
     // Ctrl/Cmd+Enter runs the query regardless of mode. Users naturally lose
     // mode context when focus moves around (e.g. after a query completes); we
     // shouldn't gate "run" on a mode they can't easily see.
@@ -386,7 +399,72 @@ export default class extends Controller {
   }
 
   _handleSaveRecipe(args) {
-    // To be implemented in Task 8.
-    this.flash(":save-recipe (impl pending)")
+    const name = args.trim()
+    if (!name) {
+      this.flash("usage: :save-recipe <name> (a-z0-9- only, 1-40 chars)")
+      return
+    }
+    if (!/^[a-z0-9][a-z0-9-]{0,39}$/.test(name)) {
+      this.flash("invalid name (a-z 0-9 - only, 1-40 chars)")
+      return
+    }
+    const sql = this.hasEditorTarget ? this.editorTarget.value : ""
+    if (!sql.trim()) {
+      this.flash(":save-recipe needs SQL in the editor")
+      return
+    }
+
+    const submit = (confirm) => {
+      const body = new FormData()
+      body.append("name", name)
+      body.append("sql", sql)
+      if (confirm) body.append("confirm", "true")
+      return fetch("/workbench/sql/recipes", {
+        method: "POST",
+        body,
+        headers: {
+          "Accept": "text/vnd.turbo-stream.html",
+          "X-CSRF-Token": document.querySelector("meta[name='csrf-token']")?.content
+        }
+      })
+    }
+
+    submit(false).then(res => {
+      if (res.status === 409) {
+        // Name exists — ask the rep to overwrite via [y/n].
+        this._pendingOverwrite = name
+        this.flash(`recipe '${name}' exists — overwrite? [y/n]`)
+      } else if (res.ok) {
+        return res.text().then(html => {
+          Turbo.renderStreamMessage(html)
+          // After the status_flash turbo_stream replaces the status span, the
+          // mode pill text is lost. Re-render it from authoritative state.
+          this.setMode(this.mode)
+          this.flash(`recipe '${name}' saved`)
+        })
+      } else {
+        return res.text().then(html => Turbo.renderStreamMessage(html))
+      }
+    })
+  }
+
+  _confirmOverwriteSave(name) {
+    const sql = this.hasEditorTarget ? this.editorTarget.value : ""
+    const body = new FormData()
+    body.append("name", name)
+    body.append("sql", sql)
+    body.append("confirm", "true")
+    fetch("/workbench/sql/recipes", {
+      method: "POST",
+      body,
+      headers: {
+        "Accept": "text/vnd.turbo-stream.html",
+        "X-CSRF-Token": document.querySelector("meta[name='csrf-token']")?.content
+      }
+    }).then(res => res.text()).then(html => {
+      Turbo.renderStreamMessage(html)
+      this.setMode(this.mode)
+      this.flash(`recipe '${name}' saved`)
+    })
   }
 }
