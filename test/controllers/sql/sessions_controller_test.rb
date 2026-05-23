@@ -72,4 +72,18 @@ class Sql::SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_match(/host=/, response.body)
   end
+
+  test "rendered pane includes mode pill status target with initial NORMAL state" do
+    post sql_session_path, params: { profile_name: "x" }
+    assert_response :success
+    # Status span exists with the workbench target and starts with NORMAL pill text
+    assert_match(/data-sql-workbench-target="status"[^>]*>-- NORMAL --/, response.body)
+  end
+
+  test "rendered pane includes mode-aware keymap hint span" do
+    post sql_session_path, params: { profile_name: "x" }
+    assert_match(/data-sql-workbench-target="keymapHint"/, response.body)
+    # NORMAL hint text should be present:
+    assert_match("? recipes", response.body)
+  end
 end

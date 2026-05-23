@@ -6,7 +6,7 @@ import { Controller } from "@hotwired/stimulus"
 //  - opening :c / :h / cell-detail overlays via dispatched events
 // Grid navigation, copy verbs, and search are layered on in later tasks.
 export default class extends Controller {
-  static targets = ["editor", "form", "confirmed", "grid", "row", "status"]
+  static targets = ["editor", "form", "confirmed", "grid", "row", "status", "keymapHint"]
   static values  = { activeRow: Number, activeCol: Number }
 
   connect() {
@@ -24,6 +24,28 @@ export default class extends Controller {
     document.body.dataset.modeStateValue = mode
     if (mode === "INSERT" && this.hasEditorTarget) this.editorTarget.focus()
     if (mode === "NORMAL" && this.hasEditorTarget) this.editorTarget.blur()
+    this._renderModePill(mode)
+    this._renderKeymapHint(mode)
+  }
+
+  _renderModePill(mode) {
+    if (!this.hasStatusTarget) return
+    const colors = ["text-mauve", "text-green", "text-cyan"]
+    colors.forEach(c => this.statusTarget.classList.remove(c))
+    if (mode === "INSERT")       { this.statusTarget.classList.add("text-green");  this.statusTarget.textContent = "-- INSERT --" }
+    else if (mode === "COMMAND") { this.statusTarget.classList.add("text-cyan");   this.statusTarget.textContent = "-- COMMAND --" }
+    else                         { this.statusTarget.classList.add("text-mauve");  this.statusTarget.textContent = "-- NORMAL --" }
+    this.statusTarget.classList.add("font-bold")
+  }
+
+  _renderKeymapHint(mode) {
+    if (!this.hasKeymapHintTarget) return
+    const hints = {
+      NORMAL:  "Ctrl+⏎ run · i edit · j/k row · / search · ? recipes · : cmd",
+      INSERT:  "Ctrl+⏎ run · ESC nav · arrows in editor",
+      COMMAND: "⏎ dispatch · ESC cancel · :db :w :c :d :save-recipe"
+    }
+    this.keymapHintTarget.textContent = hints[mode] || hints.NORMAL
   }
 
   handleKeydown(e) {

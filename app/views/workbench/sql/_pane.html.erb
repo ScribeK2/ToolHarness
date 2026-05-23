@@ -41,12 +41,14 @@
   <%# 3. Result + error region (the partial includes its own #sql_result_panel wrapper). %>
   <%= render "workbench/sql/result_panel", result: nil, run: @run, state: state %>
 
-  <%# 4. Status bar — keymap hints. Per-query stats render inside the result panel %>
-  <%# itself (so they re-render with every query via the result_panel turbo_stream). %>
-  <div class="border-t border-line bg-sunken px-3 py-1 text-mute flex items-center justify-between">
-    <span data-sql-workbench-target="status" class="text-mute">workbench</span>
-    <span class="text-mute text-[10px]">
-      Ctrl+⏎ run · i edit · ESC nav · j/k row · h/l col · y y row · / search · ? help
+  <%# 4. Status bar — mode pill + mode-aware keymap hint. Per-query stats render %>
+  <%# inside the result panel so they re-render via the result_panel turbo_stream. %>
+  <%# The status span carries id="sql_workbench_status" so :save-recipe flash %>
+  <%# turbo_streams (RecipesController#create) have a valid target. %>
+  <div class="border-t border-line bg-sunken px-3 py-1 flex items-center justify-between">
+    <span id="sql_workbench_status" data-sql-workbench-target="status" class="text-mauve font-bold">-- NORMAL --</span>
+    <span data-sql-workbench-target="keymapHint" class="text-mute text-[10px]">
+      Ctrl+⏎ run · i edit · j/k row · / search · ? recipes · : cmd
     </span>
   </div>
 
