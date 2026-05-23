@@ -12,12 +12,17 @@ export default class extends Controller {
   connect() {
     this.onKeydown = (e) => this.handleKeydown(e)
     document.addEventListener("keydown", this.onKeydown)
+    // Claim keyboard ownership: mode_controller (body-level) yields to us while
+    // the SQL pane is mounted. Without this, ":" fires both this controller's
+    // COMMAND mode AND mode_controller's legacy cmdline overlay simultaneously.
+    document.body.dataset.sqlWorkbenchActive = "true"
     this._cmdBuffer = ""
     this.setMode("NORMAL")
   }
 
   disconnect() {
     document.removeEventListener("keydown", this.onKeydown)
+    delete document.body.dataset.sqlWorkbenchActive
   }
 
   setMode(mode) {
