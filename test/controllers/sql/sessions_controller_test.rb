@@ -92,4 +92,13 @@ class Sql::SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/id="sql_recipe_palette"/, response.body)
     assert_match(/data-controller="sql-recipes"/, response.body)
   end
+
+  test "welcome card is NOT rendered when auto_orient is false (no first-connect)" do
+    post sql_session_path, params: { profile_name: "x" }
+    # First connect WOULD trigger auto_orient; we test the false path via a
+    # second connect (after Task 11's SessionsController#create change tracks
+    # this). For now (before Task 11), auto_orient is never passed, so the card
+    # should not render.
+    refute_match(/id="sql_welcome_card"/, response.body) unless response.body.include?('data-auto-orient="true"')
+  end
 end

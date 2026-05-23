@@ -1,0 +1,38 @@
+<%# locals: profile_name, write_mode, auto_orient %>
+<%# Rendered inside the result panel area (Task 12 wires this into _pane). %>
+<%# Dismissal is purely client-side — controlled by sql_welcome_controller. %>
+<% if local_assigns[:auto_orient] %>
+  <div id="sql_welcome_card"
+       class="absolute top-0 left-0 right-0 m-3 bg-sunken border border-cyan p-3 text-xs font-mono z-10"
+       data-controller="sql-welcome"
+       role="dialog"
+       aria-modal="false">
+    <div class="text-cyan font-bold mb-2">
+      <span aria-hidden="true">▸ </span>welcome to <%= local_assigns[:profile_name] || "this connection" %>
+    </div>
+    <div class="text-mute mb-2">
+      you're connected <%= local_assigns[:write_mode] || "ro" %>. try one of these:
+    </div>
+    <div class="space-y-[2px]">
+      <div data-sql-welcome-target="row" data-sql="SHOW TABLES;" class="text-fg">
+        <span class="text-yellow">[1]</span> SHOW TABLES
+        <span class="text-mute">— list everything in this DB (running now)</span>
+      </div>
+      <div data-sql-welcome-target="row" data-sql="SHOW DATABASES;" class="text-fg">
+        <span class="text-yellow">[2]</span> SHOW DATABASES
+        <span class="text-mute">— other DBs you can switch to with :db</span>
+      </div>
+      <div data-sql-welcome-target="row" data-sql="SELECT VERSION();" class="text-fg">
+        <span class="text-yellow">[3]</span> SELECT VERSION()
+        <span class="text-mute">— confirm the server version</span>
+      </div>
+      <div data-sql-welcome-target="row" data-action="palette" class="text-fg">
+        <span class="text-yellow">[4]</span> ?
+        <span class="text-mute">— to open the recipe palette any time</span>
+      </div>
+    </div>
+    <div class="text-mute text-[10px] mt-3 border-t border-line pt-2">
+      esc to dismiss · won't show again for this profile
+    </div>
+  </div>
+<% end %>
