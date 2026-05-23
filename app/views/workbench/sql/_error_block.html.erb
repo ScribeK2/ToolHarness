@@ -1,5 +1,28 @@
 <%# locals: message, code %>
+<% code = local_assigns[:code] %>
+<% message = local_assigns[:message].to_s %>
+<%
+  hint = case
+         when code.to_s == "1046" || message =~ /no database selected/i
+           "no database selected — type :db <name> to switch, or run SHOW DATABASES;"
+         when code.to_s == "1049" || message =~ /unknown database/i
+           "database doesn't exist or your user lacks access. SHOW DATABASES; to see what's reachable."
+         when code.to_s == "1146" || message =~ /table .* doesn't exist|doesn['"]t exist/i
+           "table not found in the current database. SHOW TABLES; to list, or :db <name> to switch DB."
+         when code.to_s == "1044" || code.to_s == "1142" || message =~ /access denied|command denied/i
+           "permission denied — the connection's user may not have rights on this object."
+         when code.to_s == "USE_FAILED"
+           "USE failed — chip still shows your previous active database. Try SHOW DATABASES; to confirm what's reachable."
+         when code.to_s == "WRITE_BLOCKED"
+           "this connection is read-only. :w on to enable writes for this session."
+         when code.to_s == "CONFIRM_REQUIRED"
+           "dangerous statement — re-run from the confirm overlay (type yes) to execute."
+         end
+%>
 <div class="m-3 border border-red bg-bg px-3 py-2 text-red text-xs font-mono">
-  <div class="mono-label text-red mb-1">// error<% if local_assigns[:code] %> · <%= local_assigns[:code] %><% end %></div>
-  <div class="text-fg"><%= local_assigns[:message] %></div>
+  <div class="mono-label text-red mb-1">// error<% if code %> · <%= code %><% end %></div>
+  <div class="text-fg"><%= message %></div>
+  <% if hint %>
+    <div class="text-mute mt-1">hint: <%= hint %></div>
+  <% end %>
 </div>
