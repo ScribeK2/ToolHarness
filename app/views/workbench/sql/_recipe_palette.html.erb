@@ -1,0 +1,17 @@
+<%# locals: recipes, active, error (placeholder — Task 3 fills this in fully) %>
+<div id="sql_recipe_palette" class="hidden" data-controller="sql-recipes">
+  <% if local_assigns[:error] %>
+    <div class="text-red"><%= local_assigns[:error] %></div>
+  <% end %>
+  <% recipes.each_with_index do |r, i| %>
+    <div data-sql-recipes-target="row"
+         data-name="<%= r[:name] %>"
+         data-sql="<%= r[:sql] %>"
+         data-source="<%= r[:source] %>">
+      <%= r[:name] %>
+    </div>
+  <% end %>
+  <% if recipes.none? { |r| r[:source] == :saved } %>
+    <div class="text-mute italic">(none — :save-recipe &lt;name&gt; to add)</div>
+  <% end %>
+</div>
