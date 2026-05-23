@@ -31,13 +31,19 @@ export default class extends Controller {
     const overlayOpen = document.querySelector("#sql_connection_picker:not(.hidden), #sql_history_overlay:not(.hidden), #sql_cell_detail:not(.hidden), #sql_confirm_overlay:not(.hidden), #help_overlay:not(.hidden)")
     if (overlayOpen) return
 
+    // Ctrl/Cmd+Enter runs the query regardless of mode. Users naturally lose
+    // mode context when focus moves around (e.g. after a query completes); we
+    // shouldn't gate "run" on a mode they can't easily see.
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault()
+      this.run()
+      return
+    }
+
     if (this.mode === "INSERT") {
       if (e.key === "Escape") {
         e.preventDefault()
         this.setMode("NORMAL")
-      } else if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-        e.preventDefault()
-        this.run()
       }
       return
     }
