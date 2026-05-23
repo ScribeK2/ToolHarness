@@ -86,4 +86,10 @@ class Sql::SessionsControllerTest < ActionDispatch::IntegrationTest
     # NORMAL hint text should be present:
     assert_match("? recipes", response.body)
   end
+
+  test "rendered pane mounts the recipe palette overlay" do
+    post sql_session_path, params: { profile_name: "x" }
+    assert_match(/id="sql_recipe_palette"/, response.body)
+    assert_match(/data-controller="sql-recipes"/, response.body)
+  end
 end

@@ -56,7 +56,7 @@ export default class extends Controller {
 
   handleKeydown(e) {
     // ignore when an overlay is open or another input has focus
-    const overlayOpen = document.querySelector("#sql_connection_picker:not(.hidden), #sql_history_overlay:not(.hidden), #sql_cell_detail:not(.hidden), #sql_confirm_overlay:not(.hidden), #help_overlay:not(.hidden)")
+    const overlayOpen = document.querySelector("#sql_connection_picker:not(.hidden), #sql_history_overlay:not(.hidden), #sql_cell_detail:not(.hidden), #sql_confirm_overlay:not(.hidden), #help_overlay:not(.hidden), #sql_recipe_palette:not(.hidden), #sql_welcome_card:not(.hidden)")
     if (overlayOpen) return
 
     // Ctrl/Cmd+Enter runs the query regardless of mode. Users naturally lose
@@ -171,6 +171,10 @@ export default class extends Controller {
           e.preventDefault(); this.activeRowValue = 0; this.repaintActive(rows)
         }
         break
+      case "?":
+        e.preventDefault()
+        this._openRecipePalette()
+        return
     }
 
     // 2) y starts a pending prefix
@@ -284,6 +288,18 @@ export default class extends Controller {
     this.activeColValue = ci
     this.repaintActive(this.rowTargets)
     this.flash(`/${this._searchTerm} (${this._searchIdx + 1}/${this._searchMatches.length})`)
+  }
+
+  _openRecipePalette() {
+    fetch("/workbench/sql/recipes", {
+      headers: { Accept: "text/vnd.turbo-stream.html" }
+    }).then(r => r.text()).then(html => {
+      Turbo.renderStreamMessage(html)
+      // After Turbo replaces #sql_recipe_palette, un-hide it.
+      requestAnimationFrame(() => {
+        document.querySelector("#sql_recipe_palette")?.classList.remove("hidden")
+      })
+    })
   }
 
   _renderCmdEcho() {
