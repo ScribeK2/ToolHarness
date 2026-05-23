@@ -59,6 +59,30 @@ export default class extends Controller {
     const overlayOpen = document.querySelector("#sql_connection_picker:not(.hidden), #sql_history_overlay:not(.hidden), #sql_cell_detail:not(.hidden), #sql_confirm_overlay:not(.hidden), #help_overlay:not(.hidden), #sql_recipe_palette:not(.hidden), #sql_welcome_card:not(.hidden)")
     if (overlayOpen) return
 
+    // Error-recovery one-keys: when an error block is visible AND we're in
+    // NORMAL mode AND the key matches a bound recovery action, fire it.
+    // Bindings are intentionally NORMAL-only so 's' in INSERT just types 's'.
+    if (this.mode === "NORMAL" && !(e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA"))) {
+      const errEl = document.querySelector("[data-recover-keys]")
+      if (errEl) {
+        let bindings = []
+        try { bindings = JSON.parse(errEl.dataset.recoverKeys || "[]") } catch (_) {}
+        const hit = bindings.find(b => b.key === e.key)
+        if (hit) {
+          e.preventDefault()
+          if (hit.action === "run") {
+            if (this.hasEditorTarget) this.editorTarget.value = hit.sql || ""
+            this.run()
+          } else if (hit.action === "cmdline") {
+            this._cmdBuffer = (hit.prefill || "").replace(/^:/, "")
+            this.setMode("COMMAND")
+            this._renderCmdEcho()
+          }
+          return
+        }
+      }
+    }
+
     // Pending overwrite-confirm for :save-recipe — [y] confirms, anything else cancels.
     if (this._pendingOverwrite) {
       e.preventDefault()
