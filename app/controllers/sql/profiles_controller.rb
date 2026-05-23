@@ -8,10 +8,31 @@ class Sql::ProfilesController < ApplicationController
 
   def create
     s = store
-    s.save(**profile_params)
-    render turbo_stream: turbo_stream.replace("sql_connection_picker",
-             partial: "workbench/sql/connection_picker",
-             locals:  { profiles: s.profiles, state: "list", error: nil })
+    params_h = profile_params
+    s.save(**params_h)
+
+    # Then connect — the button label promises "save & connect". If the connect
+    # fails (bad credentials, network), the profile is still saved; user sees
+    # the error in the picker and can retry from the list.
+    begin
+      s.client_for(params_h[:name])
+    rescue StandardError => e
+      return render turbo_stream: turbo_stream.replace("sql_connection_picker",
+               partial: "workbench/sql/connection_picker",
+               locals:  { profiles: s.profiles, state: "list", error: "saved profile, but connect failed: #{e.message}" })
+    end
+
+    profile = s.find(params_h[:name])
+    session[:sql_workbench] = {
+      connection:      profile[:name],
+      database:        profile[:default_database],
+      write_mode:      profile[:default_mode],
+      session_limit:   500,
+      session_timeout: 30
+    }
+    render turbo_stream: turbo_stream.replace("sql_pane",
+             partial: "workbench/sql/pane",
+             locals:  { state: session[:sql_workbench], profiles: s.profiles, run: nil, error: nil })
   end
 
   def update
