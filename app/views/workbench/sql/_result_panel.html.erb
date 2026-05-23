@@ -5,6 +5,25 @@
 <% local_result = local_assigns[:result] %>
 
 <div id="sql_result_panel" class="flex-1 min-h-0 overflow-auto">
+  <% if local_run.present? && local_run.result_data.present? %>
+    <% data = local_run.result_data %>
+    <div class="px-3 py-1 border-b border-line text-mute text-[10px] flex items-center justify-between bg-sunken">
+      <span>
+        <% if data["write_affected"] %>
+          <span class="text-green">●</span>
+          <%= data["write_affected"] %> row<%= "s" unless data["write_affected"] == 1 %> affected · <%= data["time_ms"] %> ms
+        <% else %>
+          <span class="text-green">●</span>
+          <%= data["row_count"] %> row<%= "s" unless data["row_count"] == 1 %> · <%= data["time_ms"] %> ms
+          <% if data["applied_limit"] %>
+            · LIMIT <%= data["applied_limit"] %> appended
+          <% end %>
+        <% end %>
+      </span>
+      <span class="text-mute"><%= local_run.created_at&.strftime("%H:%M:%S") %></span>
+    </div>
+  <% end %>
+
   <% if local_result && !local_result.success? %>
     <%= render "workbench/sql/error_block", message: local_result.error_message, code: local_result.error_code %>
   <% end %>

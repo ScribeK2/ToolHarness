@@ -41,22 +41,12 @@
   <%# 3. Result + error region (the partial includes its own #sql_result_panel wrapper). %>
   <%= render "workbench/sql/result_panel", result: nil, run: @run, state: state %>
 
-  <%# 4. Status bar (always present) %>
+  <%# 4. Status bar — keymap hints. Per-query stats render inside the result panel %>
+  <%# itself (so they re-render with every query via the result_panel turbo_stream). %>
   <div class="border-t border-line bg-sunken px-3 py-1 text-mute flex items-center justify-between">
-    <span data-sql-workbench-target="status">
-      <% if @run&.result_data&.dig("row_count") %>
-        <span class="text-green">●</span>
-        <%= @run.result_data["row_count"] %> row<%= "s" unless @run.result_data["row_count"] == 1 %>
-        · <%= @run.result_data["time_ms"] %> ms
-        <% if @run.result_data["applied_limit"] %>
-          · LIMIT <%= @run.result_data["applied_limit"] %> appended
-        <% end %>
-      <% else %>
-        ready
-      <% end %>
-    </span>
+    <span data-sql-workbench-target="status" class="text-mute">workbench</span>
     <span class="text-mute text-[10px]">
-      ⏎ run · i edit · j/k row · h/l col · y y row · / search · ? help
+      Ctrl+⏎ run · i edit · ESC nav · j/k row · h/l col · y y row · / search · ? help
     </span>
   </div>
 
