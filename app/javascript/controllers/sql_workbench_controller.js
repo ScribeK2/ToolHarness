@@ -295,21 +295,78 @@ export default class extends Controller {
   }
 
   _dispatchCmdline(cmd) {
-    // Trim and split: verb + rest
     const trimmed = cmd.trim()
     if (!trimmed) return
     const m = trimmed.match(/^(\S+)(?:\s+(.*))?$/)
     if (!m) return
     const verb = m[1]
-    const args = m[2] || ""
+    const argStr = m[2] || ""
+    const rest = argStr.length ? argStr.split(/\s+/) : []
 
-    if (verb === "save-recipe") return this._handleSaveRecipe(args)
-    // Other cmdline verbs (db, w, c, d) are pre-existing — leave their handling
-    // alone; they were not previously routed through this dispatcher. This
-    // dispatcher only owns :save-recipe for now. Pre-existing verbs continue
-    // to be handled via their own form submissions / buttons elsewhere in the
-    // UI. (A future cleanup unifies them; out of scope for this pass.)
-    this.flash(`unknown command: ${verb}`)
+    switch (verb) {
+      case "save-recipe":
+        return this._handleSaveRecipe(argStr)
+
+      case "c": {
+        if (!rest.length) {
+          document.getElementById("sql_connection_picker")?.classList.remove("hidden")
+        } else if (rest[0].includes("=")) {
+          // ad-hoc: c host=... port=... user=... [password=... database=... tls_mode=...]
+          const fields = { profile_name: "" }
+          rest.forEach(kv => {
+            const eq = kv.indexOf("=")
+            if (eq > 0) fields[kv.slice(0, eq)] = kv.slice(eq + 1)
+          })
+          this._cmdPost("/workbench/sql/session", fields)
+        } else {
+          this._cmdPost("/workbench/sql/session", { profile_name: rest[0] })
+        }
+        return
+      }
+
+      case "d":
+        return this._cmdDelete("/workbench/sql/session")
+
+      case "db":
+        if (!rest[0]) return this.flash("usage: :db <name>")
+        return this._cmdPatch("/workbench/sql/session", { database: rest[0] })
+
+      case "w":
+        if (rest[0] !== "on" && rest[0] !== "off") return this.flash("usage: :w on | :w off")
+        return this._cmdPatch("/workbench/sql/session", { write_mode: rest[0] === "on" ? "rw" : "ro" })
+
+      case "limit":
+        if (!rest[0]) return this.flash("usage: :limit <n>")
+        return this._cmdPatch("/workbench/sql/session", { session_limit: rest[0] })
+
+      case "timeout":
+        if (!rest[0]) return this.flash("usage: :timeout <n>")
+        return this._cmdPatch("/workbench/sql/session", { session_timeout: rest[0] })
+
+      case "h":
+        return fetch("/workbench/sql/history", { headers: { Accept: "text/vnd.turbo-stream.html" } })
+          .then(r => r.text()).then(html => Turbo.renderStreamMessage(html))
+
+      default:
+        this.flash(`unknown command: ${verb}`)
+    }
+  }
+
+  _cmdPost(url, params)      { return this._cmdSend("POST",   url, params) }
+  _cmdPatch(url, params)     { return this._cmdSend("PATCH",  url, params) }
+  _cmdDelete(url, params={}) { return this._cmdSend("DELETE", url, params) }
+  _cmdSend(method, url, params) {
+    const token = document.querySelector("meta[name=csrf-token]")?.content
+    const body = new URLSearchParams({ ...params, _method: method, authenticity_token: token || "" })
+    return fetch(url, {
+      method: method === "DELETE" ? "POST" : method,  // Rails-style _method tunneling
+      headers: {
+        "Accept": "text/vnd.turbo-stream.html",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRF-Token": token || ""
+      },
+      body
+    }).then(r => r.text()).then(html => Turbo.renderStreamMessage(html))
   }
 
   _handleSaveRecipe(args) {
