@@ -101,4 +101,35 @@ class Sql::SessionsControllerTest < ActionDispatch::IntegrationTest
     # should not render.
     refute_match(/id="sql_welcome_card"/, response.body) unless response.body.include?('data-auto-orient="true"')
   end
+
+  test "first connect to a saved profile sets auto_orient and renders welcome card + auto-orient hook" do
+    post sql_session_path, params: { profile_name: "x" }
+    assert_response :success
+    assert_match(/id="sql_welcome_card"/, response.body)
+    assert_match(/data-auto-orient="true"/, response.body)
+    assert_includes session[:sql_welcome_seen], "x"
+  end
+
+  test "second connect to the same profile does NOT render welcome card or auto-orient" do
+    post sql_session_path, params: { profile_name: "x" } # first
+    delete sql_session_path                              # disconnect
+    post sql_session_path, params: { profile_name: "x" } # second connect
+    refute_match(/id="sql_welcome_card"/, response.body)
+    refute_match(/data-auto-orient="true"/, response.body)
+    # sql_welcome_seen persists across disconnect (top-level session key)
+    assert_includes session[:sql_welcome_seen], "x"
+  end
+
+  test "first ad-hoc connect tracks _adhoc literal in sql_welcome_seen" do
+    post sql_session_path, params: { host: "10.1.2.3", port: 4000, user: "ro", password: "s", database: "d" }
+    assert_match(/id="sql_welcome_card"/, response.body)
+    assert_includes session[:sql_welcome_seen], "_adhoc"
+  end
+
+  test "second ad-hoc connect does not re-show welcome card" do
+    post sql_session_path, params: { host: "10.1.2.3", port: 4000, user: "ro", password: "s", database: "d" }
+    delete sql_session_path
+    post sql_session_path, params: { host: "10.1.2.4", port: 4000, user: "ro", password: "s", database: "d" }
+    refute_match(/id="sql_welcome_card"/, response.body)
+  end
 end

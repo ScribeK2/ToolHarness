@@ -70,7 +70,7 @@ class Sql::SessionsController < ApplicationController
     }
     render turbo_stream: turbo_stream.replace("sql_pane",
              partial: "workbench/sql/pane",
-             locals:  pane_locals)
+             locals:  pane_locals.merge(auto_orient: first_connect_for!(profile[:name])))
   end
 
   def create_adhoc
@@ -103,7 +103,7 @@ class Sql::SessionsController < ApplicationController
     }
     render turbo_stream: turbo_stream.replace("sql_pane",
              partial: "workbench/sql/pane",
-             locals:  pane_locals)
+             locals:  pane_locals.merge(auto_orient: first_connect_for!("_adhoc")))
   end
 
   # Returns nil on success, or an error message string on failure. Caller is
@@ -117,6 +117,18 @@ class Sql::SessionsController < ApplicationController
     nil
   rescue StandardError => e
     e.message
+  end
+
+  # Reads + mutates session[:sql_welcome_seen]. Returns true the first time a
+  # profile-key is seen in this browser cookie; false afterwards. The session
+  # key lives at the top level (not nested under :sql_workbench) so it survives
+  # disconnect/reconnect cycles.
+  def first_connect_for!(profile_key)
+    session[:sql_welcome_seen] ||= []
+    seen = session[:sql_welcome_seen]
+    return false if seen.include?(profile_key)
+    session[:sql_welcome_seen] = seen + [profile_key]
+    true
   end
 
   def pane_locals
