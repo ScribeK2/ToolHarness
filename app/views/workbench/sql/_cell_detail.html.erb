@@ -1,5 +1,5 @@
 <%# locals: column, value %>
-<div id="sql_cell_detail" class="<%= local_assigns[:value].present? ? '' : 'hidden' %> fixed inset-0 bg-bg/95 z-50 flex items-center justify-center" role="dialog">
+<div id="sql_cell_detail" class="<%= local_assigns[:value].present? ? '' : 'hidden' %> fixed inset-0 bg-bg/95 z-50 flex items-center justify-center" data-controller="sql-cell-detail" role="dialog">
   <div class="bg-sunken border border-mute max-w-3xl w-full max-h-[70vh] overflow-auto p-4 text-xs font-mono">
     <div class="flex items-center justify-between mb-2">
       <h4 class="text-purple uppercase tracking-[0.18em] text-[10px] font-bold">
