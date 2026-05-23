@@ -78,4 +78,30 @@ class Sql::RecipesControllerTest < ActionDispatch::IntegrationTest
     delete sql_recipe_path(name: "SHOW TABLES"), headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :unprocessable_entity
   end
+
+  test "palette renders STARTERS section header and unified key hints" do
+    get sql_recipes_path, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    assert_match "STARTERS", response.body
+    assert_match "SAVED",    response.body
+    assert_match "j/k nav",  response.body
+    assert_match "⏎ load",   response.body
+    assert_match "ESC close", response.body
+  end
+
+  test "palette marks the first row active" do
+    get sql_recipes_path, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    # First row should carry the bg-elevated class for visual active marker
+    assert_match(/data-sql-recipes-target="row"[^>]*class="[^"]*bg-elevated/, response.body)
+  end
+
+  test "palette exposes data-controller=sql-recipes on the root element" do
+    get sql_recipes_path, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    assert_match(/id="sql_recipe_palette"[^>]*data-controller="sql-recipes"/, response.body)
+  end
+
+  test "saved recipes render in SAVED section with source=saved attribute" do
+    ToolHarness::Sql::RecipeStore.new.save(name: "mine", sql: "SELECT 1;")
+    get sql_recipes_path, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    assert_match(/data-name="mine"[^>]*data-source="saved"/, response.body)
+  end
 end
