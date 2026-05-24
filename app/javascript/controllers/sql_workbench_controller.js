@@ -12,6 +12,10 @@ export default class extends Controller {
   connect() {
     this.onKeydown = (e) => this.handleKeydown(e)
     document.addEventListener("keydown", this.onKeydown)
+    // External overlays (recipe palette, future history overlay, etc.) request
+    // a mode switch via this event so they don't reach into the controller.
+    this.onInsertRequest = () => this.setMode("INSERT")
+    document.addEventListener("sql-workbench:insert", this.onInsertRequest)
     // Claim keyboard ownership: mode_controller (body-level) yields to us while
     // the SQL pane is mounted. Without this, ":" fires both this controller's
     // COMMAND mode AND mode_controller's legacy cmdline overlay simultaneously.
@@ -22,6 +26,7 @@ export default class extends Controller {
 
   disconnect() {
     document.removeEventListener("keydown", this.onKeydown)
+    document.removeEventListener("sql-workbench:insert", this.onInsertRequest)
     delete document.body.dataset.sqlWorkbenchActive
   }
 

@@ -110,9 +110,9 @@ export default class extends Controller {
         const start = sql.indexOf(m[0])
         editor.focus()
         editor.setSelectionRange(start, start + m[0].length)
-        // The workbench controller is in NORMAL by default; an explicit focus()
-        // here brings the editor into focus but does NOT switch mode. The user
-        // can press `i` to enter INSERT.
+        // Placeholder is selected — switch to INSERT so the next keystroke
+        // replaces it cleanly and the mode pill matches what the rep sees.
+        document.dispatchEvent(new Event("sql-workbench:insert"))
       }
     }
     this.element.classList.add("hidden")
