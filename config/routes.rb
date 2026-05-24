@@ -24,6 +24,7 @@ Rails.application.routes.draw do
     resource  :session,  only: %i[create destroy update]
     resources :queries,  only: %i[create]
     resources :history,  only: %i[index]
+    resources :recipes,  only: %i[index create destroy], param: :name
     resources :cells,    only: %i[show], param: :id
   end
 end

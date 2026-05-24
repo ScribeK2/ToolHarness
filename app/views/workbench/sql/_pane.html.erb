@@ -1,14 +1,16 @@
 <%# Top-level pane: connection chip + editor + result grid + status bar. %>
 <%# Locals available: @custom_partial is set when this partial is rendered. %>
-<% state    = session[:sql_workbench] %>
-<% profiles = ToolHarness::Sql::ConnectionStore.new.profiles %>
+<% state       = session[:sql_workbench] %>
+<% profiles    = ToolHarness::Sql::ConnectionStore.new.profiles %>
+<% auto_orient = local_assigns[:auto_orient] == true %>
 <% @custom_data ||= { state: state, profiles: profiles } %>
 
 <section id="sql_pane"
-         class="flex-1 min-h-0 flex flex-col text-xs"
+         class="flex-1 min-h-0 flex flex-col text-xs relative"
          data-controller="sql-workbench"
          data-sql-workbench-active-row-value="0"
-         data-sql-workbench-active-col-value="0">
+         data-sql-workbench-active-col-value="0"
+         data-auto-orient="<%= auto_orient %>">
 
   <%# 1. Connection chip header %>
   <div class="px-3 py-1 border-b border-line bg-sunken flex items-center justify-between text-fg-dim">
@@ -41,12 +43,20 @@
   <%# 3. Result + error region (the partial includes its own #sql_result_panel wrapper). %>
   <%= render "workbench/sql/result_panel", result: nil, run: @run, state: state %>
 
-  <%# 4. Status bar — keymap hints. Per-query stats render inside the result panel %>
-  <%# itself (so they re-render with every query via the result_panel turbo_stream). %>
-  <div class="border-t border-line bg-sunken px-3 py-1 text-mute flex items-center justify-between">
-    <span data-sql-workbench-target="status" class="text-mute">workbench</span>
-    <span class="text-mute text-[10px]">
-      Ctrl+⏎ run · i edit · ESC nav · j/k row · h/l col · y y row · / search · ? help
+  <%# Welcome card overlays the result panel on first connect per profile-key. %>
+  <%= render "workbench/sql/welcome_card",
+        profile_name: (state && (state[:connection] || state["connection"])),
+        write_mode:   (state && (state[:write_mode] || state["write_mode"])),
+        auto_orient:  auto_orient %>
+
+  <%# 4. Status bar — mode pill + mode-aware keymap hint. Per-query stats render %>
+  <%# inside the result panel so they re-render via the result_panel turbo_stream. %>
+  <%# The status span carries id="sql_workbench_status" so :save-recipe flash %>
+  <%# turbo_streams (RecipesController#create) have a valid target. %>
+  <div class="border-t border-line bg-sunken px-3 py-1 flex items-center justify-between">
+    <span id="sql_workbench_status" data-sql-workbench-target="status" class="text-mauve font-bold">-- NORMAL --</span>
+    <span data-sql-workbench-target="keymapHint" class="text-mute text-[10px]">
+      Ctrl+⏎ run · i edit · j/k row · / search · ? recipes · : cmd
     </span>
   </div>
 
@@ -55,4 +65,21 @@
   <%= render "workbench/sql/history_overlay", runs: [] %>
   <%= render "workbench/sql/cell_detail", column: nil, value: nil %>
   <%= render "workbench/sql/confirm_overlay", sql: nil, classification: nil, database: nil %>
+  <%= render "workbench/sql/recipe_palette", recipes: [], active: 0, error: nil %>
+
+  <% if auto_orient %>
+    <script>
+      // One-shot auto-orient: submit SHOW TABLES once after the pane mounts.
+      (function(){
+        const editor = document.querySelector("[data-sql-workbench-target='editor']")
+        const form   = document.querySelector("[data-sql-workbench-target='form']")
+        if (!editor || !form) return
+        // Preserve any text the rep may have started typing? On first connect
+        // the editor is empty — overwrite freely. We check empty just to be safe.
+        if (editor.value.trim() === "") editor.value = "SHOW TABLES;"
+        // Defer slightly so Turbo finishes processing the stream.
+        requestAnimationFrame(() => form.requestSubmit())
+      })();
+    </script>
+  <% end %>
 </section>

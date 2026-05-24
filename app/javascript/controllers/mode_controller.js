@@ -50,6 +50,9 @@ export default class extends Controller {
   }
 
   handleFocus(event) {
+    // SQL workbench owns its own mode state — don't let focus on its editor
+    // flip mode_controller's body state and desync the two.
+    if (document.body.dataset.sqlWorkbenchActive === "true") return
     const el = event.target
     if (this.isTypingTarget(el) && this.stateValue === "NORMAL") {
       this.applyMode("INSERT")
@@ -58,6 +61,9 @@ export default class extends Controller {
 
   handleKey(event) {
     if (event.metaKey || event.ctrlKey || event.altKey) return
+    // The SQL workbench owns its own keyboard contract (modal NORMAL/INSERT/COMMAND,
+    // its own `:` cmdline, its own `?` recipes palette). Yield to it when mounted.
+    if (document.body.dataset.sqlWorkbenchActive === "true") return
 
     // INSERT — only Esc returns to NORMAL
     if (this.stateValue === "INSERT") {

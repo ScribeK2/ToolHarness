@@ -1,0 +1,63 @@
+<%# locals: recipes, active, error %>
+<%# recipes: [{ name:, sql:, created_at:?, source: :starter | :saved }, ...] %>
+<%# Rendered in the workbench layout, hidden by default. The workbench Stimulus %>
+<%# controller intercepts `?` (NORMAL mode) and toggles `hidden` off after %>
+<%# fetching this partial via GET /workbench/sql/recipes. %>
+<% starters = recipes.select { |r| r[:source] == :starter } %>
+<% saved    = recipes.select { |r| r[:source] == :saved } %>
+<% rows     = starters + saved %>
+<% active_idx = [local_assigns[:active].to_i, [rows.size - 1, 0].max].min %>
+
+<div id="sql_recipe_palette"
+     class="<%= local_assigns[:auto_open] ? '' : 'hidden' %> fixed inset-0 bg-bg/95 z-50 flex items-center justify-center"
+     data-controller="sql-recipes"
+     data-sql-recipes-active-value="<%= active_idx %>"
+     aria-modal="true"
+     role="dialog">
+  <div class="bg-sunken border border-mute max-w-2xl w-full p-4 text-xs font-mono">
+    <h4 class="text-purple uppercase tracking-[0.18em] text-[10px] font-bold mb-2">
+      <span aria-hidden="true">// </span>recipes
+    </h4>
+
+    <% if local_assigns[:error].present? %>
+      <div class="text-red mb-2"><%= local_assigns[:error] %></div>
+    <% end %>
+
+    <%# STARTERS section %>
+    <div class="text-cyan text-[10px] uppercase tracking-[0.18em] mb-1">STARTERS</div>
+    <% starters.each_with_index do |r, i| %>
+      <div data-sql-recipes-target="row"
+           data-name="<%= r[:name] %>"
+           data-sql="<%= r[:sql] %>"
+           data-source="starter"
+           class="grid grid-cols-[14px_1fr] gap-2 px-2 py-[2px] <%= 'bg-elevated' if i == active_idx %>">
+        <span class="text-purple"><%= i == active_idx ? '▸' : ' ' %></span>
+        <span class="truncate"><%= r[:name] %></span>
+      </div>
+    <% end %>
+
+    <%# SAVED section %>
+    <div class="text-cyan text-[10px] uppercase tracking-[0.18em] mt-3 mb-1">SAVED</div>
+    <% if saved.empty? %>
+      <div class="text-mute italic px-2">(none — :save-recipe &lt;name&gt; to add)</div>
+    <% else %>
+      <% saved.each_with_index do |r, i| %>
+        <% global_idx = starters.size + i %>
+        <div data-sql-recipes-target="row"
+             data-name="<%= r[:name] %>"
+             data-sql="<%= r[:sql] %>"
+             data-source="saved"
+             class="grid grid-cols-[14px_1fr] gap-2 px-2 py-[2px] <%= 'bg-elevated' if global_idx == active_idx %>">
+          <span class="text-purple"><%= global_idx == active_idx ? '▸' : ' ' %></span>
+          <span class="truncate"><%= r[:name] %></span>
+        </div>
+      <% end %>
+    <% end %>
+
+    <%# Footer keymap hint %>
+    <div class="text-mute text-[10px] mt-3 border-t border-line pt-2 leading-relaxed">
+      j/k nav · ⏎ load · d delete sav.<br>
+      / filter · ESC close
+    </div>
+  </div>
+</div>

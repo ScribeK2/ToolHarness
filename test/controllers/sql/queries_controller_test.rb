@@ -65,7 +65,50 @@ class Sql::QueriesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "completed", ToolRun.last.status
   end
 
+  test "error block for code 1146 carries data-recover-keys with s -> SHOW TABLES" do
+    fake_err = mysql_error("Table 'foo' doesn't exist", 1146)
+    FakeMysql2Client.next_error = fake_err
+    post sql_queries_path, params: { sql: "SELECT * FROM foo" }
+    assert_match(/data-recover-keys=/, response.body)
+    assert_match(/SHOW TABLES/, response.body)
+    assert_match(/press (?:&#x27;|&#39;|')s(?:&#x27;|&#39;|')/, response.body) # action affordance text
+  end
+
+  test "error block for code 1049 carries data-recover-keys with d -> :db cmdline" do
+    fake_err = mysql_error("Unknown database 'nope'", 1049)
+    FakeMysql2Client.next_error = fake_err
+    post sql_queries_path, params: { sql: "SELECT 1" }
+    assert_match(/data-recover-keys=/, response.body)
+    assert_match(/:db /, response.body)
+  end
+
+  test "error block for permission denied (1044) does NOT carry data-recover-keys" do
+    fake_err = mysql_error("Access denied", 1044)
+    FakeMysql2Client.next_error = fake_err
+    post sql_queries_path, params: { sql: "SELECT 1" }
+    refute_match(/data-recover-keys=/, response.body)
+  end
+
+  test "error block for write-blocked carries w -> :w on prefill" do
+    # write blocked is produced by the runner, not by the wire — sql is DELETE in ro mode
+    post sql_queries_path, params: { sql: "DELETE FROM domains" }
+    assert_match(/data-recover-keys=/, response.body)
+    assert_match(/:w on/, response.body)
+  end
+
   private
+
+  # Build a raiseable exception that the Runner will treat as a mysql2 error.
+  def mysql_error(msg, code)
+    err_class = Class.new(StandardError) do
+      attr_reader :error_number
+      def initialize(msg, code)
+        super(msg)
+        @error_number = code
+      end
+    end
+    err_class.new(msg, code)
+  end
 
   def stub_result(columns:, rows:, affected_rows: 0)
     Struct.new(:fields, :to_a, :size, :affected_rows).new(columns, rows, rows.size, affected_rows).tap do |s|

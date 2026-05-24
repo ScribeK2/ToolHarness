@@ -8,10 +8,12 @@ class SqlWorkbenchSourceRegressionTest < ActiveSupport::TestCase
     app/controllers/sql/profiles_controller.rb
     app/controllers/sql/history_controller.rb
     app/controllers/sql/cells_controller.rb
+    app/controllers/sql/recipes_controller.rb
     lib/tool_harness/sql/classifier.rb
     lib/tool_harness/sql/limit_injector.rb
     lib/tool_harness/sql/secret_box.rb
     lib/tool_harness/sql/connection_store.rb
+    lib/tool_harness/sql/recipe_store.rb
     lib/tool_harness/sql/runner.rb
     lib/tool_harness/sql/result.rb
   ].freeze
