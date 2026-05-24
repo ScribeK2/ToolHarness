@@ -50,6 +50,9 @@ export default class extends Controller {
   }
 
   handleFocus(event) {
+    // SQL workbench owns its own mode state — don't let focus on its editor
+    // flip mode_controller's body state and desync the two.
+    if (document.body.dataset.sqlWorkbenchActive === "true") return
     const el = event.target
     if (this.isTypingTarget(el) && this.stateValue === "NORMAL") {
       this.applyMode("INSERT")
