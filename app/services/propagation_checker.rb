@@ -138,7 +138,7 @@ class PropagationChecker
       end
     end
 
-    {
+    result = {
       # success: only false when every resolver bombed with :error (catch-all).
       # NXDOMAIN / SERVFAIL / timeout still count as "the tool worked, answer was negative."
       success: oks.any? || sorted.any? { |r| r[:status] != :error },
@@ -148,8 +148,59 @@ class PropagationChecker
       consensus: consensus,
       dissenters: dissenters,
       failures: failures,
-      issues: []  # filled in by Task 8
+      issues: []
     }
+    result[:issues] = detect_issues(result)
+    result
+  end
+
+  def detect_issues(agg)
+    issues = []
+    total  = agg[:resolvers].size
+
+    all_nxdomain = agg[:resolvers].all? { |r| r[:status] == :nxdomain }
+    if all_nxdomain && total.positive?
+      issues << {
+        severity: SEVERITY_CRITICAL,
+        code: "nxdomain_consensus",
+        title: "Domain Does Not Exist",
+        message: "All #{total} resolvers report NXDOMAIN for #{agg[:domain]}.",
+        recommendation: "Verify the domain is registered and DNS is properly configured."
+      }
+      return issues
+    end
+
+    failure_count = agg[:failures].size
+    if failure_count >= (total * 0.3).ceil && failure_count.positive?
+      issues << {
+        severity: SEVERITY_WARNING,
+        code: "widespread_failure",
+        title: "Widespread Resolver Failure",
+        message: "#{failure_count} of #{total} resolvers failed (timeout, servfail, or refused).",
+        recommendation: "Re-run in a few minutes — this often clears on its own. Check your network if it persists."
+      }
+    end
+
+    if agg[:consensus].nil? && agg[:dissenters].any?
+      distinct = agg[:dissenters].map { |r| r[:values].sort }.uniq.size
+      issues << {
+        severity: SEVERITY_WARNING,
+        code: "no_consensus",
+        title: "No DNS Propagation Consensus",
+        message: "#{distinct} distinct values across #{agg[:dissenters].size} responding resolvers.",
+        recommendation: "Propagation may be mid-flight, or there is split-horizon DNS in play."
+      }
+    elsif agg[:consensus] && agg[:dissenters].any?
+      issues << {
+        severity: SEVERITY_WARNING,
+        code: "partial_propagation",
+        title: "Partial Propagation",
+        message: "#{agg[:dissenters].size} resolver(s) still serving non-consensus values.",
+        recommendation: "Wait for DNS propagation to complete (up to 48 hours for high-TTL records)."
+      }
+    end
+
+    issues
   end
 
   def monotonic_ms
