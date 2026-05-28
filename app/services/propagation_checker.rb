@@ -1,8 +1,8 @@
 require "dnsruby"
 
 class PropagationChecker
-  TIMEOUT = 10           # per-resolver dnsruby timeout (seconds)
-  JOIN_TIMEOUT = 11      # outer Thread#join cap (seconds)
+  TIMEOUT = 10.seconds   # per-resolver dnsruby timeout
+  JOIN_TIMEOUT = TIMEOUT + 1.second   # outer Thread#join cap, must exceed TIMEOUT
 
   SEVERITY_CRITICAL = "critical"
   SEVERITY_WARNING  = "warning"
