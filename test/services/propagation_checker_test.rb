@@ -1,5 +1,4 @@
 require "test_helper"
-require "ostruct"
 
 class PropagationCheckerTest < ActiveSupport::TestCase
   # Lightweight RR stand-in for normalization tests. We only need
@@ -87,11 +86,13 @@ class PropagationCheckerTest < ActiveSupport::TestCase
   #   { :ok => [RR, RR, ...] }   — returns an answer
   #   { :raise => ExceptionClass } — raises (NXDomain / ServFail / Refused / ResolvTimeout / OtherResolvError)
   #   { :sleep => seconds, :ok => [...] } — sleeps before returning (drives timeout via outer join)
+  FakeResponse = Struct.new(:answer)
+
   FakeResolver = Struct.new(:ip, :behavior) do
     def query(name, type)
       sleep(behavior[:sleep]) if behavior[:sleep]
       raise behavior[:raise], "fake #{behavior[:raise]}" if behavior[:raise]
-      OpenStruct.new(answer: behavior[:ok])
+      FakeResponse.new(behavior[:ok])
     end
   end
 

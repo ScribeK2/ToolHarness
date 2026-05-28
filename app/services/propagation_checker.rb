@@ -111,7 +111,7 @@ class PropagationChecker
     base.merge(status: :servfail, error: short_error(e), latency_ms: monotonic_ms - started)
   rescue Dnsruby::Refused => e
     base.merge(status: :refused, error: short_error(e), latency_ms: monotonic_ms - started)
-  rescue Dnsruby::ResolvTimeout => e
+  rescue Dnsruby::ResolvTimeout, Timeout::Error => e
     base.merge(status: :timeout, error: short_error(e), latency_ms: monotonic_ms - started)
   rescue Dnsruby::ResolvError, StandardError => e
     base.merge(status: :error, error: short_error(e), latency_ms: monotonic_ms - started)
