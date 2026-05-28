@@ -340,24 +340,26 @@ class PropagationCheckerTest < ActiveSupport::TestCase
   end
 
   test "#check caps total wait via outer Thread#join" do
-    # One resolver sleeps 30s; outer join is 11s. Total should be < 13s.
-    slow_ip = PropagationChecker::RESOLVERS.first[:ip]
-    map = PropagationChecker::RESOLVERS.to_h do |r|
-      if r[:ip] == slow_ip
-        [r[:ip], { sleep: 30, ok: [a_rr("1.2.3.4")] }]
-      else
-        [r[:ip], { ok: [a_rr("1.2.3.4")] }]
+    # JOIN_TIMEOUT stubbed to 1s; one resolver sleeps 5s. Should cap near 1s.
+    stub_const(PropagationChecker, :JOIN_TIMEOUT, 1) do
+      slow_ip = PropagationChecker::RESOLVERS.first[:ip]
+      map = PropagationChecker::RESOLVERS.to_h do |r|
+        if r[:ip] == slow_ip
+          [r[:ip], { sleep: 5, ok: [a_rr("1.2.3.4")] }]
+        else
+          [r[:ip], { ok: [a_rr("1.2.3.4")] }]
+        end
       end
+      fac = factory(map)
+
+      started = Time.now
+      agg = PropagationChecker.new("example.com", record_type: "A", resolver_factory: fac).check
+      elapsed = Time.now - started
+
+      assert elapsed < 3, "expected <3s, took #{elapsed}s"
+      slow_record = agg[:resolvers].find { |r| r[:ip] == slow_ip }
+      assert_equal :timeout, slow_record[:status]
     end
-    fac = factory(map)
-
-    started = Time.now
-    agg = PropagationChecker.new("example.com", record_type: "A", resolver_factory: fac).check
-    elapsed = Time.now - started
-
-    assert elapsed < 13, "expected <13s, took #{elapsed}s"
-    slow_record = agg[:resolvers].find { |r| r[:ip] == slow_ip }
-    assert_equal :timeout, slow_record[:status]
   end
 
   test "#check downcases and strips the domain" do
@@ -365,5 +367,16 @@ class PropagationCheckerTest < ActiveSupport::TestCase
     agg = PropagationChecker.new("  ExAmPlE.com  ", record_type: "a", resolver_factory: fac).check
     assert_equal "example.com", agg[:domain]
     assert_equal "A", agg[:record_type]
+  end
+
+  # Const-stubbing helper, mirrored from ping_test.rb. No Mocha dep.
+  def stub_const(klass, const, value)
+    original = klass.const_get(const)
+    klass.send(:remove_const, const)
+    klass.const_set(const, value)
+    yield
+  ensure
+    klass.send(:remove_const, const)
+    klass.const_set(const, original)
   end
 end

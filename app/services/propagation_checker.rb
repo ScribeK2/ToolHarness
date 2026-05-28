@@ -57,7 +57,7 @@ class PropagationChecker
           status: :timeout,
           values: [],
           ttl: nil,
-          error: "Outer timeout: thread exceeded #{JOIN_TIMEOUT}s",
+          error: "Outer timeout: thread exceeded #{JOIN_TIMEOUT.to_i}s",
           latency_ms: JOIN_TIMEOUT.to_i * 1000
         )
       end
