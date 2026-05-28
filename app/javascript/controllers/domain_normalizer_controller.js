@@ -21,16 +21,23 @@ export default class extends Controller {
   static values = { preservePath: Boolean }
 
   connect() {
-    this.onInput = () => {
+    this.normalizeNow = () => {
       const cleaned = normalize(this.element.value, this.preservePathValue)
       if (cleaned !== this.element.value) {
         this.element.value = cleaned
       }
     }
-    this.element.addEventListener("input", this.onInput)
+    // Normalize only on paste (the painful case) and on blur (catches typed
+    // URLs before submit). Avoid `input` to not consume the user's keystrokes
+    // mid-typing — e.g. typing the `/` in `http:/` would otherwise be eaten
+    // by the path-strip regex before they can type the second slash.
+    this.onPaste = () => setTimeout(this.normalizeNow, 0)
+    this.element.addEventListener("paste", this.onPaste)
+    this.element.addEventListener("blur", this.normalizeNow)
   }
 
   disconnect() {
-    this.element.removeEventListener("input", this.onInput)
+    this.element.removeEventListener("paste", this.onPaste)
+    this.element.removeEventListener("blur", this.normalizeNow)
   }
 }
