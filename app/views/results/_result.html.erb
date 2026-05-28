@@ -13,7 +13,8 @@
   <% else %>
     <%
       custom_partial = tool_run.tool_class&.result_partial
-      presenter      = ToolHarness::ResultPresenter.new(tool_run) unless custom_partial
+      use_custom     = custom_partial && tool_run.status != "failed"
+      presenter      = ToolHarness::ResultPresenter.new(tool_run) unless use_custom
       sections       = presenter&.sections
     %>
     <div class="flex items-center justify-between mb-2 text-mute">
@@ -25,7 +26,7 @@
               data-copy-text-value="<%= tool_run_ticket_text(tool_run) %>">[y s] copy summary</button>
     </div>
 
-    <% if custom_partial && tool_run.status != "failed" %>
+    <% if use_custom %>
       <%= render custom_partial, tool_run: tool_run %>
     <% else %>
       <% sections.each_with_index do |section, i| %>
