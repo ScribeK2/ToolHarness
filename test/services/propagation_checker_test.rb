@@ -1,4 +1,5 @@
 require "test_helper"
+require "ostruct"
 
 class PropagationCheckerTest < ActiveSupport::TestCase
   # Lightweight RR stand-in for normalization tests. We only need
@@ -79,5 +80,89 @@ class PropagationCheckerTest < ActiveSupport::TestCase
 
   test "RESOLVERS is frozen" do
     assert PropagationChecker::RESOLVERS.frozen?
+  end
+
+  # Programmable resolver used in place of Dnsruby::Resolver.
+  # behavior is one of:
+  #   { :ok => [RR, RR, ...] }   — returns an answer
+  #   { :raise => ExceptionClass } — raises (NXDomain / ServFail / Refused / ResolvTimeout / OtherResolvError)
+  #   { :sleep => seconds, :ok => [...] } — sleeps before returning (drives timeout via outer join)
+  FakeResolver = Struct.new(:ip, :behavior) do
+    def query(name, type)
+      sleep(behavior[:sleep]) if behavior[:sleep]
+      raise behavior[:raise], "fake #{behavior[:raise]}" if behavior[:raise]
+      OpenStruct.new(answer: behavior[:ok])
+    end
+  end
+
+  def factory(map)
+    # map: { "8.8.8.8" => { ok: [...] }, "1.1.1.1" => { raise: Dnsruby::NXDomain }, ... }
+    ->(ip) { FakeResolver.new(ip, map.fetch(ip) { { raise: Dnsruby::OtherResolvError } }) }
+  end
+
+  def a_rr(addr, ttl: 3600)
+    RR.new(Dnsruby::Types::A, addr, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, ttl)
+  end
+
+  test "query_one: OK response captures values, ttl, latency_ms" do
+    fac = factory("8.8.8.8" => { ok: [a_rr("1.2.3.4", ttl: 600)] })
+    checker = PropagationChecker.new("example.com", record_type: "A", resolver_factory: fac)
+    entry = PropagationChecker::RESOLVERS.find { |r| r[:ip] == "8.8.8.8" }
+    result = checker.send(:query_one, entry)
+
+    assert_equal :ok, result[:status]
+    assert_equal ["1.2.3.4"], result[:values]
+    assert_equal 600, result[:ttl]
+    assert_kind_of Integer, result[:latency_ms]
+    assert result[:latency_ms] >= 0
+    assert_equal "8.8.8.8", result[:ip]
+    assert_equal "Google", result[:operator]
+  end
+
+  test "query_one: NXDomain mapped to :nxdomain" do
+    fac = factory("8.8.8.8" => { raise: Dnsruby::NXDomain })
+    checker = PropagationChecker.new("missing.example", record_type: "A", resolver_factory: fac)
+    entry = PropagationChecker::RESOLVERS.find { |r| r[:ip] == "8.8.8.8" }
+    result = checker.send(:query_one, entry)
+
+    assert_equal :nxdomain, result[:status]
+    assert_equal [], result[:values]
+    assert_nil result[:ttl]
+    refute_nil result[:error]
+  end
+
+  test "query_one: ServFail mapped to :servfail" do
+    fac = factory("8.8.8.8" => { raise: Dnsruby::ServFail })
+    checker = PropagationChecker.new("example.com", record_type: "A", resolver_factory: fac)
+    entry = PropagationChecker::RESOLVERS.find { |r| r[:ip] == "8.8.8.8" }
+    assert_equal :servfail, checker.send(:query_one, entry)[:status]
+  end
+
+  test "query_one: Refused mapped to :refused" do
+    fac = factory("8.8.8.8" => { raise: Dnsruby::Refused })
+    checker = PropagationChecker.new("example.com", record_type: "A", resolver_factory: fac)
+    entry = PropagationChecker::RESOLVERS.find { |r| r[:ip] == "8.8.8.8" }
+    assert_equal :refused, checker.send(:query_one, entry)[:status]
+  end
+
+  test "query_one: ResolvTimeout mapped to :timeout" do
+    fac = factory("8.8.8.8" => { raise: Dnsruby::ResolvTimeout })
+    checker = PropagationChecker.new("example.com", record_type: "A", resolver_factory: fac)
+    entry = PropagationChecker::RESOLVERS.find { |r| r[:ip] == "8.8.8.8" }
+    assert_equal :timeout, checker.send(:query_one, entry)[:status]
+  end
+
+  test "query_one: other ResolvError mapped to :error" do
+    fac = factory("8.8.8.8" => { raise: Dnsruby::OtherResolvError })
+    checker = PropagationChecker.new("example.com", record_type: "A", resolver_factory: fac)
+    entry = PropagationChecker::RESOLVERS.find { |r| r[:ip] == "8.8.8.8" }
+    assert_equal :error, checker.send(:query_one, entry)[:status]
+  end
+
+  test "query_one: ttl is the minimum across multiple RRs" do
+    fac = factory("8.8.8.8" => { ok: [a_rr("1.2.3.4", ttl: 900), a_rr("1.2.3.5", ttl: 300)] })
+    checker = PropagationChecker.new("example.com", record_type: "A", resolver_factory: fac)
+    entry = PropagationChecker::RESOLVERS.find { |r| r[:ip] == "8.8.8.8" }
+    assert_equal 300, checker.send(:query_one, entry)[:ttl]
   end
 end

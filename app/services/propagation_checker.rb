@@ -90,4 +90,39 @@ class PropagationChecker
   def strip_dot(host)
     host.to_s.sub(/\.\z/, "")
   end
+
+  def query_one(entry)
+    base = entry.merge(values: [], ttl: nil, error: nil)
+    started = monotonic_ms
+
+    resolver = @resolver_factory.call(entry[:ip])
+    response = resolver.query(@domain, dnsruby_type(@record_type))
+    rrs = answer_for_type(@record_type, response.answer)
+
+    base.merge(
+      status: :ok,
+      values: normalize_values(@record_type, response.answer),
+      ttl: rrs.map { |r| r.ttl.to_i }.min,
+      latency_ms: monotonic_ms - started
+    )
+  rescue Dnsruby::NXDomain => e
+    base.merge(status: :nxdomain, error: short_error(e), latency_ms: monotonic_ms - started)
+  rescue Dnsruby::ServFail => e
+    base.merge(status: :servfail, error: short_error(e), latency_ms: monotonic_ms - started)
+  rescue Dnsruby::Refused => e
+    base.merge(status: :refused, error: short_error(e), latency_ms: monotonic_ms - started)
+  rescue Dnsruby::ResolvTimeout => e
+    base.merge(status: :timeout, error: short_error(e), latency_ms: monotonic_ms - started)
+  rescue Dnsruby::ResolvError, StandardError => e
+    base.merge(status: :error, error: short_error(e), latency_ms: monotonic_ms - started)
+  end
+
+  def monotonic_ms
+    (Process.clock_gettime(Process::CLOCK_MONOTONIC) * 1000).to_i
+  end
+
+  def short_error(e)
+    msg = e.message.to_s
+    "#{e.class.name.demodulize}: #{msg.length > 120 ? msg[0, 117] + '...' : msg}"
+  end
 end
