@@ -9,10 +9,15 @@
                 class: "flex flex-col" do |f| %>
     <div class="h-10 px-3 flex items-center gap-3">
       <span class="mono-label">target<span aria-hidden="true"> ›</span></span>
+      <% normalize_input = @tool_class && %i[domain host].include?(@tool_class.input_type) %>
       <%= f.text_field primary, value: @target,
             autocomplete: "off", spellcheck: "false",
             class: "flex-1",
-            data: { workbench_target: "input" } %>
+            data: {
+              workbench_target: "input",
+              controller: normalize_input ? "domain-normalizer" : nil,
+              domain_normalizer_preserve_path_value: normalize_input ? @tool_class.preserve_path_in_input?.to_s : nil
+            }.compact %>
       <button type="submit" class="btn btn-primary cursor-pointer" aria-label="Run">RUN<span aria-hidden="true"> ⏎</span></button>
     </div>
 
