@@ -1,0 +1,125 @@
+<%# app/views/results/tools/_dns_propagation.html.erb
+    Locals: tool_run %>
+<%
+  data = tool_run.result_data || {}
+  domain     = data["domain"] || data[:domain]
+  rtype      = data["record_type"] || data[:record_type]
+  resolvers  = data["resolvers"] || data[:resolvers] || []
+  consensus  = data["consensus"] || data[:consensus]
+  dissenters = data["dissenters"] || data[:dissenters] || []
+  failures   = data["failures"] || data[:failures] || []
+  total      = resolvers.size
+
+  fully_propagated = consensus && dissenters.empty? && failures.empty?
+  all_nxdomain     = total.positive? && resolvers.all? { |r| (r["status"] || r[:status]).to_s == "nxdomain" }
+  all_failed       = consensus.nil? && dissenters.empty? && failures.size == total && total.positive?
+
+  consensus_value = if consensus
+    Array(consensus["value"] || consensus[:value]).join(", ")
+  end
+
+  format_value = ->(row) {
+    status = (row["status"] || row[:status]).to_s
+    if status == "ok"
+      vals = Array(row["values"] || row[:values])
+      vals.empty? ? "—" : (vals.size > 1 ? "#{vals.first} (+#{vals.size - 1} more)" : vals.first)
+    else
+      err = (row["error"] || row[:error]).to_s
+      err.empty? ? status : "#{status}: #{err}"
+    end
+  }
+
+  status_icon = ->(status, row) {
+    case status.to_s
+    when "ok"
+      same = consensus && Array(row["values"] || row[:values]).sort == Array(consensus["value"] || consensus[:value]).sort
+      same ? ["✓", "text-cyan"] : ["⚠", "text-amber"]
+    when "nxdomain", "servfail", "refused", "timeout", "error"
+      ["✗", "text-red"]
+    else
+      ["?", "text-mute"]
+    end
+  }
+%>
+
+<%# ─── BANNER ─────────────────────────────────────────────────────────────────%>
+<div class="py-2 border-t border-line first:border-t-0" data-section="banner">
+  <h3 class="text-[11px] tracking-[0.18em] uppercase text-fg font-bold mb-1"><span aria-hidden="true">▸ </span>Status</h3>
+  <pre class="text-fg whitespace-pre border-l border-line pl-2">
+<% if fully_propagated %>
+✓ FULLY PROPAGATED · <%= consensus["count"] || consensus[:count] %> of <%= total %> resolvers see <%= consensus_value %>
+<% elsif all_nxdomain %>
+✗ DOMAIN DOES NOT EXIST · all <%= total %> resolvers report NXDOMAIN
+<% elsif all_failed %>
+✗ NO RESOLVER RESPONDED · <%= total %> of <%= total %> failed
+<% elsif consensus %>
+✓ MAJORITY: <%= consensus["count"] || consensus[:count] %> of <%= consensus["total"] || consensus[:total] %> resolvers see <%= consensus_value %>
+<% if dissenters.any? %>⚠ <%= dissenters.size %> dissenter<%= "s" if dissenters.size != 1 %><% end %>
+<% if failures.any? %>✗ <%= failures.size %> failure<%= "s" if failures.size != 1 %><% end %>
+<% else %>
+⚠ NO CONSENSUS · <%= dissenters.map { |r| Array(r["values"] || r[:values]).sort }.uniq.size %> distinct values across <%= dissenters.size %> responding resolvers
+<% end %>
+</pre>
+</div>
+
+<%# ─── RESOLVERS TABLE ────────────────────────────────────────────────────────%>
+<div class="py-2 border-t border-line" data-section="a">
+  <div class="flex items-center justify-between mb-1">
+    <h3 class="text-[11px] tracking-[0.18em] uppercase text-fg font-bold"><span aria-hidden="true">▸ </span>Resolvers (<%= total %>)</h3>
+    <button type="button" class="text-mute hover:text-cyan text-[10px]"
+            data-controller="copy" data-action="click->copy#copySection"
+            data-copy-section-value="a">[y a]</button>
+  </div>
+
+  <table class="w-full text-fg" data-controller="sortable-table">
+    <thead>
+      <tr class="text-mute text-left">
+        <th class="pr-2"   data-sort-key="status">STATUS</th>
+        <th class="pr-2"   data-sort-key="ip">RESOLVER</th>
+        <th class="pr-2"   data-sort-key="operator">OPERATOR</th>
+        <th class="pr-2">VALUE</th>
+        <th class="pr-2 text-right" data-sort-key="ttl" data-sort-as="number">TTL</th>
+        <th class="pr-2 text-right" data-sort-key="ms"  data-sort-as="number">ms</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% resolvers.each do |row|
+           status   = (row["status"] || row[:status]).to_s
+           icon, cls = status_icon.call(status, row)
+           operator = row["operator"] || row[:operator]
+           region   = row["region"] || row[:region]
+           ip       = row["ip"] || row[:ip]
+           ttl      = row["ttl"] || row[:ttl]
+           ms       = row["latency_ms"] || row[:latency_ms] %>
+        <tr>
+          <td class="pr-2 <%= cls %>" data-sort-cell="status" data-sort-value="<%= status %>"><%= icon %></td>
+          <td class="pr-2" data-sort-cell="ip"><%= ip %></td>
+          <td class="pr-2" data-sort-cell="operator"><%= operator %><% if region && region != "Global anycast" %> <span class="text-mute">(<%= region.split.first %>)</span><% end %></td>
+          <td class="pr-2"><%= format_value.call(row) %></td>
+          <td class="pr-2 text-right text-mute" data-sort-cell="ttl"><%= ttl || "—" %></td>
+          <td class="pr-2 text-right text-mute" data-sort-cell="ms"><%= ms || "—" %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<%# ─── ISSUES (reuses existing severity tag/styling) ──────────────────────────%>
+<% issues = (tool_run.issues || []).map { |i| i.is_a?(Hash) ? i : i.to_h } %>
+<% if issues.any? %>
+  <div class="py-2 border-t border-line" data-section="b">
+    <div class="flex items-center justify-between mb-1">
+      <h3 class="text-[11px] tracking-[0.18em] uppercase text-fg font-bold"><span aria-hidden="true">▸ </span>Issues</h3>
+      <button type="button" class="text-mute hover:text-cyan text-[10px]"
+              data-controller="copy" data-action="click->copy#copySection"
+              data-copy-section-value="b">[y b]</button>
+    </div>
+    <% issues.each do |issue| %>
+      <div class="flex gap-2 py-[1px]">
+        <%= render "results/severity_tag", severity: (issue["severity"] || issue[:severity]) %>
+        <span class="text-fg"><%= issue["title"] || issue[:title] %><%
+          msg = issue["message"] || issue[:message]; if msg.present? %> — <span class="text-fg-dim"><%= msg %></span><% end %></span>
+      </div>
+    <% end %>
+  </div>
+<% end %>
