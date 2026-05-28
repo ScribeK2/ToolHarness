@@ -14,6 +14,7 @@ class ToolHarness::HostNormalizerTest < ActiveSupport::TestCase
     ["example.com:8080",                   "example.com:8080",       "example.com:8080"],
     ["example.com:8080/admin",             "example.com:8080",       "example.com:8080/admin"],
     ["ftp://example.com",                  "ftp://example.com",      "ftp://example.com"],
+    ["ftp://example.com/path",             "ftp://example.com/path", "ftp://example.com/path"],
     ["example.com",                        "example.com",            "example.com"],
     ["example.com/foo/",                   "example.com",            "example.com/foo"],
     ["",                                   "",                       ""],
