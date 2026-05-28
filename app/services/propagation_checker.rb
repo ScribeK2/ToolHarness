@@ -128,7 +128,7 @@ class PropagationChecker
     consensus = nil
     dissenters = []
 
-    if majority_pair && oks.any?
+    if majority_pair
       majority_value, majority_list = majority_pair
       if majority_list.size * 2 > oks.size
         consensus = { value: majority_value, count: majority_list.size, total: oks.size }
@@ -139,6 +139,8 @@ class PropagationChecker
     end
 
     {
+      # success: only false when every resolver bombed with :error (catch-all).
+      # NXDOMAIN / SERVFAIL / timeout still count as "the tool worked, answer was negative."
       success: oks.any? || sorted.any? { |r| r[:status] != :error },
       domain: @domain,
       record_type: @record_type,

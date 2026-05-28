@@ -213,9 +213,9 @@ class PropagationCheckerTest < ActiveSupport::TestCase
   test "aggregate: failures separated from OK pool" do
     ips = PropagationChecker::RESOLVERS.map { |r| r[:ip] }
     good = ips.first(15).map { |ip| per(ip, values: ["1.2.3.4"]) }
-    fail = ips.last(5).map  { |ip| per(ip, status: :timeout, ttl: nil) }
+    errored = ips.last(5).map { |ip| per(ip, status: :timeout, ttl: nil) }
     agg = PropagationChecker.new("example.com", record_type: "A")
-      .send(:aggregate, good + fail)
+      .send(:aggregate, good + errored)
 
     assert_equal 15, agg[:consensus][:count]
     assert_equal 15, agg[:consensus][:total]
@@ -242,5 +242,25 @@ class PropagationCheckerTest < ActiveSupport::TestCase
 
     operators_then_ips = agg[:resolvers].map { |r| [r[:operator], r[:ip]] }
     assert_equal operators_then_ips, operators_then_ips.sort
+  end
+
+  test "aggregate: all :error resolvers -> success false" do
+    per_resolver = PropagationChecker::RESOLVERS.map { |r| per(r[:ip], status: :error, ttl: nil) }
+    agg = PropagationChecker.new("example.com", record_type: "A")
+      .send(:aggregate, per_resolver)
+
+    refute agg[:success]
+    assert_nil agg[:consensus]
+    assert_equal 20, agg[:failures].size
+  end
+
+  test "aggregate: all :nxdomain resolvers -> success true (definitive negative answer)" do
+    per_resolver = PropagationChecker::RESOLVERS.map { |r| per(r[:ip], status: :nxdomain, ttl: nil) }
+    agg = PropagationChecker.new("example.com", record_type: "A")
+      .send(:aggregate, per_resolver)
+
+    assert agg[:success]
+    assert_nil agg[:consensus]
+    assert_equal 20, agg[:failures].size
   end
 end
