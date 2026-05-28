@@ -53,4 +53,41 @@ class PropagationChecker
   def build_real_resolver(address)
     Dnsruby::Resolver.new(nameserver: address, timeout: TIMEOUT)
   end
+
+  def normalize_values(record_type, answer)
+    rrs = answer_for_type(record_type, answer)
+    case record_type
+    when "A", "AAAA"
+      rrs.map { |r| r.address.to_s }.sort
+    when "MX"
+      rrs
+        .sort_by { |r| [r.preference.to_i, r.exchange.to_s] }
+        .map { |r| "#{r.preference} #{strip_dot(r.exchange)}" }
+    when "NS"
+      rrs.map { |r| strip_dot(r.nsdname).downcase }.sort
+    when "CNAME"
+      rrs.map { |r| strip_dot(r.rdata).downcase }.sort
+    when "TXT"
+      rrs.map { |r| Array(r.strings).join }.sort
+    when "SOA"
+      rrs.map { |r| "#{strip_dot(r.mname)} #{strip_dot(r.rname)} #{r.serial}" }
+    when "CAA"
+      rrs.map { |r| "#{r.flags} #{r.tag} #{r.value}" }.sort
+    else
+      []
+    end
+  end
+
+  def answer_for_type(record_type, answer)
+    target = dnsruby_type(record_type)
+    Array(answer).select { |r| r.type == target }
+  end
+
+  def dnsruby_type(record_type)
+    Dnsruby::Types.const_get(record_type)
+  end
+
+  def strip_dot(host)
+    host.to_s.sub(/\.\z/, "")
+  end
 end
