@@ -117,6 +117,39 @@ class PropagationChecker
     base.merge(status: :error, error: short_error(e), latency_ms: monotonic_ms - started)
   end
 
+  def aggregate(per_resolver)
+    sorted = per_resolver.sort_by { |r| [r[:operator].to_s, r[:ip].to_s] }
+    oks     = sorted.select { |r| r[:status] == :ok }
+    failures = sorted.reject { |r| r[:status] == :ok }
+
+    groups = oks.group_by { |r| r[:values].sort }
+    majority_pair = groups.max_by { |_v, list| list.size }
+
+    consensus = nil
+    dissenters = []
+
+    if majority_pair && oks.any?
+      majority_value, majority_list = majority_pair
+      if majority_list.size * 2 > oks.size
+        consensus = { value: majority_value, count: majority_list.size, total: oks.size }
+        dissenters = oks - majority_list
+      else
+        dissenters = oks
+      end
+    end
+
+    {
+      success: oks.any? || sorted.any? { |r| r[:status] != :error },
+      domain: @domain,
+      record_type: @record_type,
+      resolvers: sorted,
+      consensus: consensus,
+      dissenters: dissenters,
+      failures: failures,
+      issues: []  # filled in by Task 8
+    }
+  end
+
   def monotonic_ms
     (Process.clock_gettime(Process::CLOCK_MONOTONIC) * 1000).to_i
   end

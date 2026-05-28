@@ -166,4 +166,81 @@ class PropagationCheckerTest < ActiveSupport::TestCase
     entry = PropagationChecker::RESOLVERS.find { |r| r[:ip] == "8.8.8.8" }
     assert_equal 300, checker.send(:query_one, entry)[:ttl]
   end
+
+  def per(ip, status: :ok, values: [], ttl: 3600)
+    entry = PropagationChecker::RESOLVERS.find { |r| r[:ip] == ip } ||
+            { id: "fake-#{ip}", ip: ip, operator: "Fake", region: "Fake" }
+    entry.merge(status: status, values: values, ttl: ttl, error: nil, latency_ms: 10)
+  end
+
+  test "aggregate: full consensus across all OK resolvers" do
+    per_resolver = PropagationChecker::RESOLVERS.map { |r| per(r[:ip], values: ["1.2.3.4"]) }
+    agg = PropagationChecker.new("example.com", record_type: "A")
+      .send(:aggregate, per_resolver)
+
+    assert agg[:success]
+    assert_equal ["1.2.3.4"], agg[:consensus][:value]
+    assert_equal 20, agg[:consensus][:count]
+    assert_equal 20, agg[:consensus][:total]
+    assert_empty agg[:dissenters]
+    assert_empty agg[:failures]
+  end
+
+  test "aggregate: partial propagation surfaces dissenters" do
+    ips = PropagationChecker::RESOLVERS.map { |r| r[:ip] }
+    majority = ips.first(18).map { |ip| per(ip, values: ["1.2.3.4"]) }
+    dissent  = ips.last(2).map  { |ip| per(ip, values: ["9.9.9.9"]) }
+    agg = PropagationChecker.new("example.com", record_type: "A")
+      .send(:aggregate, majority + dissent)
+
+    assert_equal ["1.2.3.4"], agg[:consensus][:value]
+    assert_equal 18, agg[:consensus][:count]
+    assert_equal 2, agg[:dissenters].size
+    assert_empty agg[:failures]
+  end
+
+  test "aggregate: even four-way split yields no consensus" do
+    ips = PropagationChecker::RESOLVERS.map { |r| r[:ip] }.first(20)
+    groups = [["1.1.1.1"], ["2.2.2.2"], ["3.3.3.3"], ["4.4.4.4"]]
+    per_resolver = ips.each_with_index.map { |ip, i| per(ip, values: groups[i % 4]) }
+    agg = PropagationChecker.new("example.com", record_type: "A")
+      .send(:aggregate, per_resolver)
+
+    assert_nil agg[:consensus]
+    assert_equal 20, agg[:dissenters].size
+  end
+
+  test "aggregate: failures separated from OK pool" do
+    ips = PropagationChecker::RESOLVERS.map { |r| r[:ip] }
+    good = ips.first(15).map { |ip| per(ip, values: ["1.2.3.4"]) }
+    fail = ips.last(5).map  { |ip| per(ip, status: :timeout, ttl: nil) }
+    agg = PropagationChecker.new("example.com", record_type: "A")
+      .send(:aggregate, good + fail)
+
+    assert_equal 15, agg[:consensus][:count]
+    assert_equal 15, agg[:consensus][:total]
+    assert_equal 5, agg[:failures].size
+  end
+
+  test "aggregate: order-independent values (MX returned in different orders agree)" do
+    a = per("8.8.8.8", values: ["10 mx1.example.com", "20 mx2.example.com"])
+    b = per("1.1.1.1", values: ["20 mx2.example.com", "10 mx1.example.com"])
+    # Note: in production, normalize_values already sorts MX by priority, so this
+    # scenario is mostly a defense-in-depth check.
+    per_resolver = [a, b]
+    agg = PropagationChecker.new("example.com", record_type: "MX")
+      .send(:aggregate, per_resolver)
+
+    assert_equal 2, agg[:consensus][:count]
+  end
+
+  test "aggregate: resolvers sorted by operator then ip for stable display" do
+    ips = PropagationChecker::RESOLVERS.map { |r| r[:ip] }
+    per_resolver = ips.map { |ip| per(ip, values: ["1.2.3.4"]) }.shuffle
+    agg = PropagationChecker.new("example.com", record_type: "A")
+      .send(:aggregate, per_resolver)
+
+    operators_then_ips = agg[:resolvers].map { |r| [r[:operator], r[:ip]] }
+    assert_equal operators_then_ips, operators_then_ips.sort
+  end
 end
