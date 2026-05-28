@@ -30,6 +30,10 @@ class ToolRun < ApplicationRecord
     run
   end
 
+  def tool_class
+    ToolHarness::Registry.find_tool(tool_key)
+  end
+
   def apply_result!(result, started_at: nil, completed_at: nil)
     completed = completed_at || Time.current
     started   = started_at || self.started_at || (completed - (result.execution_time || 0).seconds)

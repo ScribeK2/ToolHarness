@@ -134,4 +134,17 @@ class ToolRunTest < ActiveSupport::TestCase
     assert_not run.success
     assert_equal "boom", run.error
   end
+
+  # ---- tool_class instance method ----
+
+  test "#tool_class resolves via the registry from tool_key" do
+    ToolHarness::Registry.auto_discover!
+    run = ToolRun.new(tool_key: "dns_lookup", tool_name: "X", category: "dns")
+    assert_equal Tools::DnsLookup, run.tool_class
+  end
+
+  test "#tool_class returns nil when tool_key is unknown" do
+    run = ToolRun.new(tool_key: "no_such_tool", tool_name: "X", category: "dns")
+    assert_nil run.tool_class
+  end
 end
