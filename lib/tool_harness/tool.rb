@@ -42,6 +42,10 @@ module ToolHarness
       def preserve_path_in_input?
         false
       end
+
+      def result_partial
+        nil
+      end
     end
 
     def execute(params)

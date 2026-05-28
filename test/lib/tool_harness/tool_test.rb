@@ -134,6 +134,23 @@ class ToolHarness::ToolTest < ActiveSupport::TestCase
     assert Tools::HttpInspect.preserve_path_in_input?
   end
 
+  test "result_partial defaults to nil" do
+    klass = make_tool_class("Tools::TestProbeResultPartialDefault") do
+      def self.tool_name = "Result Partial Default Probe"
+      def self.category  = :test
+    end
+    assert_nil klass.result_partial
+  end
+
+  test "tools can override result_partial" do
+    klass = make_tool_class("Tools::TestProbeResultPartialOverride") do
+      def self.tool_name      = "Result Partial Override Probe"
+      def self.category       = :test
+      def self.result_partial = "results/tools/foo"
+    end
+    assert_equal "results/tools/foo", klass.result_partial
+  end
+
   private
 
   # Build a Tool-including class with a fixed name, run a config block, and
