@@ -74,7 +74,7 @@ jobs:
 
       - name: Create GitHub Release
         if: github.event_name == 'push' && github.ref_type == 'tag'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             ToolHarness-${{ steps.version.outputs.version }}-x86_64.AppImage
