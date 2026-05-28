@@ -41,6 +41,12 @@ jobs:
             libssl-dev libyaml-dev libffi-dev libsqlite3-dev libreadline-dev \
             zlib1g-dev libgmp-dev patchelf file fuse libfuse2 imagemagick
 
+      - name: Run AppRun lib tests
+        run: |
+          bash test/script/lib/assert_test.sh
+          bash test/script/appimage_takeover_helpers_test.sh
+          bash test/script/appimage_takeover_integration_test.sh
+
       - name: Build AppImage
         env:
           VERSION: ${{ steps.version.outputs.version }}
