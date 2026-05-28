@@ -113,6 +113,27 @@ class ToolHarness::ToolTest < ActiveSupport::TestCase
     Rails.cache = original_cache
   end
 
+  test "preserve_path_in_input? defaults to false" do
+    klass = make_tool_class("Tools::TestProbePreservePathDefault") do
+      def self.category = :test
+      def self.tool_name = "Preserve Path Default Probe"
+    end
+    refute klass.preserve_path_in_input?
+  end
+
+  test "preserve_path_in_input? can be overridden to true" do
+    klass = make_tool_class("Tools::TestProbePreservePathTrue") do
+      def self.category = :test
+      def self.tool_name = "Preserve Path True Probe"
+      def self.preserve_path_in_input? = true
+    end
+    assert klass.preserve_path_in_input?
+  end
+
+  test "Tools::HttpInspect opts into preserve_path_in_input?" do
+    assert Tools::HttpInspect.preserve_path_in_input?
+  end
+
   private
 
   # Build a Tool-including class with a fixed name, run a config block, and

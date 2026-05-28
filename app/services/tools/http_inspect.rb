@@ -8,6 +8,7 @@ module Tools
     def self.form_fields = { domain: :text }
     def self.input_type = :domain
     def self.cacheable? = false
+    def self.preserve_path_in_input? = true
 
     def execute(params)
       raw = ::HttpChecker.check(params[:domain])

@@ -38,6 +38,10 @@ module ToolHarness
       def cache_duration
         1.hour
       end
+
+      def preserve_path_in_input?
+        false
+      end
     end
 
     def execute(params)
