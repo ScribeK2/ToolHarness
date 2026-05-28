@@ -1,0 +1,56 @@
+require "dnsruby"
+
+class PropagationChecker
+  TIMEOUT = 10           # per-resolver dnsruby timeout (seconds)
+  JOIN_TIMEOUT = 11      # outer Thread#join cap (seconds)
+
+  SEVERITY_CRITICAL = "critical"
+  SEVERITY_WARNING  = "warning"
+  SEVERITY_INFO     = "info"
+
+  RESOLVERS = [
+    { id: "google-1",      ip: "8.8.8.8",         operator: "Google",        region: "Global anycast" },
+    { id: "google-2",      ip: "8.8.4.4",         operator: "Google",        region: "Global anycast" },
+    { id: "cloudflare-1",  ip: "1.1.1.1",         operator: "Cloudflare",    region: "Global anycast" },
+    { id: "cloudflare-2",  ip: "1.0.0.1",         operator: "Cloudflare",    region: "Global anycast" },
+    { id: "quad9",         ip: "9.9.9.9",         operator: "Quad9",         region: "CH (anycast)"   },
+    { id: "opendns-1",     ip: "208.67.222.222",  operator: "OpenDNS",       region: "Global anycast" },
+    { id: "opendns-2",     ip: "208.67.220.220",  operator: "OpenDNS",       region: "Global anycast" },
+    { id: "verisign",      ip: "64.6.64.6",       operator: "Verisign",      region: "US"             },
+    { id: "yandex",        ip: "77.88.8.8",       operator: "Yandex",        region: "RU"             },
+    { id: "adguard",       ip: "94.140.14.14",    operator: "AdGuard",       region: "CY/Global"      },
+    { id: "comodo",        ip: "8.26.56.26",      operator: "Comodo",        region: "US"             },
+    { id: "neustar",       ip: "156.154.70.1",    operator: "Neustar",       region: "US"             },
+    { id: "dns-watch",     ip: "84.200.69.80",    operator: "DNS.WATCH",     region: "DE"             },
+    { id: "level3",        ip: "4.2.2.1",         operator: "Level3",        region: "US"             },
+    { id: "alternate",     ip: "76.76.19.19",     operator: "Alternate",     region: "US"             },
+    { id: "cleanbrowsing", ip: "185.228.168.9",   operator: "CleanBrowsing", region: "Global"         },
+    { id: "norton",        ip: "199.85.126.10",   operator: "Norton",        region: "US"             },
+    { id: "uncensoreddns", ip: "91.239.100.100",  operator: "UncensoredDNS", region: "DK"             },
+    { id: "freenom",       ip: "80.80.80.80",     operator: "Freenom",       region: "NL"             },
+    { id: "controld",      ip: "76.76.2.0",       operator: "Control D",     region: "Global anycast" }
+  ].freeze
+
+  SUPPORTED_TYPES = %w[A AAAA MX NS CNAME TXT SOA CAA].freeze
+
+  def self.check(domain, record_type:, resolver_factory: nil)
+    new(domain, record_type: record_type, resolver_factory: resolver_factory).check
+  end
+
+  def initialize(domain, record_type:, resolver_factory: nil)
+    @domain = domain.to_s.strip.downcase
+    @record_type = record_type.to_s.upcase
+    @resolver_factory = resolver_factory || method(:build_real_resolver)
+  end
+
+  def check
+    # Implemented in Task 9.
+    raise NotImplementedError
+  end
+
+  private
+
+  def build_real_resolver(address)
+    Dnsruby::Resolver.new(nameserver: address, timeout: TIMEOUT)
+  end
+end
