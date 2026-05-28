@@ -44,8 +44,26 @@ class PropagationChecker
   end
 
   def check
-    # Implemented in Task 9.
-    raise NotImplementedError
+    threads = RESOLVERS.map do |entry|
+      Thread.new { query_one(entry) }
+    end
+
+    per_resolver = threads.zip(RESOLVERS).map do |t, entry|
+      if t.join(JOIN_TIMEOUT)
+        t.value
+      else
+        t.kill
+        entry.merge(
+          status: :timeout,
+          values: [],
+          ttl: nil,
+          error: "Outer timeout: thread exceeded #{JOIN_TIMEOUT}s",
+          latency_ms: JOIN_TIMEOUT.to_i * 1000
+        )
+      end
+    end
+
+    aggregate(per_resolver)
   end
 
   private

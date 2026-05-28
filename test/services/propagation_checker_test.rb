@@ -1,4 +1,5 @@
 require "test_helper"
+require "concurrent/set"
 
 class PropagationCheckerTest < ActiveSupport::TestCase
   # Lightweight RR stand-in for normalization tests. We only need
@@ -317,5 +318,52 @@ class PropagationCheckerTest < ActiveSupport::TestCase
     agg = checker.send(:aggregate, per_resolver)
 
     assert_empty agg[:issues]
+  end
+
+  test "#check fans out to all 20 resolvers" do
+    queried = Concurrent::Set.new
+    fac = ->(ip) {
+      queried << ip
+      FakeResolver.new(ip, ok: [a_rr("1.2.3.4", ttl: 600)])
+    }
+    agg = PropagationChecker.new("example.com", record_type: "A", resolver_factory: fac).check
+
+    assert_equal 20, queried.size
+    assert_equal 20, agg[:resolvers].size
+    assert_equal ["1.2.3.4"], agg[:consensus][:value]
+  end
+
+  test "#check class method delegates to instance" do
+    fac = factory(PropagationChecker::RESOLVERS.to_h { |r| [r[:ip], { ok: [a_rr("1.2.3.4")] }] })
+    agg = PropagationChecker.check("example.com", record_type: "A", resolver_factory: fac)
+    assert agg[:consensus]
+  end
+
+  test "#check caps total wait via outer Thread#join" do
+    # One resolver sleeps 30s; outer join is 11s. Total should be < 13s.
+    slow_ip = PropagationChecker::RESOLVERS.first[:ip]
+    map = PropagationChecker::RESOLVERS.to_h do |r|
+      if r[:ip] == slow_ip
+        [r[:ip], { sleep: 30, ok: [a_rr("1.2.3.4")] }]
+      else
+        [r[:ip], { ok: [a_rr("1.2.3.4")] }]
+      end
+    end
+    fac = factory(map)
+
+    started = Time.now
+    agg = PropagationChecker.new("example.com", record_type: "A", resolver_factory: fac).check
+    elapsed = Time.now - started
+
+    assert elapsed < 13, "expected <13s, took #{elapsed}s"
+    slow_record = agg[:resolvers].find { |r| r[:ip] == slow_ip }
+    assert_equal :timeout, slow_record[:status]
+  end
+
+  test "#check downcases and strips the domain" do
+    fac = factory(PropagationChecker::RESOLVERS.to_h { |r| [r[:ip], { ok: [a_rr("1.2.3.4")] }] })
+    agg = PropagationChecker.new("  ExAmPlE.com  ", record_type: "a", resolver_factory: fac).check
+    assert_equal "example.com", agg[:domain]
+    assert_equal "A", agg[:record_type]
   end
 end
