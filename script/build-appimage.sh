@@ -154,6 +154,7 @@ ln -sf toolharness.png "$APP_DIR/.DirIcon"
 
 # ---- Install AppRun ----
 cp "$REPO_ROOT/script/AppRun.tmpl" "$APP_DIR/AppRun"
+cp "$REPO_ROOT/script/AppRun-takeover.sh" "$APP_DIR/AppRun-takeover.sh"
 chmod +x "$APP_DIR/AppRun"
 
 # ---- Walk ELF deps with linuxdeploy ----

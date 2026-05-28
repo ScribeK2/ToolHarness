@@ -42,6 +42,10 @@ export SSL_CERT_FILE="$HERE/usr/etc/ssl/certs/ca-certificates.crt"
 export LD_LIBRARY_PATH="$HERE/usr/lib:${LD_LIBRARY_PATH:-}"
 cd "$HERE/usr/share/toolharness"
 
+# 1z. Source the update-takeover helpers (ver_lt, takeover, appimage_lock_dispatch).
+# Installed alongside AppRun by script/build-appimage.sh.
+. "$HERE/AppRun-takeover.sh"
+
 # 1a. Browser launcher cascade.
 # Returns 0 on first launcher that exits 0 within 3 seconds.
 # Tries $BROWSER first (user override), then the standard cascade.
@@ -119,15 +123,11 @@ TH_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/toolharness"
 TH_STATE="${XDG_STATE_HOME:-$HOME/.local/state}/toolharness"
 mkdir -p "$TH_DATA" "$TH_CONFIG" "$TH_STATE" "$TH_STATE/log" "$TH_STATE/tmp"
 
-# 3. Single-instance lock
+# 3. Single-instance lock + version-aware update takeover.
+# See .internal/specs/2026-05-28-appimage-update-takeover-design.md.
 LOCK_FILE="$TH_STATE/toolharness.lock"
-exec 9>"$LOCK_FILE"
-if ! flock -n 9; then
-  existing_port=$(cat "$TH_STATE/port" 2>/dev/null || echo 3000)
-  echo "ToolHarness already running on http://localhost:$existing_port"
-  surface_url "$existing_port"
-  exit 0
-fi
+OUR_VERSION=$(cat "$HERE/usr/share/toolharness/VERSION")
+appimage_lock_dispatch
 
 # 4. Persist SECRET_KEY_BASE (once per machine)
 if [ ! -f "$TH_CONFIG/secret_key_base" ]; then
@@ -175,12 +175,13 @@ else
   LOG_ERR="$TH_STATE/log/server.err"
 fi
 
-# 9. Spawn jobs worker in background
-bundle exec bin/jobs >>"$LOG_OUT" 2>>"$LOG_ERR" &
+# 9. Spawn jobs worker in background. fd 9 closed in the child so future
+# puma cluster-mode workers (or any fork from jobs) don't inherit the flock.
+( exec 9<&-; bundle exec bin/jobs >>"$LOG_OUT" 2>>"$LOG_ERR" ) &
 JOBS_PID=$!
 
 # 10. Trap shutdown — clean up both jobs and puma on signal
-trap 'kill -TERM "$PUMA_PID" 2>/dev/null; kill -TERM "$JOBS_PID" 2>/dev/null; wait 2>/dev/null; exit' INT TERM
+trap 'kill -TERM "$PUMA_PID" 2>/dev/null; kill -TERM "$JOBS_PID" 2>/dev/null; rm -f "$TH_STATE/running_version" "$TH_STATE/running_pid"; wait 2>/dev/null; exit' INT TERM
 
 # 11. Auto-open browser + always surface the URL (background subshell, polls /up).
 # Polls up to 120s; heartbeats to stderr every ~10s in TTY mode so a slow first-run
@@ -204,8 +205,12 @@ trap 'kill -TERM "$PUMA_PID" 2>/dev/null; kill -TERM "$JOBS_PID" 2>/dev/null; wa
   echo "Check logs: $TH_STATE/log/server.err" >&2
 ) &
 
-# 12. Run Puma in foreground (NOT exec — we need the trap to fire on signal)
+# 12. Run Puma in foreground (NOT exec — we need the trap to fire on signal).
+# fd 9 closed in the child so puma (and any future cluster-mode workers) don't
+# inherit the flock — kept as a future-proofing measure; the takeover path
+# already kills the immediate children via pgrep -P.
 bind_addr="${TOOLHARNESS_BIND:-127.0.0.1}"
-bundle exec puma -e production -b "tcp://${bind_addr}:$port" >>"$LOG_OUT" 2>>"$LOG_ERR" &
+( exec 9<&-; bundle exec puma -e production -b "tcp://${bind_addr}:$port" >>"$LOG_OUT" 2>>"$LOG_ERR" ) &
 PUMA_PID=$!
 wait "$PUMA_PID"
+rm -f "$TH_STATE/running_version" "$TH_STATE/running_pid"
