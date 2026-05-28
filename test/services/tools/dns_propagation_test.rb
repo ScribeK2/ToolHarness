@@ -18,7 +18,6 @@ class Tools::DnsPropagationTest < ActiveSupport::TestCase
   end
 
   test "registered in the registry under :dns_propagation" do
-    ToolHarness::Registry.auto_discover!
     assert_equal Tools::DnsPropagation, ToolHarness::Registry.find_tool(:dns_propagation)
     assert_includes ToolHarness::Registry.tools_for_category(:dns), Tools::DnsPropagation
   end
@@ -87,5 +86,18 @@ class Tools::DnsPropagationTest < ActiveSupport::TestCase
     }
     summary = Tools::DnsPropagation.new.send(:build_summary, raw)
     assert_equal "No resolver responded — 20 of 20 failed.", summary
+  end
+
+  test "summary: partial propagation with multiple dissenters/failures pluralizes" do
+    raw = {
+      success: true, domain: "example.com", record_type: "A",
+      resolvers: Array.new(20) { { status: :ok } },
+      consensus: { value: ["1.2.3.4"], count: 15, total: 18 },
+      dissenters: Array.new(3) { { status: :ok } },
+      failures: Array.new(2) { { status: :timeout } },
+      issues: []
+    }
+    summary = Tools::DnsPropagation.new.send(:build_summary, raw)
+    assert_equal "A record fully propagated to 15/18 resolvers (3 dissents, 2 failures).", summary
   end
 end

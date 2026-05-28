@@ -37,7 +37,7 @@ module Tools
       rtype = raw[:record_type]
 
       # NXDOMAIN sweep
-      if raw[:issues].any? { |i| (i[:code] || i["code"]) == "nxdomain_consensus" }
+      if raw[:issues].any? { |i| i[:code] == "nxdomain_consensus" }
         return "Domain #{raw[:domain]} does not exist (NXDOMAIN across all #{total} resolvers)."
       end
 
@@ -57,8 +57,8 @@ module Tools
       count = raw[:consensus][:count]
       ok_total = raw[:consensus][:total]
       extras = []
-      extras << "#{raw[:dissenters].size} dissent"  if raw[:dissenters].any?
-      extras << "#{raw[:failures].size} failure"    if raw[:failures].any?
+      extras << "#{raw[:dissenters].size} dissent#{'s' if raw[:dissenters].size != 1}"  if raw[:dissenters].any?
+      extras << "#{raw[:failures].size} failure#{'s' if raw[:failures].size != 1}"      if raw[:failures].any?
       suffix = extras.any? ? " (#{extras.join(', ')})" : ""
 
       "#{rtype} record fully propagated to #{count}/#{ok_total} resolvers#{suffix}."

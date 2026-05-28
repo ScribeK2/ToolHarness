@@ -14,6 +14,7 @@ class Tools::RegistrySweepTest < ActiveSupport::TestCase
     dkim_check
     dmarc_check
     dns_lookup
+    dns_propagation
     email_auth_check
     hosting_diagnostic
     http_inspect
