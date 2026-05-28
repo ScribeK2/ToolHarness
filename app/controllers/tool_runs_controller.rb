@@ -1,4 +1,6 @@
 class ToolRunsController < ApplicationController
+  NORMALIZED_INPUT_TYPES = %i[domain host].freeze
+
   def create
     tool_class = ToolHarness::Registry.find_tool(params[:tool_key])
     raise ActionController::RoutingError, "Tool not found: #{params[:tool_key]}" unless tool_class
@@ -26,6 +28,20 @@ class ToolRunsController < ApplicationController
 
   def run_params(tool_class)
     permitted = tool_class.form_fields.keys
-    params.fetch(:tool_run, {}).permit(*permitted).to_h.symbolize_keys
+    attrs = params.fetch(:tool_run, {}).permit(*permitted).to_h.symbolize_keys
+    normalize_primary_field!(attrs, tool_class)
+    attrs
+  end
+
+  def normalize_primary_field!(attrs, tool_class)
+    return unless NORMALIZED_INPUT_TYPES.include?(tool_class.input_type)
+
+    primary = tool_class.form_fields.keys.first
+    return unless attrs.key?(primary)
+
+    attrs[primary] = ToolHarness::HostNormalizer.call(
+      attrs[primary],
+      preserve_path: tool_class.preserve_path_in_input?
+    )
   end
 end
