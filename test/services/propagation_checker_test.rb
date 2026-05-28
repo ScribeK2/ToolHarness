@@ -272,7 +272,6 @@ class PropagationCheckerTest < ActiveSupport::TestCase
     per_resolver = PropagationChecker::RESOLVERS.map { |r| per(r[:ip], status: :nxdomain, ttl: nil) }
     checker = PropagationChecker.new("example.com", record_type: "A")
     agg = checker.send(:aggregate, per_resolver)
-    agg[:issues] = checker.send(:detect_issues, agg)
 
     issue = find_issue(agg, "nxdomain_consensus")
     assert issue, "expected nxdomain_consensus issue, got: #{agg[:issues].map { |i| i[:code] }}"
@@ -285,7 +284,6 @@ class PropagationCheckerTest < ActiveSupport::TestCase
                    ips.last(2).map  { |ip| per(ip, values: ["9.9.9.9"]) }
     checker = PropagationChecker.new("example.com", record_type: "A")
     agg = checker.send(:aggregate, per_resolver)
-    agg[:issues] = checker.send(:detect_issues, agg)
 
     issue = find_issue(agg, "partial_propagation")
     assert issue
@@ -298,7 +296,6 @@ class PropagationCheckerTest < ActiveSupport::TestCase
     per_resolver = ips.each_with_index.map { |ip, i| per(ip, values: groups[i % 4]) }
     checker = PropagationChecker.new("example.com", record_type: "A")
     agg = checker.send(:aggregate, per_resolver)
-    agg[:issues] = checker.send(:detect_issues, agg)
 
     assert find_issue(agg, "no_consensus")
     refute find_issue(agg, "partial_propagation"), "no_consensus and partial_propagation are mutually exclusive"
@@ -310,7 +307,6 @@ class PropagationCheckerTest < ActiveSupport::TestCase
                    ips.last(7).map  { |ip| per(ip, status: :timeout, ttl: nil) }
     checker = PropagationChecker.new("example.com", record_type: "A")
     agg = checker.send(:aggregate, per_resolver)
-    agg[:issues] = checker.send(:detect_issues, agg)
 
     assert find_issue(agg, "widespread_failure")
   end
@@ -319,7 +315,6 @@ class PropagationCheckerTest < ActiveSupport::TestCase
     per_resolver = PropagationChecker::RESOLVERS.map { |r| per(r[:ip], values: ["1.2.3.4"]) }
     checker = PropagationChecker.new("example.com", record_type: "A")
     agg = checker.send(:aggregate, per_resolver)
-    agg[:issues] = checker.send(:detect_issues, agg)
 
     assert_empty agg[:issues]
   end
