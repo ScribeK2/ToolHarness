@@ -30,7 +30,8 @@ module Investigations
           key: "email_delivery",
           label: "Email Delivery",
           probes: [
-            "dns_lookup", "spf_check", "dkim_check", "dmarc_check", "hosting_diagnostic",
+            "dns_lookup", "spf_check", "dkim_check", "dmarc_check",
+            { tool: "hosting_diagnostic", depends_on: "dns_lookup", target: :primary_mx_host },
             { tool: "blacklist", depends_on: "dns_lookup", target: :primary_mx_host }
           ],
           correlator: Investigations::EmailDeliveryCorrelator

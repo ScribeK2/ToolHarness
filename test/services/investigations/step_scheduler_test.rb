@@ -68,4 +68,23 @@ class Investigations::StepSchedulerTest < ActiveJob::TestCase
       Investigations::StepScheduler.new(inv).call
     end
   end
+
+  test "retargets both hosting_diagnostic and blacklist at the primary MX host" do
+    inv = Investigation.create!(domain: "example.com", track: "email_delivery", status: "running", started_at: Time.current)
+    inv.tool_runs.create!(tool_key: "dns_lookup", tool_name: "DNS", category: "dns", status: "completed",
+                          success: true, step_order: 0, result_data: { "mx_records" => [{ "priority" => 10, "host" => "mx1.mail.com." }] })
+    hosting = inv.tool_runs.create!(tool_key: "hosting_diagnostic", tool_name: "Hosting", category: "hosting",
+                                    status: "pending", step_order: 4, input: { "domain" => "example.com" })
+    blacklist = inv.tool_runs.create!(tool_key: "blacklist", tool_name: "Blacklist", category: "diagnostics",
+                                      status: "pending", step_order: 5, input: { "domain" => "example.com" })
+
+    assert_enqueued_jobs 2, only: ToolRunJob do
+      Investigations::StepScheduler.new(inv).call
+    end
+
+    assert_equal "mx1.mail.com", hosting.reload.input["domain"]
+    assert_equal "mx1.mail.com", blacklist.reload.input["domain"]
+    assert_equal "processing", hosting.status
+    assert_equal "processing", blacklist.status
+  end
 end

@@ -57,7 +57,7 @@ module Investigations
       return [] if mx_records.empty?
       return [] if (open_ports & MAIL_PORTS).any?
       [finding("critical", "smtp_unreachable", "MX present but no mail ports answering",
-               "MX records route mail to a host, but none of SMTP/IMAP/POP3 (25/465/587/143/993/110/995) accepted a connection from outside.",
+               "The primary MX host (from DNS) accepted no connection on any mail port — SMTP/IMAP/POP3 (25/465/587/143/993/110/995) — from outside.",
                %w[dns_lookup hosting_diagnostic],
                "The mail host may be down or firewalled — escalate with Graylog Postfix/Dovecot logs if it should be up.")]
     end
