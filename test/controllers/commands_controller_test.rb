@@ -112,6 +112,21 @@ class CommandsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/usage/, response.body)
   end
 
+  test "investigate with a known track starts that track and redirects" do
+    assert_difference -> { Investigation.count }, 1 do
+      post commands_path, params: { cmd: ":investigate example.com email_delivery" }, as: :turbo_stream
+    end
+    assert_equal "email_delivery", Investigation.last.track
+    assert_response :redirect
+  end
+
+  test "investigate with an unknown track shows an error and starts nothing" do
+    assert_no_difference -> { Investigation.count } do
+      post commands_path, params: { cmd: ":investigate example.com bogus" }, as: :turbo_stream
+    end
+    assert_match "unknown track", @response.body
+  end
+
   private
 
   # Extracts the URL-encoded payload from a `data:text/plain;charset=utf-8,...`

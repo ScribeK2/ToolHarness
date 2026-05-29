@@ -15,7 +15,7 @@ module ToolHarness
 
       args = case name
              when :run        then { tool: rest[0], target: rest[1] }.compact
-             when :investigate then { domain: rest[0] }.compact
+             when :investigate then { domain: rest[0], track: rest[1] }.compact
              when :tool   then { name: rest[0] }.compact
              when :target then { value: rest.join(" ") }
              when :copy   then { what: rest[0] || "summary" }
