@@ -19,7 +19,19 @@
     %>
     <div class="flex items-center justify-between mb-2 text-mute">
       <span><span aria-hidden="true">▸ </span><%= tool_run.tool_name.downcase %> · <%= tool_run.input_summary %> · <%= tool_run.status == "failed" ? "failed" : "done #{tool_run.execution_time&.round(2)}s" %></span>
-      <span class="flex items-center gap-3">
+      <div class="flex items-center gap-3">
+        <% siblings = sibling_tools_for(tool_run) %>
+        <% if siblings.any? %>
+          <details class="relative">
+            <summary class="text-mute hover:text-cyan text-[10px] cursor-pointer list-none">[→] in tool ▾</summary>
+            <div class="absolute right-0 z-10 mt-1 bg-elevated border border-line py-1 min-w-[160px]">
+              <% siblings.each do |key, name| %>
+                <%= link_to name, workbench_path(tool: key, target: tool_run.primary_input),
+                      class: "block px-3 py-[2px] text-fg hover:bg-line hover:text-cyan whitespace-nowrap" %>
+              <% end %>
+            </div>
+          </details>
+        <% end %>
         <%= button_to tool_run_rerun_path(tool_run),
               class: "text-mute hover:text-cyan text-[10px]",
               form_class: "inline" do %>↻ re-run<% end %>
@@ -28,7 +40,7 @@
                 data-controller="copy"
                 data-action="click->copy#copySummary"
                 data-copy-text-value="<%= tool_run_ticket_text(tool_run) %>">[y s] copy summary</button>
-      </span>
+      </div>
     </div>
 
     <% if use_custom %>
