@@ -60,4 +60,17 @@ class InvestigationsControllerTest < ActionDispatch::IntegrationTest
     end
     assert_equal "email_delivery", Investigation.last.track
   end
+
+  test "show renders a live next-track button when the suggested track exists" do
+    inv = Investigation.create!(domain: "example.com", track: "orientation", status: "completed",
+                                started_at: 1.minute.ago, completed_at: Time.current,
+                                verdict_status: "issues", suggested_track: "email_delivery",
+                                findings: [{ "severity" => "warning", "code" => "x", "title" => "t", "message" => "m" }])
+    inv.tool_runs.create!(tool_key: "dns_lookup", tool_name: "DNS", category: "dns", status: "completed", success: true, step_order: 0)
+
+    get investigation_path(inv)
+    assert_response :success
+    assert_select "form[action=?]", investigations_path  # button_to renders a form posting to /investigations
+    assert_match "investigate EMAIL DELIVERY", @response.body
+  end
 end
