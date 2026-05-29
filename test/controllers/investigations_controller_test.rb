@@ -46,4 +46,18 @@ class InvestigationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "#investigation_report_#{inv.id}"
     assert_match(/copy report/i, response.body)
   end
+
+  test "create with an unknown track returns 422 and creates nothing" do
+    assert_no_difference -> { Investigation.count } do
+      post investigations_path, params: { domain: "example.com", track: "bogus" }
+    end
+    assert_response :unprocessable_entity
+  end
+
+  test "create with the email_delivery track starts an email investigation" do
+    assert_difference -> { Investigation.count }, 1 do
+      post investigations_path, params: { domain: "example.com", track: "email_delivery" }
+    end
+    assert_equal "email_delivery", Investigation.last.track
+  end
 end
