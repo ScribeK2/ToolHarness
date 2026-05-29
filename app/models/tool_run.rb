@@ -3,6 +3,8 @@ class ToolRun < ApplicationRecord
 
   enum :status, STATUSES.zip(STATUSES).to_h
 
+  belongs_to :investigation, optional: true
+
   validates :tool_key, :tool_name, :category, presence: true
 
   scope :recent,         -> { order(created_at: :desc) }
@@ -12,7 +14,7 @@ class ToolRun < ApplicationRecord
   scope :for_tool,       ->(key) { where(tool_key: key.to_s) }
   scope :search_input,   ->(q) { q.present? ? where("input_summary LIKE ?", "%#{sanitize_sql_like(q)}%") : all }
 
-  def self.create_pending!(tool_class:, params:)
+  def self.create_pending!(tool_class:, params:, investigation: nil, step_order: nil)
     create!(
       tool_key: tool_class.name.demodulize.underscore,
       tool_name: tool_class.tool_name,
@@ -20,7 +22,9 @@ class ToolRun < ApplicationRecord
       input_type: tool_class.input_type.to_s,
       input: normalize_params(params),
       input_summary: build_input_summary(params),
-      status: "pending"
+      status: "pending",
+      investigation_id: investigation&.id,
+      step_order: step_order
     )
   end
 
