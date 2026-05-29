@@ -3,7 +3,7 @@ import { Prefs } from "lib/prefs"
 
 const KNOWN = ["run", "tool", "target", "copy", "export", "pin", "history",
                "expiring", "raw", "help", "set", "purge", "q",
-               "c", "d", "db", "w", "h", "limit", "timeout"]
+               "c", "d", "db", "w", "h", "limit", "timeout", "investigate"]
 const CLIENT_ONLY = ["copy", "set", "q", "raw", "tool", "target", "pin", "expiring", "history", "help",
                      "c", "d", "db", "w", "h", "limit", "timeout"]
 

@@ -94,14 +94,15 @@ class CommandsControllerTest < ActionDispatch::IntegrationTest
     assert_match    /&lt;script&gt;alert\(1\)&lt;\/script&gt;/, response.body
   end
 
-  test ":investigate starts an investigation and replaces the result panel" do
+  test ":investigate starts an investigation and redirects to its page" do
+    investigation = nil
     assert_difference -> { Investigation.count }, 1 do
       post commands_path,
         params: { cmd: ":investigate example.com" },
         headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end
-    assert_response :success
-    assert_match(/turbo-stream action="replace" target="result_panel"/, response.body)
+    investigation = Investigation.order(created_at: :desc).first
+    assert_redirected_to investigation_path(investigation)
   end
 
   test ":investigate with no domain reports an error" do
