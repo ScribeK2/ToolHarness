@@ -12,6 +12,9 @@ Rails.application.routes.draw do
   # Re-run a prior run by replaying its stored input
   post "runs/:id/rerun", to: "tool_runs#rerun", as: :tool_run_rerun
 
+  # Investigations — domain-anchored orchestration over real ToolRuns
+  resources :investigations, only: %i[create show]
+
   # Commands API
   post "commands", to: "commands#create", as: :commands
 

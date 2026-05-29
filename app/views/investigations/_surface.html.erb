@@ -1,0 +1,27 @@
+<section id="result_panel" class="flex-1 min-h-0 overflow-hidden text-xs">
+  <%= turbo_stream_from investigation %>
+  <div class="flex items-center justify-between px-3 py-2 border-b border-line">
+    <span>
+      <span class="bg-purple text-bg px-1 font-bold">INVESTIGATION</span>
+      <span class="text-cyan"><%= investigation.domain %></span>
+      <span class="text-mute" aria-hidden="true">// <%= investigation.track %></span>
+    </span>
+    <%= render "investigations/report_button", investigation: investigation %>
+  </div>
+
+  <div class="flex min-h-0" style="height: calc(100% - 33px);">
+    <div class="w-[38%] border-r border-line overflow-y-auto">
+      <%= render "investigations/steps", investigation: investigation, selected: selected %>
+    </div>
+    <div class="flex-1 min-w-0 overflow-y-auto">
+      <%= render "investigations/verdict", investigation: investigation %>
+      <div class="px-3 py-2 border-t border-line">
+        <% if selected %>
+          <%= render "results/result", tool_run: selected %>
+        <% else %>
+          <span class="text-mute">no step selected</span>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</section>

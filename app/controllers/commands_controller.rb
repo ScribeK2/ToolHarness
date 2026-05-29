@@ -4,8 +4,9 @@ class CommandsController < ApplicationController
 
     stream =
       case cmd.name
-      when :run     then dispatch_run(cmd.args)
-      when :export  then dispatch_export(cmd.args, params[:run_id])
+      when :run        then dispatch_run(cmd.args)
+      when :export     then dispatch_export(cmd.args, params[:run_id])
+      when :investigate then dispatch_investigate(cmd.args)
       when :purge   then dispatch_purge(cmd.args)
       when :unknown then error_stream("no command '#{cmd.args[:raw]}'")
       when :empty   then error_stream("empty command")
@@ -34,6 +35,19 @@ class CommandsController < ApplicationController
       "result_panel",
       partial: "workbench/result_panel_with_run",
       locals: { tool_run: run }
+    )
+  end
+
+  def dispatch_investigate(args)
+    return error_stream("usage: :investigate <domain>") if args[:domain].blank?
+
+    domain = ToolHarness::HostNormalizer.call(args[:domain])
+    investigation = Investigations::Orchestrator.start(domain: domain, track_key: "orientation")
+
+    turbo_stream.replace(
+      "result_panel",
+      partial: "investigations/surface",
+      locals: { investigation: investigation, selected: investigation.tool_runs.first }
     )
   end
 

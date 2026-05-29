@@ -27,6 +27,8 @@
         <% if @view == "history" %>
           <%= render "run_history/filter_row" %>
           <%= render "run_history/runs_table" %>
+        <% elsif @investigation.present? %>
+          <%= render "investigations/surface", investigation: @investigation, selected: @selected %>
         <% elsif @custom_partial.present? %>
           <%= render @custom_partial %>
         <% else %>

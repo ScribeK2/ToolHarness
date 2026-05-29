@@ -94,6 +94,23 @@ class CommandsControllerTest < ActionDispatch::IntegrationTest
     assert_match    /&lt;script&gt;alert\(1\)&lt;\/script&gt;/, response.body
   end
 
+  test ":investigate starts an investigation and replaces the result panel" do
+    assert_difference -> { Investigation.count }, 1 do
+      post commands_path,
+        params: { cmd: ":investigate example.com" },
+        headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    end
+    assert_response :success
+    assert_match(/turbo-stream action="replace" target="result_panel"/, response.body)
+  end
+
+  test ":investigate with no domain reports an error" do
+    post commands_path, params: { cmd: ":investigate" },
+      headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    assert_match(/cmdline_message/, response.body)
+    assert_match(/usage/, response.body)
+  end
+
   private
 
   # Extracts the URL-encoded payload from a `data:text/plain;charset=utf-8,...`

@@ -10,7 +10,23 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_18_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_29_000000) do
+  create_table "investigations", force: :cascade do |t|
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.string "domain", null: false
+    t.json "findings", default: [], null: false
+    t.datetime "started_at"
+    t.string "status", default: "pending", null: false
+    t.string "suggested_track"
+    t.string "ticket_ref"
+    t.string "track", default: "orientation", null: false
+    t.datetime "updated_at", null: false
+    t.string "verdict_status"
+    t.index ["created_at"], name: "index_investigations_on_created_at"
+    t.index ["status"], name: "index_investigations_on_status"
+  end
+
   create_table "solid_cable_messages", force: :cascade do |t|
     t.binary "channel", limit: 1024, null: false
     t.integer "channel_hash", limit: 8, null: false
@@ -164,11 +180,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_18_000000) do
     t.json "input", default: {}, null: false
     t.string "input_summary"
     t.string "input_type"
+    t.integer "investigation_id"
     t.json "issues", default: []
     t.json "recommendations", default: []
     t.json "result_data", default: {}
     t.datetime "started_at"
     t.string "status", default: "pending", null: false
+    t.integer "step_order"
     t.boolean "success", default: false, null: false
     t.string "summary"
     t.string "tool_key", null: false
@@ -176,6 +194,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_18_000000) do
     t.datetime "updated_at", null: false
     t.index ["category"], name: "index_tool_runs_on_category"
     t.index ["input_summary"], name: "index_tool_runs_on_input_summary"
+    t.index ["investigation_id"], name: "index_tool_runs_on_investigation_id"
     t.index ["success"], name: "index_tool_runs_on_success"
     t.index ["tool_key", "created_at"], name: "index_tool_runs_on_tool_key_and_created_at"
     t.index ["tool_key"], name: "index_tool_runs_on_tool_key"
@@ -187,4 +206,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_18_000000) do
   add_foreign_key "solid_queue_ready_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_recurring_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_scheduled_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
+  add_foreign_key "tool_runs", "investigations"
 end
