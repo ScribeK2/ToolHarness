@@ -21,4 +21,11 @@ class ResultSurfaceEasyWinsTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "[data-controller~=copy][data-action~='click->copy#copyValue'][data-copy-value='93.184.216.34']"
   end
+
+  test "result header has a re-run button posting to the rerun route" do
+    run = completed_run
+    get workbench_path(tool: "dns_lookup", target: "example.com", run: run.id)
+    assert_response :success
+    assert_select "form[action='#{tool_run_rerun_path(run)}'][method=post] button", text: /re-run/i
+  end
 end
