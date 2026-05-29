@@ -41,4 +41,11 @@ class ResultSurfaceEasyWinsTest < ActionDispatch::IntegrationTest
     # never links back to the current tool
     assert_select "details a[href*='tool=dns_lookup']", false
   end
+
+  test "history rows have a per-row re-run button" do
+    run = completed_run
+    get workbench_path(view: "history")
+    assert_response :success
+    assert_select "form[action='#{tool_run_rerun_path(run)}'][method=post] button"
+  end
 end

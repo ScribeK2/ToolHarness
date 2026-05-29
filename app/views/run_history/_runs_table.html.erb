@@ -12,21 +12,27 @@
       </div>
       <% @runs.each_with_index do |run, i| %>
         <% sev = (run.issues || []).group_by { |x| (x["severity"] || x[:severity]).to_s }.transform_values(&:size) %>
-        <%= link_to workbench_path(tool: run.tool_key, target: run.input_summary, run: run.id),
-                    class: "grid grid-cols-[80px_120px_1fr_80px_100px_60px] gap-3 px-2 py-[2px] border-b border-line/50 hover:bg-elevated text-fg" do %>
-          <span class="text-mute"><%= run.created_at.strftime("%H:%M") %></span>
-          <span><%= run.tool_key %></span>
-          <span class="text-fg-dim truncate"><%= run.input_summary %></span>
-          <% if run.status == "completed" %>
-            <span class="sev sev-ok"> OK </span>
-          <% elsif run.status == "failed" %>
-            <span class="sev sev-crit">FAIL</span>
-          <% else %>
-            <span class="text-mute"><%= run.status %></span>
+        <div class="relative group">
+          <%= link_to workbench_path(tool: run.tool_key, target: run.input_summary, run: run.id),
+                      class: "grid grid-cols-[80px_120px_1fr_80px_100px_60px] gap-3 px-2 pr-10 py-[2px] border-b border-line/50 hover:bg-elevated text-fg" do %>
+            <span class="text-mute"><%= run.created_at.strftime("%H:%M") %></span>
+            <span><%= run.tool_key %></span>
+            <span class="text-fg-dim truncate"><%= run.input_summary %></span>
+            <% if run.status == "completed" %>
+              <span class="sev sev-ok"> OK </span>
+            <% elsif run.status == "failed" %>
+              <span class="sev sev-crit">FAIL</span>
+            <% else %>
+              <span class="text-mute"><%= run.status %></span>
+            <% end %>
+            <span class="text-fg-dim">C:<%= sev["critical"] || 0 %> W:<%= sev["warning"] || 0 %> I:<%= sev["info"] || 0 %></span>
+            <span class="text-mute text-right"><%= time_ago_in_words(run.created_at).sub("about ", "") %></span>
           <% end %>
-          <span class="text-fg-dim">C:<%= sev["critical"] || 0 %> W:<%= sev["warning"] || 0 %> I:<%= sev["info"] || 0 %></span>
-          <span class="text-mute text-right"><%= time_ago_in_words(run.created_at).sub("about ", "") %></span>
-        <% end %>
+          <%= button_to "↻", tool_run_rerun_path(run),
+                title: "re-run",
+                class: "text-mute hover:text-cyan text-[10px]",
+                form_class: "absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity" %>
+        </div>
       <% end %>
     </div>
   <% end %>
