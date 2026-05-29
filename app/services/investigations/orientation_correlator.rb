@@ -80,7 +80,7 @@ module Investigations
     end
 
     def serving_findings
-      return [] unless dns && hosting
+      return [] unless dns&.success && hosting
       return [] if a_records.empty?
       return [] if (open_ports & WEB_PORTS).any?
 
@@ -91,7 +91,7 @@ module Investigations
     end
 
     def mail_findings
-      return [] unless dns
+      return [] unless dns&.success
       if mx_records.empty?
         return [finding("warning", "no_mx", "Mail not configured",
                         "No MX records found — the domain cannot receive email.",

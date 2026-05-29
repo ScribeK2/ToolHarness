@@ -140,4 +140,33 @@ class Investigations::OrientationCorrelatorTest < ActiveSupport::TestCase
     expired = res.findings.find { |f| f["code"] == "domain_expired" }
     assert_equal ["whois_lookup"], expired["provenance"]
   end
+
+  test "failed DNS run fires no_resolution only, not resolves_not_serving or no_mx" do
+    res = Investigations::OrientationCorrelator.new([
+      whois(data: { "expiration_date" => (Date.today + 200).iso8601 }),
+      dns(data: { "a_records" => ["1.2.3.4"], "mx_records" => [] }, success: false),
+      hosting(data: { "open_ports" => [] })
+    ]).call
+    assert_includes codes(res), "no_resolution"
+    assert_not_includes codes(res), "resolves_not_serving"
+    assert_not_includes codes(res), "no_mx"
+    assert_equal "critical", res.verdict_status
+  end
+
+  test "suggested_track is nil when no MX and nothing serving" do
+    res = Investigations::OrientationCorrelator.new([
+      whois(data: { "expiration_date" => (Date.today + 200).iso8601 }),
+      dns(data: { "a_records" => ["1.2.3.4"], "mx_records" => [] }),
+      hosting(data: { "open_ports" => [], "server_banner" => nil })
+    ]).call
+    assert_nil res.suggested_track
+  end
+
+  test "degrades gracefully when only the whois run is present" do
+    assert_nothing_raised do
+      Investigations::OrientationCorrelator.new([
+        whois(data: { "expiration_date" => (Date.today + 200).iso8601 })
+      ]).call
+    end
+  end
 end
