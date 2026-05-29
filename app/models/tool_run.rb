@@ -34,6 +34,16 @@ class ToolRun < ApplicationRecord
     ToolHarness::Registry.find_tool(tool_key)
   end
 
+  # Raw value of the tool's primary input field — used to hand a target off
+  # to a sibling tool. Falls back to input_summary if the tool is gone.
+  def primary_input
+    klass = tool_class
+    return input_summary unless klass
+
+    key = klass.form_fields.keys.first.to_s
+    input[key].presence || input_summary
+  end
+
   def apply_result!(result, started_at: nil, completed_at: nil)
     completed = completed_at || Time.current
     started   = started_at || self.started_at || (completed - (result.execution_time || 0).seconds)
