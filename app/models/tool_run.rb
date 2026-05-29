@@ -118,8 +118,15 @@ class ToolRun < ApplicationRecord
   end
 
   after_create_commit :enforce_cap_async
+  after_update_commit :notify_investigation
 
   private
+
+  def notify_investigation
+    return unless investigation_id
+    return unless saved_change_to_status? && %w[completed failed].include?(status)
+    InvestigationProgressJob.perform_later(investigation_id)
+  end
 
   def enforce_cap_async
     # Quick inline check; if over cap, sweep oldest. Cheap because we only run on insert.
