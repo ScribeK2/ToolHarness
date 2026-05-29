@@ -4,13 +4,15 @@
     <% glyph, color = case run.status
                       when "completed" then run.success ? ["✓", "text-green"] : ["✗", "text-red"]
                       when "failed"    then ["✗", "text-red"]
+                      when "skipped"   then ["⊝", "text-mute"]
                       else                  ["⠿", "text-mute"]
                       end %>
     <% active = selected && run.id == selected.id %>
     <%= link_to investigation_path(investigation, step: run.id),
                 class: "flex items-center gap-2 px-3 py-[3px] text-[11.5px] #{active ? 'bg-elevated text-fg border-l-2 border-purple pl-[10px]' : 'text-fg-dim hover:bg-elevated'}" do %>
       <span class="<%= color %>" aria-hidden="true"><%= glyph %></span>
-      <span><%= run.tool_name.downcase %></span>
+      <%= content_tag :span, run.tool_name.downcase,
+            title: (run.skipped? && run.skip_reason.present? ? run.skip_reason : nil) %>
     <% end %>
   <% end %>
 </div>

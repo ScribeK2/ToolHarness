@@ -61,6 +61,19 @@ class InvestigationsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "email_delivery", Investigation.last.track
   end
 
+  test "show renders the skipped glyph and reason for a skipped step" do
+    inv = Investigation.create!(domain: "example.com", track: "email_delivery", status: "completed",
+                                started_at: 1.minute.ago, completed_at: Time.current,
+                                verdict_status: "critical", findings: [])
+    inv.tool_runs.create!(tool_key: "blacklist", tool_name: "Blacklist Check", category: "diagnostics",
+                          status: "skipped", skip_reason: "No MX records — reputation check skipped", step_order: 5)
+
+    get investigation_path(inv)
+    assert_response :success
+    assert_match "⊝", @response.body
+    assert_match "No MX records", @response.body
+  end
+
   test "show renders a live next-track button when the suggested track exists" do
     inv = Investigation.create!(domain: "example.com", track: "orientation", status: "completed",
                                 started_at: 1.minute.ago, completed_at: Time.current,
