@@ -35,4 +35,26 @@ module ApplicationHelper
 
     lines.join("\n")
   end
+
+  # Tools the current run's target can be handed off to. Same input_type,
+  # plus :domain targets may also target :host tools. Excludes the current
+  # tool and special input types. Returns [tool_key, display_name] sorted.
+  def sibling_tools_for(tool_run)
+    tool_class = tool_run.tool_class
+    return [] unless tool_class
+
+    allowed = case tool_class.input_type
+              when :domain then %i[domain host]
+              when :host   then %i[host]
+              else []
+              end
+    return [] if allowed.empty?
+
+    current_key = tool_run.tool_key.to_sym
+    ToolHarness::Registry.tools
+      .reject { |key, _klass| key == current_key }
+      .select { |_key, klass| allowed.include?(klass.input_type) }
+      .map    { |key, klass| [key.to_s, klass.tool_name] }
+      .sort_by { |_key, name| name }
+  end
 end
