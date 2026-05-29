@@ -32,6 +32,11 @@ export default class extends Controller {
   copySummary() { this.write(this.textValue) }
   copySection() { this.write(this.getSection(this.sectionValue)) }
 
+  copyValue(e) {
+    const el = e.currentTarget
+    this.write(el.dataset.copyValue ?? el.innerText)
+  }
+
   getSummary() {
     // The summary button has data-copy-text-value="…"
     const el = document.querySelector("[data-copy-text-value]")
