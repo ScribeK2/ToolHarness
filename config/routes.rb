@@ -9,6 +9,9 @@ Rails.application.routes.draw do
   # Tool execution — POST endpoint still in use by the target row form
   post "tools/:tool_key/run", to: "tool_runs#create", as: :tool_run_create
 
+  # Re-run a prior run by replaying its stored input
+  post "runs/:id/rerun", to: "tool_runs#rerun", as: :tool_run_rerun
+
   # Commands API
   post "commands", to: "commands#create", as: :commands
 
