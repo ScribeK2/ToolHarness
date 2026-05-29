@@ -2,11 +2,15 @@ class CommandsController < ApplicationController
   def create
     cmd = ToolHarness::CommandDispatcher.parse(params[:cmd].to_s)
 
+    # :investigate opens the investigation as its own full view, so it redirects
+    # (Turbo follows it as a Visit) rather than swapping the result panel in place —
+    # otherwise the surrounding workbench chrome (rail, target row) stays stale.
+    return dispatch_investigate(cmd.args) if cmd.name == :investigate
+
     stream =
       case cmd.name
       when :run        then dispatch_run(cmd.args)
       when :export     then dispatch_export(cmd.args, params[:run_id])
-      when :investigate then dispatch_investigate(cmd.args)
       when :purge   then dispatch_purge(cmd.args)
       when :unknown then error_stream("no command '#{cmd.args[:raw]}'")
       when :empty   then error_stream("empty command")
@@ -39,16 +43,14 @@ class CommandsController < ApplicationController
   end
 
   def dispatch_investigate(args)
-    return error_stream("usage: :investigate <domain>") if args[:domain].blank?
+    if args[:domain].blank?
+      render turbo_stream: error_stream("usage: :investigate <domain>")
+      return
+    end
 
     domain = ToolHarness::HostNormalizer.call(args[:domain])
     investigation = Investigations::Orchestrator.start(domain: domain, track_key: "orientation")
-
-    turbo_stream.replace(
-      "result_panel",
-      partial: "investigations/surface",
-      locals: { investigation: investigation, selected: investigation.tool_runs.first }
-    )
+    redirect_to investigation_path(investigation)
   end
 
   def dispatch_export(args, run_id)
