@@ -3,7 +3,7 @@ module ToolHarness
     Command = Struct.new(:name, :args, keyword_init: true)
 
     KNOWN = %i[run tool target copy export pin history expiring raw help set purge q
-               c d db w h limit timeout].freeze
+               c d db w h limit timeout investigate].freeze
 
     def self.parse(input)
       s = input.to_s.strip.sub(/\A:/, "")
@@ -14,7 +14,8 @@ module ToolHarness
       return Command.new(name: :unknown, args: { raw: s }) unless KNOWN.include?(name)
 
       args = case name
-             when :run    then { tool: rest[0], target: rest[1] }.compact
+             when :run        then { tool: rest[0], target: rest[1] }.compact
+             when :investigate then { domain: rest[0] }.compact
              when :tool   then { name: rest[0] }.compact
              when :target then { value: rest.join(" ") }
              when :copy   then { what: rest[0] || "summary" }

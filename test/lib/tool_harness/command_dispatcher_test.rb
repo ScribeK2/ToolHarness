@@ -35,4 +35,10 @@ class ToolHarness::CommandDispatcherTest < ActiveSupport::TestCase
     cmd = ToolHarness::CommandDispatcher.parse("")
     assert_equal :empty, cmd.name
   end
+
+  test ":investigate parses the domain arg" do
+    cmd = ToolHarness::CommandDispatcher.parse(":investigate example.com")
+    assert_equal :investigate, cmd.name
+    assert_equal "example.com", cmd.args[:domain]
+  end
 end
