@@ -42,6 +42,12 @@ class InvestigationProgressJob < ApplicationJob
       partial: "investigations/verdict",
       locals: { investigation: investigation }
     )
+    Turbo::StreamsChannel.broadcast_replace_to(
+      investigation,
+      target: "investigation_report_#{investigation.id}",
+      partial: "investigations/report_button",
+      locals: { investigation: investigation }
+    )
   rescue StandardError => e
     Rails.logger.error "InvestigationProgressJob broadcast failed for ##{investigation.id}: #{e.class}: #{e.message}"
     Rails.logger.error e.backtrace.first(5).join("\n") if e.backtrace

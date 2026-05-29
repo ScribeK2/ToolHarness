@@ -27,7 +27,7 @@ class InvestigationsController < ApplicationController
   def show
     @investigation = Investigation.find(params[:id])
     @selected = @investigation.tool_runs.find_by(id: params[:step]) || @investigation.tool_runs.first
-    @view = "investigation"   # tells the workbench layout which main branch to render
+    @view = "investigation"   # keep the rail out of "history" mode; the layout branches on @investigation.present?
   end
 
   private

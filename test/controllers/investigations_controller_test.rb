@@ -26,4 +26,24 @@ class InvestigationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "#investigation_verdict_#{inv.id}"
     assert_match(/whois lookup/i, response.body)
   end
+
+  test "GET show on a running investigation shows 'report pending', not a copy button" do
+    inv = Investigations::Orchestrator.start(domain: "example.com")  # children stay pending -> running
+    get investigation_path(inv)
+    assert_response :success
+    assert_select "#investigation_report_#{inv.id}"
+    assert_match(/report pending/i, response.body)
+    assert_no_match(/copy report/i, response.body)
+  end
+
+  test "GET show on a completed investigation shows the copy-report button" do
+    inv = Investigation.create!(domain: "example.com", track: "orientation", status: "completed",
+                                verdict_status: "healthy", completed_at: Time.current, findings: [])
+    inv.tool_runs.create!(tool_key: "whois_lookup", tool_name: "WHOIS Lookup", category: "domain",
+                          status: "completed", success: true, step_order: 0, summary: "ok")
+    get investigation_path(inv)
+    assert_response :success
+    assert_select "#investigation_report_#{inv.id}"
+    assert_match(/copy report/i, response.body)
+  end
 end

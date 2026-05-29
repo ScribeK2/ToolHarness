@@ -6,11 +6,7 @@
       <span class="text-cyan"><%= investigation.domain %></span>
       <span class="text-mute" aria-hidden="true">// <%= investigation.track %></span>
     </span>
-    <button type="button"
-            class="text-mute hover:text-cyan text-[10px]"
-            data-controller="copy"
-            data-action="click->copy#copySummary"
-            data-copy-text-value="<%= Investigations::ReportGenerator.new(investigation).to_markdown %>">[y] copy report</button>
+    <%= render "investigations/report_button", investigation: investigation %>
   </div>
 
   <div class="flex min-h-0" style="height: calc(100% - 33px);">
