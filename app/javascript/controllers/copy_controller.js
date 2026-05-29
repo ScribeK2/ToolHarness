@@ -1,10 +1,11 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Replaces clipboard_controller. Handles three flavors of copy:
+// Replaces clipboard_controller. Handles four flavors of copy:
 //   y s → summary  (data-copy-text-value)
 //   y r → raw      (window.toolRunRawJson, set per-run)
 //   y <letter> → a specific result section (matches [data-section="<letter>"])
-// Listens for `yank:request` from mode controller.
+//   click → copyValue: a single value (data-copy-value), e.g. a kv field or table cell
+// Listens for `yank:request` from mode controller; copyValue is mouse-driven.
 export default class extends Controller {
   static values = { text: String, section: String }
 
