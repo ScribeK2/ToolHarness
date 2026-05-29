@@ -28,4 +28,17 @@ class InvestigationTest < ActiveSupport::TestCase
     inv = Investigation.create!(domain: "example.com", track: "orientation", status: "running")
     assert_not inv.all_steps_terminal?
   end
+
+  test "enforce_retention_cap! nullifies child runs of purged investigations without raising" do
+    old = Investigation.create!(domain: "old.com", track: "orientation", status: "completed")
+    child = old.tool_runs.create!(tool_key: "dns_lookup", tool_name: "DNS", category: "dns", status: "completed", step_order: 0)
+    Investigation.create!(domain: "new.com", track: "orientation", status: "running")
+
+    purged = nil
+    assert_nothing_raised { purged = Investigation.enforce_retention_cap!(cap: 1) }
+    assert_equal 1, purged
+    assert_not Investigation.exists?(old.id), "oldest investigation should be purged"
+    assert ToolRun.exists?(child.id), "child run should survive the purge"
+    assert_nil child.reload.investigation_id, "child run's investigation_id should be nullified"
+  end
 end

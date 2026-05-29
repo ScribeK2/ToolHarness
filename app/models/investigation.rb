@@ -25,6 +25,7 @@ class Investigation < ApplicationRecord
     over = count - cap
     return 0 if over <= 0
     ids = order(:created_at).limit(over).pluck(:id)
+    ToolRun.where(investigation_id: ids).update_all(investigation_id: nil)
     where(id: ids).delete_all
     over
   end
