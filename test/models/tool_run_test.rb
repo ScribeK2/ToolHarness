@@ -1,6 +1,8 @@
 require "test_helper"
 
 class ToolRunTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
   # ---- validations ----
 
   test "valid with required fields" do
@@ -146,5 +148,30 @@ class ToolRunTest < ActiveSupport::TestCase
   test "#tool_class returns nil when tool_key is unknown" do
     run = ToolRun.new(tool_key: "no_such_tool", tool_name: "X", category: "dns")
     assert_nil run.tool_class
+  end
+
+  # ---- notify_investigation hook guards ----
+
+  test "standalone run does not enqueue InvestigationProgressJob on completion" do
+    run = ToolRun.create!(tool_key: "dns_lookup", tool_name: "DNS", category: "dns", status: "pending")
+    assert_no_enqueued_jobs only: InvestigationProgressJob do
+      run.update!(status: "completed")
+    end
+  end
+
+  test "investigation child does not enqueue on a non-terminal status update" do
+    inv = Investigation.create!(domain: "example.com", track: "orientation", status: "running")
+    run = inv.tool_runs.create!(tool_key: "dns_lookup", tool_name: "DNS", category: "dns", status: "pending", step_order: 0)
+    assert_no_enqueued_jobs only: InvestigationProgressJob do
+      run.update!(status: "processing")
+    end
+  end
+
+  test "investigation child enqueues InvestigationProgressJob when it reaches a terminal status" do
+    inv = Investigation.create!(domain: "example.com", track: "orientation", status: "running")
+    run = inv.tool_runs.create!(tool_key: "dns_lookup", tool_name: "DNS", category: "dns", status: "pending", step_order: 0)
+    assert_enqueued_with(job: InvestigationProgressJob, args: [inv.id]) do
+      run.update!(status: "completed")
+    end
   end
 end

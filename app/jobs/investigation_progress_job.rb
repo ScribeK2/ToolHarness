@@ -1,5 +1,6 @@
 class InvestigationProgressJob < ApplicationJob
   queue_as :default
+  discard_on ActiveRecord::RecordNotFound
 
   def perform(investigation_id)
     investigation = Investigation.find(investigation_id)
@@ -43,5 +44,6 @@ class InvestigationProgressJob < ApplicationJob
     )
   rescue StandardError => e
     Rails.logger.error "InvestigationProgressJob broadcast failed for ##{investigation.id}: #{e.class}: #{e.message}"
+    Rails.logger.error e.backtrace.first(5).join("\n") if e.backtrace
   end
 end
