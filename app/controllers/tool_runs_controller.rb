@@ -24,6 +24,26 @@ class ToolRunsController < ApplicationController
     end
   end
 
+  def rerun
+    source     = ToolRun.find(params[:id])
+    tool_class = source.tool_class
+    raise ActionController::RoutingError, "Tool not found: #{source.tool_key}" unless tool_class
+
+    @tool_run = ToolRun.create_pending!(tool_class: tool_class, params: source.input)
+    ToolRunJob.perform_later(@tool_run.id)
+
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.replace(
+          "result_panel",
+          partial: "workbench/result_panel_with_run",
+          locals: { tool_run: @tool_run }
+        )
+      end
+      format.html { redirect_to workbench_path(tool: source.tool_key, target: @tool_run.input_summary, run: @tool_run.id) }
+    end
+  end
+
   private
 
   def run_params(tool_class)

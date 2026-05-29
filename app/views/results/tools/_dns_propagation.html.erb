@@ -93,9 +93,14 @@
            ms       = row["latency_ms"] || row[:latency_ms] %>
         <tr>
           <td class="pr-2 <%= cls %>" data-sort-cell="status" data-sort-value="<%= status %>"><%= icon %></td>
-          <td class="pr-2" data-sort-cell="ip"><%= ip %></td>
+          <td class="pr-2 cursor-pointer hover:text-cyan" data-sort-cell="ip"
+              data-controller="copy" data-action="click->copy#copyValue"
+              data-copy-value="<%= ip %>" title="click to copy"><%= ip %></td>
           <td class="pr-2" data-sort-cell="operator"><%= operator %><% if region && region != "Global anycast" %> <span class="text-mute">(<%= region.split.first %>)</span><% end %></td>
-          <td class="pr-2"><%= format_value.call(row) %></td>
+          <td class="pr-2 cursor-pointer hover:text-cyan"
+              data-controller="copy" data-action="click->copy#copyValue"
+              data-copy-value="<%= Array(row["values"] || row[:values]).join(", ") %>"
+              title="click to copy"><%= format_value.call(row) %></td>
           <td class="pr-2 text-right text-mute" data-sort-cell="ttl"><%= ttl || "—" %></td>
           <td class="pr-2 text-right text-mute" data-sort-cell="ms"><%= ms || "—" %></td>
         </tr>
