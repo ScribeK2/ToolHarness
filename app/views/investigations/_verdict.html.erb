@@ -1,0 +1,27 @@
+<div id="investigation_verdict_<%= investigation.id %>">
+  <% if investigation.completed? %>
+    <% label, color = case investigation.verdict_status
+                      when "critical" then ["▲ CRITICAL", "text-red"]
+                      when "issues"   then ["▲ ISSUES FOUND", "text-yellow"]
+                      else                 ["✓ HEALTHY", "text-green"]
+                      end %>
+    <div class="px-3 py-2 border-b border-line font-bold <%= color %>"><%= label %></div>
+    <% investigation.findings.each do |f| %>
+      <% dot = { "critical" => "text-red", "warning" => "text-yellow" }.fetch(f["severity"], "text-mute") %>
+      <div class="px-3 py-1 border-b border-line">
+        <span class="<%= dot %>" aria-hidden="true">●</span>
+        <span class="text-fg"><%= f["title"] %></span>
+        <span class="text-mute">— <%= f["message"] %></span>
+      </div>
+    <% end %>
+    <% if investigation.suggested_track.present? %>
+      <div class="px-3 py-2 bg-green text-bg font-bold text-[11.5px]">
+        → start <%= investigation.suggested_track.tr('_', ' ').upcase %> investigation <span class="opacity-70">(coming soon)</span>
+      </div>
+    <% end %>
+  <% else %>
+    <div class="px-3 py-2 border-b border-line text-mute flex items-center gap-2">
+      <span class="spinner"></span> correlating… (<%= investigation.tool_runs.count { |r| %w[completed failed].include?(r.status) } %>/<%= investigation.tool_runs.size %>)
+    </div>
+  <% end %>
+</div>

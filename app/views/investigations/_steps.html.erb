@@ -1,0 +1,16 @@
+<div id="investigation_steps_<%= investigation.id %>">
+  <div class="pt-2 px-3"><span class="mono-label"><span aria-hidden="true">// </span>steps</span></div>
+  <% investigation.tool_runs.each do |run| %>
+    <% glyph, color = case run.status
+                      when "completed" then run.success ? ["✓", "text-green"] : ["✗", "text-red"]
+                      when "failed"    then ["✗", "text-red"]
+                      else                  ["⠿", "text-mute"]
+                      end %>
+    <% active = selected && run.id == selected.id %>
+    <%= link_to investigation_path(investigation, step: run.id),
+                class: "flex items-center gap-2 px-3 py-[3px] text-[11.5px] #{active ? 'bg-elevated text-fg border-l-2 border-purple pl-[10px]' : 'text-fg-dim hover:bg-elevated'}" do %>
+      <span class="<%= color %>" aria-hidden="true"><%= glyph %></span>
+      <span><%= run.tool_name.downcase %></span>
+    <% end %>
+  <% end %>
+</div>
