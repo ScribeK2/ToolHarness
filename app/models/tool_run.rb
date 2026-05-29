@@ -1,5 +1,6 @@
 class ToolRun < ApplicationRecord
-  STATUSES = %w[pending processing completed failed].freeze
+  STATUSES = %w[pending processing completed failed skipped].freeze
+  TERMINAL_STATUSES = %w[completed failed skipped].freeze
 
   enum :status, STATUSES.zip(STATUSES).to_h
 
@@ -124,7 +125,7 @@ class ToolRun < ApplicationRecord
 
   def notify_investigation
     return unless investigation_id
-    return unless saved_change_to_status? && %w[completed failed].include?(status)
+    return unless saved_change_to_status? && TERMINAL_STATUSES.include?(status)
     InvestigationProgressJob.perform_later(investigation_id)
   end
 
