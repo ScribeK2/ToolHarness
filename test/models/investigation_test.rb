@@ -23,4 +23,9 @@ class InvestigationTest < ActiveSupport::TestCase
     assert Investigation.new(status: "running").running?
     assert_not Investigation.new(status: "completed").running?
   end
+
+  test "all_steps_terminal? is false with no runs" do
+    inv = Investigation.create!(domain: "example.com", track: "orientation", status: "running")
+    assert_not inv.all_steps_terminal?
+  end
 end

@@ -20,14 +20,20 @@ class Investigation < ApplicationRecord
   def track_config = Investigations::Track.find(track)
 
   RETENTION_CAP = 5000
+
+  def self.enforce_retention_cap!(cap: RETENTION_CAP)
+    over = count - cap
+    return 0 if over <= 0
+    ids = order(:created_at).limit(over).pluck(:id)
+    where(id: ids).delete_all
+    over
+  end
+
   after_create_commit :enforce_cap_async
 
   private
 
   def enforce_cap_async
-    return unless self.class.count > RETENTION_CAP
-    over = self.class.count - RETENTION_CAP
-    ids  = self.class.order(:created_at).limit(over).pluck(:id)
-    self.class.where(id: ids).delete_all
+    self.class.enforce_retention_cap! if self.class.count > RETENTION_CAP
   end
 end
