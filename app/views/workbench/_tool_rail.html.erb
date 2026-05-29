@@ -9,9 +9,12 @@
   <div class="pt-2 px-3"><span class="mono-label"><span aria-hidden="true">// </span>investigate</span></div>
   <%# turbo: false so submitting navigates to the investigation's own page (a full
       view), rather than swapping just the result panel and leaving stale rail chrome. %>
-  <%= form_with url: investigations_path, method: :post, class: "px-3 py-1", data: { turbo: false } do |f| %>
-    <%= f.hidden_field :track, value: "orientation" %>
-    <%= f.text_field :domain, placeholder: "domain → orientation",
+  <%= form_with url: investigations_path, method: :post, class: "px-3 py-1 space-y-1", data: { turbo: false } do |f| %>
+    <%= f.select :track,
+          Investigations::Track.all.map { |t| [t.label, t.key] },
+          { selected: "orientation" },
+          class: "w-full bg-bg border border-line px-2 py-[2px] text-[11px] text-fg focus:border-purple outline-none" %>
+    <%= f.text_field :domain, placeholder: "domain → investigate",
           class: "w-full bg-bg border border-line px-2 py-[2px] text-[11px] text-fg placeholder:text-mute focus:border-purple outline-none" %>
   <% end %>
   <% (category_order + unknown).each do |cat| %>

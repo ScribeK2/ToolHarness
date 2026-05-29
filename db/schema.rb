@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_29_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_30_000000) do
   create_table "investigations", force: :cascade do |t|
     t.datetime "completed_at"
     t.datetime "created_at", null: false
@@ -184,6 +184,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_29_000000) do
     t.json "issues", default: []
     t.json "recommendations", default: []
     t.json "result_data", default: {}
+    t.string "skip_reason"
     t.datetime "started_at"
     t.string "status", default: "pending", null: false
     t.integer "step_order"

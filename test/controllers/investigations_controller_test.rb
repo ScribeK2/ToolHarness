@@ -46,4 +46,44 @@ class InvestigationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "#investigation_report_#{inv.id}"
     assert_match(/copy report/i, response.body)
   end
+
+  test "create with an unknown track returns 422 and creates nothing" do
+    assert_no_difference -> { Investigation.count } do
+      post investigations_path, params: { domain: "example.com", track: "bogus" }
+    end
+    assert_response :unprocessable_entity
+  end
+
+  test "create with the email_delivery track starts an email investigation" do
+    assert_difference -> { Investigation.count }, 1 do
+      post investigations_path, params: { domain: "example.com", track: "email_delivery" }
+    end
+    assert_equal "email_delivery", Investigation.last.track
+  end
+
+  test "show renders the skipped glyph and reason for a skipped step" do
+    inv = Investigation.create!(domain: "example.com", track: "email_delivery", status: "completed",
+                                started_at: 1.minute.ago, completed_at: Time.current,
+                                verdict_status: "critical", findings: [])
+    inv.tool_runs.create!(tool_key: "blacklist", tool_name: "Blacklist Check", category: "diagnostics",
+                          status: "skipped", skip_reason: "No MX records — reputation check skipped", step_order: 5)
+
+    get investigation_path(inv)
+    assert_response :success
+    assert_match "⊝", @response.body
+    assert_match "No MX records", @response.body
+  end
+
+  test "show renders a live next-track button when the suggested track exists" do
+    inv = Investigation.create!(domain: "example.com", track: "orientation", status: "completed",
+                                started_at: 1.minute.ago, completed_at: Time.current,
+                                verdict_status: "issues", suggested_track: "email_delivery",
+                                findings: [{ "severity" => "warning", "code" => "x", "title" => "t", "message" => "m" }])
+    inv.tool_runs.create!(tool_key: "dns_lookup", tool_name: "DNS", category: "dns", status: "completed", success: true, step_order: 0)
+
+    get investigation_path(inv)
+    assert_response :success
+    assert_select "form[action=?]", investigations_path  # button_to renders a form posting to /investigations
+    assert_match "investigate EMAIL DELIVERY", @response.body
+  end
 end

@@ -174,4 +174,21 @@ class ToolRunTest < ActiveSupport::TestCase
       run.update!(status: "completed")
     end
   end
+
+  test "skipped is a valid status and exposes a skip_reason" do
+    inv = Investigation.create!(domain: "x.com", track: "orientation", status: "running", started_at: Time.current)
+    run = inv.tool_runs.create!(tool_key: "blacklist", tool_name: "Blacklist", category: "diagnostics",
+                                status: "skipped", skip_reason: "No MX records", step_order: 0)
+    assert run.skipped?
+    assert_equal "No MX records", run.skip_reason
+  end
+
+  test "transitioning a child to skipped notifies its investigation" do
+    inv = Investigation.create!(domain: "x.com", track: "orientation", status: "running", started_at: Time.current)
+    run = inv.tool_runs.create!(tool_key: "blacklist", tool_name: "Blacklist", category: "diagnostics",
+                                status: "pending", step_order: 0)
+    assert_enqueued_with(job: InvestigationProgressJob, args: [inv.id]) do
+      run.update!(status: "skipped", skip_reason: "No MX records")
+    end
+  end
 end

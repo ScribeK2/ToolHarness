@@ -14,10 +14,12 @@ class InvestigationProgressJob < ApplicationJob
   def correlate_if_ready(investigation)
     investigation.with_lock do
       return unless investigation.running?
+
+      Investigations::StepScheduler.new(investigation).call
       return unless investigation.all_steps_terminal?
 
       track  = investigation.track_config
-      result = track.correlator.new(investigation.tool_runs.to_a).call
+      result = track.correlator.new(investigation.tool_runs.reload.to_a).call
 
       investigation.update!(
         verdict_status: result.verdict_status,

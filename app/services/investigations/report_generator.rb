@@ -39,7 +39,13 @@ module Investigations
       boxes = ["registry back-end (gated — only some reps have registry access)"]
       codes = @inv.findings.map { |f| f["code"] }
       boxes << "Pterodactyl container internals (panel only — no container/sudo access)" if codes.intersect?(%w[resolves_not_serving])
-      boxes << "mail server internals (only Postfix/Dovecot logs via Graylog — no DB)" if codes.intersect?(%w[no_mx mail_ports_closed])
+      # Codes from BOTH correlators: orientation emits no_mx/mail_ports_closed, the
+      # email track emits the rest. Listed together so an orientation investigation that
+      # surfaces a mail issue still names the mail-server box, not only email_delivery runs.
+      mail_codes = %w[no_mx mail_ports_closed smtp_unreachable mail_blacklisted spf_permerror dmarc_missing]
+      if @inv.track == "email_delivery" || codes.intersect?(mail_codes)
+        boxes << "mail server internals (only Postfix/Dovecot logs via Graylog — no DB)"
+      end
 
       [
         "## Visibility boundary",
@@ -52,9 +58,13 @@ module Investigations
     def evidence_section
       lines = ["## Probe evidence"]
       @inv.tool_runs.each do |run|
-        status = run.status == "failed" ? "FAILED" : "ok"
+        status = case run.status
+                 when "failed"  then "FAILED"
+                 when "skipped" then "SKIPPED"
+                 else                "ok"
+                 end
         lines << "### #{run.tool_name} (#{status})"
-        lines << (run.summary.presence || "_no summary_")
+        lines << (run.summary.presence || run.skip_reason.presence || "_no summary_")
       end
       lines.join("\n")
     end

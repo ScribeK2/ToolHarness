@@ -14,7 +14,7 @@ class Investigation < ApplicationRecord
 
   def all_steps_terminal?
     runs = tool_runs.to_a
-    runs.any? && runs.all? { |r| %w[completed failed].include?(r.status) }
+    runs.any? && runs.all? { |r| ToolRun::TERMINAL_STATUSES.include?(r.status) }
   end
 
   def track_config = Investigations::Track.find(track)

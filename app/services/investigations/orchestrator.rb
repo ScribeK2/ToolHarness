@@ -11,9 +11,9 @@ module Investigations
         started_at: Time.current
       )
 
-      track.probes.each_with_index do |tool_key, index|
-        tool_class = ToolHarness::Registry.find_tool(tool_key)
-        raise ArgumentError, "Unknown probe tool: #{tool_key}" unless tool_class
+      track.specs.each_with_index do |spec, index|
+        tool_class = ToolHarness::Registry.find_tool(spec.tool_key)
+        raise ArgumentError, "Unknown probe tool: #{spec.tool_key}" unless tool_class
 
         run = ToolRun.create_pending!(
           tool_class: tool_class,
@@ -21,7 +21,9 @@ module Investigations
           investigation: investigation,
           step_order: index
         )
-        ToolRunJob.perform_later(run.id)
+        # Dependent probes are enqueued later by the StepScheduler once their
+        # dependency resolves (or skipped if it can't be resolved).
+        ToolRunJob.perform_later(run.id) unless spec.depends_on
       end
 
       investigation

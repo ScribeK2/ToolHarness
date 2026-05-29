@@ -15,9 +15,17 @@
       </div>
     <% end %>
     <% if investigation.suggested_track.present? %>
-      <div class="px-3 py-2 bg-green text-bg font-bold text-[11.5px]">
-        → start <%= investigation.suggested_track.tr('_', ' ').upcase %> investigation <span class="opacity-70">(coming soon)</span>
-      </div>
+      <% if Investigations::Track.exists?(investigation.suggested_track) %>
+        <%= button_to investigations_path(domain: investigation.domain, track: investigation.suggested_track),
+              method: :post, data: { turbo: false },
+              class: "w-full text-left px-3 py-2 bg-green text-bg font-bold text-[11.5px]" do %>
+          → investigate <%= investigation.suggested_track.tr('_', ' ').upcase %>
+        <% end %>
+      <% else %>
+        <div class="px-3 py-2 bg-green text-bg font-bold text-[11.5px]">
+          → start <%= investigation.suggested_track.tr('_', ' ').upcase %> investigation <span class="opacity-70">(coming soon)</span>
+        </div>
+      <% end %>
     <% end %>
   <% else %>
     <div class="px-3 py-2 border-b border-line text-mute flex items-center gap-2">

@@ -41,4 +41,17 @@ class ToolHarness::CommandDispatcherTest < ActiveSupport::TestCase
     assert_equal :investigate, cmd.name
     assert_equal "example.com", cmd.args[:domain]
   end
+
+  test "investigate parses an optional track argument" do
+    cmd = ToolHarness::CommandDispatcher.parse(":investigate example.com email_delivery")
+    assert_equal :investigate, cmd.name
+    assert_equal "example.com", cmd.args[:domain]
+    assert_equal "email_delivery", cmd.args[:track]
+  end
+
+  test "investigate without a track omits the key" do
+    cmd = ToolHarness::CommandDispatcher.parse(":investigate example.com")
+    assert_equal "example.com", cmd.args[:domain]
+    assert_nil cmd.args[:track]
+  end
 end

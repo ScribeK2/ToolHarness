@@ -22,6 +22,8 @@ class InvestigationsController < ApplicationController
       end
       format.html { redirect_to investigation_path(investigation) }
     end
+  rescue KeyError
+    head :unprocessable_entity
   end
 
   def show

@@ -29,6 +29,15 @@ class InvestigationTest < ActiveSupport::TestCase
     assert_not inv.all_steps_terminal?
   end
 
+  test "all_steps_terminal? counts skipped as terminal" do
+    inv = Investigation.create!(domain: "x.com", track: "orientation", status: "running", started_at: Time.current)
+    inv.tool_runs.create!(tool_key: "dns_lookup", tool_name: "DNS", category: "dns",
+                          status: "completed", success: true, step_order: 0)
+    inv.tool_runs.create!(tool_key: "blacklist", tool_name: "BL", category: "diagnostics",
+                          status: "skipped", skip_reason: "No MX records", step_order: 1)
+    assert inv.all_steps_terminal?
+  end
+
   test "enforce_retention_cap! nullifies child runs of purged investigations without raising" do
     old = Investigation.create!(domain: "old.com", track: "orientation", status: "completed")
     child = old.tool_runs.create!(tool_key: "dns_lookup", tool_name: "DNS", category: "dns", status: "completed", step_order: 0)

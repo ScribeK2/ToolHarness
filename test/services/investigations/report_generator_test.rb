@@ -45,4 +45,24 @@ class Investigations::ReportGeneratorTest < ActiveSupport::TestCase
     assert_match(/WHOIS Lookup/, md)
     assert_match(/Resolves to 1\.2\.3\.4\./, md)
   end
+
+  test "boundary section names the mail server for the email_delivery track" do
+    inv = Investigation.create!(domain: "example.com", track: "email_delivery", status: "completed",
+                                started_at: 1.minute.ago, completed_at: Time.current,
+                                verdict_status: "healthy", findings: [])
+    md = Investigations::ReportGenerator.new(inv).to_markdown
+    assert_match(/mail server internals/i, md)
+    assert_match(/Graylog/, md)
+  end
+
+  test "evidence section marks a skipped probe as SKIPPED with its reason" do
+    inv = Investigation.create!(domain: "example.com", track: "email_delivery", status: "completed",
+                                started_at: 1.minute.ago, completed_at: Time.current,
+                                verdict_status: "critical", findings: [])
+    inv.tool_runs.create!(tool_key: "blacklist", tool_name: "Blacklist Check", category: "diagnostics",
+                          status: "skipped", skip_reason: "No MX records — reputation check skipped", step_order: 5)
+    md = Investigations::ReportGenerator.new(inv).to_markdown
+    assert_match(/Blacklist Check \(SKIPPED\)/, md)
+    assert_match(/No MX records/, md)
+  end
 end

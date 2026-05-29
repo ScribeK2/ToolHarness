@@ -44,12 +44,18 @@ class CommandsController < ApplicationController
 
   def dispatch_investigate(args)
     if args[:domain].blank?
-      render turbo_stream: error_stream("usage: :investigate <domain>")
+      render turbo_stream: error_stream("usage: :investigate <domain> [track]")
+      return
+    end
+
+    track = args[:track].presence || "orientation"
+    unless Investigations::Track.exists?(track)
+      render turbo_stream: error_stream("unknown track '#{track}'")
       return
     end
 
     domain = ToolHarness::HostNormalizer.call(args[:domain])
-    investigation = Investigations::Orchestrator.start(domain: domain, track_key: "orientation")
+    investigation = Investigations::Orchestrator.start(domain: domain, track_key: track)
     redirect_to investigation_path(investigation)
   end
 
