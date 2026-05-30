@@ -11,15 +11,27 @@ class Rdap::BootstrapTest < ActiveSupport::TestCase
     ]
   }.freeze
 
+  # The test env uses :null_store (writes/reads are no-ops), so swap in a real
+  # in-memory store for the duration of any test that exercises caching.
+  def with_memory_cache
+    original = Rails.cache
+    Rails.cache = ActiveSupport::Cache::MemoryStore.new
+    yield
+  ensure
+    Rails.cache = original
+  end
+
   test "fetch_json is the single HTTP seam and its result is cached" do
-    calls = 0
-    fetcher = ->(_url) { calls += 1; DNS_JSON }
-    boot = Rdap::Bootstrap.new
-    boot.stub(:fetch_json, fetcher) do
-      assert_equal DNS_JSON, boot.send(:dns_services)
-      assert_equal DNS_JSON, boot.send(:dns_services) # second call hits cache
+    with_memory_cache do
+      calls = 0
+      fetcher = ->(_url) { calls += 1; DNS_JSON }
+      boot = Rdap::Bootstrap.new
+      boot.stub(:fetch_json, fetcher) do
+        assert_equal DNS_JSON, boot.send(:dns_services)
+        assert_equal DNS_JSON, boot.send(:dns_services) # second call hits cache
+      end
+      assert_equal 1, calls, "expected dns.json fetched once then cached"
     end
-    assert_equal 1, calls, "expected dns.json fetched once then cached"
   end
 
   test "base_for resolves a domain to its registry by longest TLD match" do
