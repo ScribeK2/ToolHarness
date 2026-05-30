@@ -17,6 +17,7 @@ module Rdap
     def base_for(query, record_type)
       case record_type
       when :domain then domain_base(query)
+      when :ip     then ip_base(query)
       else nil
       end
     end
@@ -48,6 +49,29 @@ module Rdap
           return urls.first if Array(tlds).map(&:downcase).include?(candidate)
         end
       end
+      nil
+    end
+
+    def ip_base(ip_string)
+      addr = IPAddr.new(ip_string.to_s)
+      services = addr.ipv6? ? ipv6_services : ipv4_services
+      return nil unless services.is_a?(Hash)
+
+      best_url = nil
+      best_prefix = -1
+      services["services"].to_a.each do |(cidrs, urls)|
+        Array(cidrs).each do |cidr|
+          block = IPAddr.new(cidr)
+          next unless block.include?(addr)
+          prefix = cidr.split("/").last.to_i
+          if prefix > best_prefix
+            best_prefix = prefix
+            best_url = urls.first
+          end
+        end
+      end
+      best_url
+    rescue IPAddr::Error
       nil
     end
 
