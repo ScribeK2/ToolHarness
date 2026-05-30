@@ -13,6 +13,14 @@ module Rdap
     OPEN_TIMEOUT = 5
     READ_TIMEOUT = 8
 
+    # Returns an RDAP base URL (trailing slash preserved) or nil.
+    def base_for(query, record_type)
+      case record_type
+      when :domain then domain_base(query)
+      else nil
+      end
+    end
+
     private
 
     def dns_services  = cached("dns")  { fetch_json("#{BASE}/dns.json") }
@@ -27,6 +35,20 @@ module Rdap
       val = yield
       Rails.cache.write(key, val, expires_in: CACHE_TTL) if val
       val
+    end
+
+    def domain_base(domain)
+      services = dns_services
+      return nil unless services.is_a?(Hash)
+      labels = domain.to_s.downcase.chomp(".").split(".")
+      # Try the longest suffix first: "a.b.co.uk" -> "a.b.co.uk","b.co.uk","co.uk","uk"
+      labels.each_index do |i|
+        candidate = labels[i..].join(".")
+        services["services"].to_a.each do |(tlds, urls)|
+          return urls.first if Array(tlds).map(&:downcase).include?(candidate)
+        end
+      end
+      nil
     end
 
     # The single HTTP seam — stub this in tests. Returns a parsed Hash or nil.

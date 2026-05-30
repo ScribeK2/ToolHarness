@@ -21,4 +21,19 @@ class Rdap::BootstrapTest < ActiveSupport::TestCase
     end
     assert_equal 1, calls, "expected dns.json fetched once then cached"
   end
+
+  test "base_for resolves a domain to its registry by longest TLD match" do
+    boot = Rdap::Bootstrap.new
+    boot.stub(:fetch_json, ->(_) { DNS_JSON }) do
+      assert_equal "https://rdap.verisign.com/com/v1/", boot.base_for("example.com", :domain)
+      assert_equal "https://rdap.publicinterestregistry.org/rdap/", boot.base_for("nonprofit.org", :domain)
+    end
+  end
+
+  test "base_for returns nil for an unknown TLD" do
+    boot = Rdap::Bootstrap.new
+    boot.stub(:fetch_json, ->(_) { DNS_JSON }) do
+      assert_nil boot.base_for("example.zzz", :domain)
+    end
+  end
 end
