@@ -44,4 +44,55 @@ class RdapCheckerTest < ActiveSupport::TestCase
       end
     end
   end
+
+  test "falls back to rdap.org when bootstrap has no base" do
+    boot = Rdap::Bootstrap.new
+    boot.stub(:base_for, nil) do
+      c = RdapChecker.new("example.com", bootstrap: boot)
+      seen = []
+      fake = ->(url) { seen << url; { status: 200, body: DOMAIN_RDAP } }
+      c.stub(:http_get_json, fake) do
+        r = c.check
+        assert r[:success]
+        assert_equal :rdap_bootstrap_redirect, r[:source]
+        assert_match %r{rdap\.org/domain/example\.com}, seen.first
+      end
+    end
+  end
+
+  test "registry 5xx falls back to rdap.org" do
+    boot = Rdap::Bootstrap.new
+    boot.stub(:base_for, "https://rdap.verisign.com/com/v1/") do
+      c = RdapChecker.new("example.com", bootstrap: boot)
+      fake = ->(url) { url.include?("rdap.org") ? { status: 200, body: DOMAIN_RDAP } : { status: 503, body: nil } }
+      c.stub(:http_get_json, fake) do
+        r = c.check
+        assert r[:success]
+        assert_equal :rdap_bootstrap_redirect, r[:source]
+      end
+    end
+  end
+
+  test "registry 404 is authoritative not-registered (no fallback)" do
+    boot = Rdap::Bootstrap.new
+    boot.stub(:base_for, "https://rdap.verisign.com/com/v1/") do
+      c = RdapChecker.new("nope.com", bootstrap: boot)
+      c.stub(:http_get_json, ->(_) { { status: 404, body: nil } }) do
+        r = c.check
+        assert r[:success]
+        assert(r[:issues].any? { |i| i[:code] == "rdap_not_found" })
+      end
+    end
+  end
+
+  test "total failure returns success false for WHOIS fallback" do
+    boot = Rdap::Bootstrap.new
+    boot.stub(:base_for, nil) do
+      c = RdapChecker.new("example.com", bootstrap: boot)
+      c.stub(:http_get_json, ->(_) { { status: 0, body: nil } }) do
+        r = c.check
+        assert_not r[:success]
+      end
+    end
+  end
 end
