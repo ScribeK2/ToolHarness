@@ -108,7 +108,45 @@ class RdapChecker
   end
 
   def parse_ip(d, source)
-    base_result # filled in Task 6
+    start_a = d["startAddress"]
+    end_a   = d["endAddress"]
+    abuse   = Array(d["entities"]).find { |e| Array(e["roles"]).include?("abuse") }
+    base_result.merge(
+      success: true, source: source,
+      raw_data: JSON.pretty_generate(d),
+      ip_range: ([start_a, end_a].all?(&:present?) ? "#{start_a} – #{end_a}" : nil),
+      cidr: cidr_from(start_a, end_a),
+      network_name: d["name"],
+      network_type: d["type"],
+      rir: rir_from(d),
+      country: d["country"],
+      organization: entity_name(d, "registrant"),
+      abuse_contact: (abuse && vcard_value(abuse, "email")),
+      entities: parse_entities(d["entities"]),
+      events: Array(d["events"]).map { |e| { action: e["eventAction"], date: e["eventDate"] } }
+    )
+  end
+
+  def cidr_from(start_a, end_a)
+    return nil unless start_a.present? && end_a.present?
+    lo = IPAddr.new(start_a); hi = IPAddr.new(end_a)
+    range = (hi.to_i - lo.to_i + 1)
+    bits = lo.ipv6? ? 128 : 32
+    prefix = bits - Math.log2(range).to_i
+    "#{start_a}/#{prefix}"
+  rescue StandardError
+    nil
+  end
+
+  # Best-effort RIR from the port43 whois host or rdap base.
+  def rir_from(d)
+    host = d["port43"].to_s
+    return "ARIN"    if host.include?("arin")
+    return "RIPE"    if host.include?("ripe")
+    return "APNIC"   if host.include?("apnic")
+    return "LACNIC"  if host.include?("lacnic")
+    return "AFRINIC" if host.include?("afrinic")
+    nil
   end
 
   def event_date(events, action)

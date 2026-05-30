@@ -95,4 +95,41 @@ class RdapCheckerTest < ActiveSupport::TestCase
       end
     end
   end
+
+  IP_RDAP = {
+    "objectClassName" => "ip network",
+    "handle" => "NET-8-8-8-0-1",
+    "startAddress" => "8.8.8.0",
+    "endAddress" => "8.8.8.255",
+    "ipVersion" => "v4",
+    "name" => "GOGL",
+    "type" => "DIRECT ALLOCATION",
+    "country" => "US",
+    "port43" => "whois.arin.net",
+    "events" => [{ "eventAction" => "registration", "eventDate" => "2014-03-14T00:00:00Z" }],
+    "entities" => [
+      { "roles" => ["registrant"],
+        "vcardArray" => ["vcard", [["version", {}, "text", "4.0"], ["fn", {}, "text", "Google LLC"]]] },
+      { "roles" => ["abuse"],
+        "vcardArray" => ["vcard", [["version", {}, "text", "4.0"], ["email", {}, "text", "abuse@google.com"]]] }
+    ]
+  }.freeze
+
+  test "IP lookup parses network, range, org, and abuse contact" do
+    boot = Rdap::Bootstrap.new
+    boot.stub(:base_for, "https://rdap.arin.net/registry/") do
+      c = RdapChecker.new("8.8.8.8", bootstrap: boot)
+      c.stub(:http_get_json, ->(_) { { status: 200, body: IP_RDAP } }) do
+        r = c.check
+        assert r[:success]
+        assert_equal :ip, r[:record_type]
+        assert_equal "8.8.8.0 – 8.8.8.255", r[:ip_range]
+        assert_equal "GOGL", r[:network_name]
+        assert_equal "DIRECT ALLOCATION", r[:network_type]
+        assert_equal "US", r[:country]
+        assert_equal "Google LLC", r[:organization]
+        assert_equal "abuse@google.com", r[:abuse_contact]
+      end
+    end
+  end
 end
