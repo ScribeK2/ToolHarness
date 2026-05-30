@@ -49,4 +49,11 @@ class WhoisCheckerTest < ActiveSupport::TestCase
       assert_equal :domain, result[:record_type]
     end
   end
+
+  test "detect_domain_issues is callable on a plain hash (for RDAP reuse)" do
+    issues = WhoisChecker.detect_domain_issues(
+      expiration_date: "2020-01-01", nameservers: %w[a.example.net], registrar: "X"
+    )
+    assert(issues.any? { |i| i[:code] == "domain_expired" })
+  end
 end

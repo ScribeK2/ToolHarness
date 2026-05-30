@@ -144,9 +144,18 @@ class WhoisChecker
     result
   end
 
+  # Callable from RdapChecker so RDAP-sourced domain results get the same
+  # expiry/nameserver/registrar issues WHOIS results do. Reads a plain hash
+  # (string or symbol keys); needs no instance state.
+  def self.detect_domain_issues(hash)
+    allocate.send(:build_domain_issues, hash.transform_keys(&:to_sym))
+  end
+
   private
 
-  def detect_issues(result)
+  def detect_issues(result) = build_domain_issues(result)
+
+  def build_domain_issues(result)
     issues = []
 
     # Check expiration date

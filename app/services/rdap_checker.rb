@@ -93,7 +93,7 @@ class RdapChecker
 
   def parse_domain(d, source)
     events = Array(d["events"])
-    base_result.merge(
+    h = base_result.merge(
       success: true, source: source,
       raw_data: JSON.pretty_generate(d),
       registrar: registrar_name(d),
@@ -105,6 +105,7 @@ class RdapChecker
       statuses: Array(d["status"]),
       entities: parse_entities(d["entities"])
     )
+    h.merge(issues: WhoisChecker.detect_domain_issues(h))
   end
 
   def parse_ip(d, source)

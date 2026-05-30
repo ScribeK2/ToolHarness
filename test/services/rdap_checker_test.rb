@@ -132,4 +132,17 @@ class RdapCheckerTest < ActiveSupport::TestCase
       end
     end
   end
+
+  test "RDAP domain results get expiry issues" do
+    expired = DOMAIN_RDAP.merge("events" => [{ "eventAction" => "expiration", "eventDate" => "2020-01-01T00:00:00Z" }])
+    boot = Rdap::Bootstrap.new
+    boot.stub(:base_for, "https://rdap.verisign.com/com/v1/") do
+      c = RdapChecker.new("example.com", bootstrap: boot)
+      c.stub(:http_get_json, ->(_) { { status: 200, body: expired } }) do
+        r = c.check
+        assert(r[:issues].any? { |i| i[:code] == "domain_expired" })
+      end
+    end
+  end
+
 end
