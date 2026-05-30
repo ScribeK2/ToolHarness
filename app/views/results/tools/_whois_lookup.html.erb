@@ -1,0 +1,71 @@
+<%# app/views/results/tools/_whois_lookup.html.erb
+    Locals: tool_run. Renders RDAP/WHOIS registration results (domain or IP).
+    Reads result_data with string-or-symbol keys (JSON round-trip safe).
+    summary + issues come from the ToolRun columns, NOT result_data. %>
+<%
+  d = (tool_run.result_data || {})
+  get = ->(k) { d[k.to_s].nil? ? d[k.to_sym] : d[k.to_s] }
+  rtype  = (get.(:record_type) || "domain").to_s
+  source = get.(:source).to_s
+  badge  = case source
+           when "rdap_registry" then "via RDAP (registry)"
+           when "rdap_bootstrap_redirect" then "via RDAP (rdap.org)"
+           when "whois_fallback" then "via WHOIS fallback"
+           else "—"
+           end
+  issues = Array(tool_run.issues)
+%>
+
+<div class="py-2 border-t border-line first:border-t-0">
+  <div class="text-mute mb-2"><span aria-hidden="true">▸ </span><%= badge %></div>
+
+  <% if tool_run.summary.present? %>
+    <div class="text-fg mb-2 border-l border-line pl-2"><%= tool_run.summary %></div>
+  <% end %>
+
+  <% issues.each do |i| %>
+    <div class="mb-1">
+      <%= render "results/severity_tag", severity: (i["severity"] || i[:severity]) %>
+      <span class="text-fg"><%= i["title"] || i[:title] %></span>
+      <span class="text-mute">— <%= i["message"] || i[:message] %></span>
+    </div>
+  <% end %>
+
+  <% if rtype == "ip" %>
+    <%= render "results/kv_row", label: "Network",       value: get.(:network_name) if get.(:network_name).present? %>
+    <%= render "results/kv_row", label: "CIDR",          value: get.(:cidr) if get.(:cidr).present? %>
+    <%= render "results/kv_row", label: "Range",         value: get.(:ip_range) if get.(:ip_range).present? %>
+    <%= render "results/kv_row", label: "Type",          value: get.(:network_type) if get.(:network_type).present? %>
+    <%= render "results/kv_row", label: "RIR",           value: get.(:rir) if get.(:rir).present? %>
+    <%= render "results/kv_row", label: "Organization",  value: get.(:organization) if get.(:organization).present? %>
+    <%= render "results/kv_row", label: "Country",       value: get.(:country) if get.(:country).present? %>
+    <%= render "results/kv_row", label: "Abuse contact", value: get.(:abuse_contact) if get.(:abuse_contact).present? %>
+    <% Array(get.(:events)).each do |e| %>
+      <% action = (e["action"] || e[:action]).to_s
+         date   = (e["date"]   || e[:date]) %>
+      <%= render "results/kv_row", label: action.capitalize, value: date if date.present? %>
+    <% end %>
+  <% else %>
+    <%= render "results/kv_row", label: "Registrar",   value: get.(:registrar) if get.(:registrar).present? %>
+    <%= render "results/kv_row", label: "Created",     value: get.(:creation_date) if get.(:creation_date).present? %>
+    <%= render "results/kv_row", label: "Updated",     value: get.(:updated_date) if get.(:updated_date).present? %>
+    <%= render "results/kv_row", label: "Expires",     value: get.(:expiration_date) if get.(:expiration_date).present? %>
+    <%= render "results/kv_row", label: "Registrant",  value: get.(:registrant) if get.(:registrant).present? %>
+    <% if Array(get.(:statuses)).any? %>
+      <%= render "results/kv_row", label: "Status", value: Array(get.(:statuses)).join(", ") %>
+    <% end %>
+    <% if Array(get.(:nameservers)).any? %>
+      <div class="flex gap-2 py-[1px]">
+        <span class="text-mute w-40 shrink-0">Nameservers</span>
+        <span class="text-fg break-all"><%= safe_join(Array(get.(:nameservers)), tag.br) %></span>
+      </div>
+    <% end %>
+  <% end %>
+
+  <% if get.(:raw_data).present? %>
+    <details class="mt-2">
+      <summary class="text-mute hover:text-cyan text-[10px] cursor-pointer list-none">show raw</summary>
+      <pre class="text-mute whitespace-pre-wrap mt-1 border-l border-line pl-2"><%= get.(:raw_data) %></pre>
+    </details>
+  <% end %>
+</div>
