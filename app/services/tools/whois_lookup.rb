@@ -2,45 +2,70 @@ module Tools
   class WhoisLookup
     include ToolHarness::Tool
 
-    def self.tool_name = "WHOIS Lookup"
+    def self.tool_name = "Registration Lookup (RDAP / WHOIS)"
     def self.category = :domain
-    def self.description = "Retrieves registrar, expiration, nameservers, and registrant details from WHOIS, falling back to the system whois command if needed."
+    def self.description = "RDAP-first registration lookup for domains and IPs, falling back to WHOIS — registrar, key dates, nameservers, network ownership, and abuse contacts."
     def self.form_fields = { domain: :text }
     def self.input_type = :domain
     def self.cacheable? = false
     def self.timeout = 30
+    def self.result_partial = "results/tools/whois_lookup"
 
     def execute(params)
-      raw = ::WhoisChecker.check(params[:domain])
+      query = params[:domain].to_s.strip
+      data  = lookup(query)
 
       ToolHarness::Result.new(
-        success: raw[:success],
+        success: data[:success],
         tool: self.class.tool_name,
-        data: raw.except(:issues, :success, :raw_data).merge(raw_data: raw[:raw_data]),
-        issues: raw[:issues] || [],
-        summary: build_summary(raw),
-        error: raw[:error]
+        data: data,
+        issues: data[:issues] || [],
+        summary: build_summary(data),
+        error: data[:error]
       )
     end
 
     private
 
-    def build_summary(raw)
-      return "WHOIS lookup failed: #{raw[:error] || 'unknown error'}." unless raw[:success]
+    # RDAP-first ladder. IPs and domains both get a WHOIS fallback (the whois
+    # gem queries RIR WHOIS for IPs). First success wins; if both miss we keep
+    # the RDAP result so its error/issues surface.
+    def lookup(query)
+      rdap = ::RdapChecker.check(query)
+      return rdap if rdap[:success]
 
+      whois = ::WhoisChecker.check(query)
+      whois[:success] ? whois : rdap.merge(error: rdap[:error] || whois[:error])
+    end
+
+    def build_summary(data)
+      return "Registration lookup failed: #{data[:error] || 'unknown error'}." unless data[:success]
+
+      via = case data[:source]
+            when :rdap_registry then "via RDAP (registry)"
+            when :rdap_bootstrap_redirect then "via RDAP (rdap.org)"
+            when :whois_fallback then "via WHOIS fallback"
+            else ""
+            end
+
+      body = data[:record_type] == :ip ? ip_summary(data) : domain_summary(data)
+      "#{body} #{via}".strip
+    end
+
+    def domain_summary(data)
       parts = []
-      parts << "Registered via #{raw[:registrar]}" if raw[:registrar].present?
-      if raw[:expiration_date].present?
-        days = days_until(raw[:expiration_date])
-        if days
-          parts << "expires #{raw[:expiration_date][0, 10]} (#{days} days)"
-        else
-          parts << "expires #{raw[:expiration_date]}"
-        end
+      parts << "Registered via #{data[:registrar]}" if data[:registrar].present?
+      if data[:expiration_date].present?
+        days = days_until(data[:expiration_date])
+        parts << (days ? "expires #{data[:expiration_date][0, 10]} (#{days} days)" : "expires #{data[:expiration_date]}")
       end
-      parts << "#{raw[:nameservers].size} nameservers" if raw[:nameservers]&.any?
+      parts << "#{data[:nameservers].size} nameservers" if data[:nameservers]&.any?
+      parts.any? ? parts.join(", ") : "Registration data retrieved"
+    end
 
-      parts.any? ? "#{parts.join(', ')}." : "WHOIS data retrieved."
+    def ip_summary(data)
+      parts = [data[:network_name], data[:cidr] || data[:ip_range], data[:organization]].compact
+      parts.any? ? parts.join(" · ") : "Network data retrieved"
     end
 
     def days_until(date_str)
