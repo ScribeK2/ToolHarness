@@ -24,7 +24,7 @@ class InvestigationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "#investigation_steps_#{inv.id}"
     assert_select "#investigation_verdict_#{inv.id}"
-    assert_match(/whois lookup/i, response.body)
+    assert_match(/registration lookup/i, response.body)
   end
 
   test "GET show on a running investigation shows 'report pending', not a copy button" do
