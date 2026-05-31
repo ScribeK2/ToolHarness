@@ -10,7 +10,7 @@
   <% if truncated %>
     <div class="flex-1" data-truncated>
       <pre class="text-fg whitespace-pre border-l border-line pl-2 cursor-pointer hover:text-cyan" data-truncated-head <%= tag.attributes(copy_attrs) %>><%= head_text %></pre>
-      <pre class="text-fg whitespace-pre border-l border-line pl-2 hidden" data-truncated-full><%= value %></pre>
+      <pre class="text-fg whitespace-pre border-l border-line pl-2 hidden cursor-pointer hover:text-cyan" data-truncated-full <%= tag.attributes(copy_attrs) %>><%= value %></pre>
     </div>
   <% elsif value.to_s.include?("\n") %>
     <pre class="text-fg whitespace-pre border-l border-line pl-2 cursor-pointer hover:text-cyan" <%= tag.attributes(copy_attrs) %>><%= value %></pre>
