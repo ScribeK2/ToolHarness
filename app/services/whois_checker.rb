@@ -1,3 +1,4 @@
+require "ipaddr"
 require "whois"
 require "shellwords"
 
@@ -16,6 +17,14 @@ class WhoisChecker
 
   def initialize(domain)
     @domain = domain.to_s.strip.downcase
+    @record_type = ip?(@domain) ? :ip : :domain
+  end
+
+  def ip?(value)
+    IPAddr.new(value)
+    true
+  rescue IPAddr::Error
+    false
   end
 
   def check
@@ -25,12 +34,20 @@ class WhoisChecker
 
     result = {
       success: false,
+      record_type: @record_type,
+      source: :whois_fallback,
       registrar: nil,
       expiration_date: nil,
       creation_date: nil,
       updated_date: nil,
       nameservers: [],
       registrant: nil,
+      ip_range: nil,
+      cidr: nil,
+      network_name: nil,
+      organization: nil,
+      country: nil,
+      abuse_contact: nil,
       raw_data: nil,
       error: nil,
       issues: []
@@ -42,16 +59,19 @@ class WhoisChecker
       whois_record = client.lookup(@domain)
 
       result[:success] = true
-      result[:registrar] = extract_registrar(whois_record)
-      result[:expiration_date] = extract_expiration_date(whois_record)
-      result[:creation_date] = extract_creation_date(whois_record)
-      result[:updated_date] = extract_updated_date(whois_record)
-      result[:nameservers] = extract_nameservers(whois_record)
-      result[:registrant] = extract_registrant(whois_record)
       result[:raw_data] = whois_record.content
 
-      # Detect issues
-      result[:issues] = detect_issues(result)
+      if @record_type == :ip
+        extract_ip_fields!(result, whois_record.content.to_s)
+      else
+        result[:registrar] = extract_registrar(whois_record)
+        result[:expiration_date] = extract_expiration_date(whois_record)
+        result[:creation_date] = extract_creation_date(whois_record)
+        result[:updated_date] = extract_updated_date(whois_record)
+        result[:nameservers] = extract_nameservers(whois_record)
+        result[:registrant] = extract_registrant(whois_record)
+        result[:issues] = detect_issues(result)
+      end
     rescue Timeout::Error, Errno::ETIMEDOUT => e
       retries += 1
       if retries < MAX_RETRIES
@@ -124,9 +144,18 @@ class WhoisChecker
     result
   end
 
+  # Callable from RdapChecker so RDAP-sourced domain results get the same
+  # expiry/nameserver/registrar issues WHOIS results do. Reads a plain hash
+  # (string or symbol keys); needs no instance state.
+  def self.detect_domain_issues(hash)
+    allocate.send(:build_domain_issues, hash.transform_keys(&:to_sym))
+  end
+
   private
 
-  def detect_issues(result)
+  def detect_issues(result) = build_domain_issues(result)
+
+  def build_domain_issues(result)
     issues = []
 
     # Check expiration date
@@ -216,6 +245,19 @@ class WhoisChecker
 
   private
 
+  # IP/network WHOIS uses a different schema than domain WHOIS (ARIN/RIPE/etc.).
+  # Extract the network-ownership fields the RDAP IP path also surfaces.
+  def extract_ip_fields!(result, content)
+    result[:cidr]          = content[/CIDR:\s*(.+)/i, 1]&.strip
+    result[:network_name]  = content[/NetName:\s*(.+)/i, 1]&.strip
+    result[:organization]  = content[/(?:Organization|OrgName|org-name|owner):\s*(.+)/i, 1]&.strip
+    result[:country]       = content[/Country:\s*(.+)/i, 1]&.strip
+    result[:abuse_contact] = content[/(?:OrgAbuseEmail|abuse-mailbox|e-mail):\s*(\S+@\S+)/i, 1]&.strip
+    net = content[/NetRange:\s*(.+)/i, 1] || content[/inetnum:\s*(.+)/i, 1]
+    result[:ip_range]      = net&.strip
+    result[:issues]        = []
+  end
+
   def extract_registrar(whois_record)
     content = whois_record.content.to_s
     registrar_match = content.match(/Registrar:\s*(.+)/i) ||
@@ -302,4 +344,3 @@ class WhoisChecker
     nil
   end
 end
-
