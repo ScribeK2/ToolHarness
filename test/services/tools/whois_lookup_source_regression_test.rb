@@ -46,4 +46,23 @@ class WhoisLookupSourceRegressionTest < ActiveSupport::TestCase
     )
     assert_match(/WHOIS/i, html)
   end
+
+  # The raw blob must use the shared kv_row surface so it gets the universal
+  # [data-truncated] toggle (the `:raw` cmdline verb) + click-to-copy, not a
+  # hand-rolled <details>. A multi-line raw value triggers the truncation path.
+  test "raw block uses the shared truncation + click-to-copy surface" do
+    multiline = (1..10).map { |i| %(  "k#{i}": #{i},) }.join("\n")
+    html = render_partial(
+      record_type: :domain, source: :rdap_registry, success: true,
+      query: "example.com", registrar: "Reg", nameservers: [], statuses: [],
+      entities: [], raw_data: "{\n#{multiline}\n}"
+    )
+    assert_match "data-truncated", html, "raw must be `:raw`-expandable"
+    refute_match "show raw", html, "the hand-rolled <details> should be gone"
+    # Both the truncated-head AND the expanded-full views must be click-to-copy.
+    head_copyable = html =~ /data-truncated-head[^>]*data-copy-value|data-copy-value[^>]*data-truncated-head/
+    full_copyable = html =~ /data-truncated-full[^>]*data-copy-value|data-copy-value[^>]*data-truncated-full/
+    assert head_copyable, "truncated raw must be click-to-copy"
+    assert full_copyable, "expanded raw must also be click-to-copy"
+  end
 end

@@ -63,9 +63,12 @@
   <% end %>
 
   <% if get.(:raw_data).present? %>
-    <details class="mt-2">
-      <summary class="text-mute hover:text-cyan text-[10px] cursor-pointer list-none">show raw</summary>
-      <pre class="text-mute whitespace-pre-wrap mt-1 border-l border-line pl-2"><%= get.(:raw_data) %></pre>
-    </details>
+    <div class="py-2 border-t border-line mt-2">
+      <h3 class="text-[11px] tracking-[0.18em] uppercase text-fg font-bold mb-1"><span aria-hidden="true">▸ </span>Raw</h3>
+      <%# Render via the shared kv_row so the raw blob gets the universal
+          [data-truncated] toggle (driven by the `:raw` cmdline verb), the normal
+          text color, and click-to-copy — matching every other tool's surface. %>
+      <%= render "results/kv_row", key: "", value: get.(:raw_data) %>
+    </div>
   <% end %>
 </div>
