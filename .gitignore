@@ -56,3 +56,6 @@
 /ToolHarness-*.AppImage
 /ToolHarness-*.AppImage.sig
 
+
+# Claude Code runtime state
+.claude/
