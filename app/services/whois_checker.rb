@@ -344,4 +344,3 @@ class WhoisChecker
     nil
   end
 end
-

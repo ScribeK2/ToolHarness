@@ -42,11 +42,11 @@ module Tools
       return "Registration lookup failed: #{data[:error] || 'unknown error'}." unless data[:success]
 
       via = case data[:source]
-            when :rdap_registry then "via RDAP (registry)"
-            when :rdap_bootstrap_redirect then "via RDAP (rdap.org)"
-            when :whois_fallback then "via WHOIS fallback"
-            else ""
-            end
+      when :rdap_registry then "via RDAP (registry)"
+      when :rdap_bootstrap_redirect then "via RDAP (rdap.org)"
+      when :whois_fallback then "via WHOIS fallback"
+      else ""
+      end
 
       body = data[:record_type] == :ip ? ip_summary(data) : domain_summary(data)
       "#{body} #{via}".strip
@@ -64,7 +64,7 @@ module Tools
     end
 
     def ip_summary(data)
-      parts = [data[:network_name], data[:cidr] || data[:ip_range], data[:organization]].compact
+      parts = [ data[:network_name], data[:cidr] || data[:ip_range], data[:organization] ].compact
       parts.any? ? parts.join(" · ") : "Network data retrieved"
     end
 

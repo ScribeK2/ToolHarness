@@ -26,11 +26,11 @@ class RdapChecker
     if base
       resp = http_get_json(object_url(base))
       return parse(resp[:body], source: :rdap_registry) if ok?(resp)
-      return not_found_result if resp && resp[:status] == 404
+      return not_found_result(:rdap_registry) if resp && resp[:status] == 404
     end
     resp = http_get_json("#{RDAP_ORG}/#{path_segment}/#{@query}")
     return parse(resp[:body], source: :rdap_bootstrap_redirect) if ok?(resp)
-    return not_found_result if resp && resp[:status] == 404
+    return not_found_result(:rdap_bootstrap_redirect) if resp && resp[:status] == 404
 
     failure("RDAP lookup failed (no endpoint or server error).")
   end
@@ -78,12 +78,12 @@ class RdapChecker
     base_result.merge(success: false, error: msg)
   end
 
-  def not_found_result
+  def not_found_result(source)
     base_result.merge(
-      success: true, source: :rdap_registry,
-      issues: [{ severity: "info", code: "rdap_not_found",
+      success: true, source: source,
+      issues: [ { severity: "info", code: "rdap_not_found",
                  title: "Not registered", message: "RDAP reports no record for #{@query}.",
-                 recommendation: "The object may be unregistered or available." }]
+                 recommendation: "The object may be unregistered or available." } ]
     )
   end
 
@@ -115,7 +115,7 @@ class RdapChecker
     base_result.merge(
       success: true, source: source,
       raw_data: JSON.pretty_generate(d),
-      ip_range: ([start_a, end_a].all?(&:present?) ? "#{start_a} – #{end_a}" : nil),
+      ip_range: ([ start_a, end_a ].all?(&:present?) ? "#{start_a} – #{end_a}" : nil),
       cidr: cidr_from(start_a, end_a),
       network_name: d["name"],
       network_type: d["type"],

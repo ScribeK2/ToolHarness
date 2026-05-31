@@ -32,31 +32,31 @@
   <% end %>
 
   <% if rtype == "ip" %>
-    <%= render "results/kv_row", label: "Network",       value: get.(:network_name) if get.(:network_name).present? %>
-    <%= render "results/kv_row", label: "CIDR",          value: get.(:cidr) if get.(:cidr).present? %>
-    <%= render "results/kv_row", label: "Range",         value: get.(:ip_range) if get.(:ip_range).present? %>
-    <%= render "results/kv_row", label: "Type",          value: get.(:network_type) if get.(:network_type).present? %>
-    <%= render "results/kv_row", label: "RIR",           value: get.(:rir) if get.(:rir).present? %>
-    <%= render "results/kv_row", label: "Organization",  value: get.(:organization) if get.(:organization).present? %>
-    <%= render "results/kv_row", label: "Country",       value: get.(:country) if get.(:country).present? %>
-    <%= render "results/kv_row", label: "Abuse contact", value: get.(:abuse_contact) if get.(:abuse_contact).present? %>
+    <%= render "results/kv_row", key: "Network",       value: get.(:network_name) if get.(:network_name).present? %>
+    <%= render "results/kv_row", key: "CIDR",          value: get.(:cidr) if get.(:cidr).present? %>
+    <%= render "results/kv_row", key: "Range",         value: get.(:ip_range) if get.(:ip_range).present? %>
+    <%= render "results/kv_row", key: "Type",          value: get.(:network_type) if get.(:network_type).present? %>
+    <%= render "results/kv_row", key: "RIR",           value: get.(:rir) if get.(:rir).present? %>
+    <%= render "results/kv_row", key: "Organization",  value: get.(:organization) if get.(:organization).present? %>
+    <%= render "results/kv_row", key: "Country",       value: get.(:country) if get.(:country).present? %>
+    <%= render "results/kv_row", key: "Abuse contact", value: get.(:abuse_contact) if get.(:abuse_contact).present? %>
     <% Array(get.(:events)).each do |e| %>
       <% action = (e["action"] || e[:action]).to_s
          date   = (e["date"]   || e[:date]) %>
-      <%= render "results/kv_row", label: action.capitalize, value: date if date.present? %>
+      <%= render "results/kv_row", key: action.capitalize, value: date if date.present? %>
     <% end %>
   <% else %>
-    <%= render "results/kv_row", label: "Registrar",   value: get.(:registrar) if get.(:registrar).present? %>
-    <%= render "results/kv_row", label: "Created",     value: get.(:creation_date) if get.(:creation_date).present? %>
-    <%= render "results/kv_row", label: "Updated",     value: get.(:updated_date) if get.(:updated_date).present? %>
-    <%= render "results/kv_row", label: "Expires",     value: get.(:expiration_date) if get.(:expiration_date).present? %>
-    <%= render "results/kv_row", label: "Registrant",  value: get.(:registrant) if get.(:registrant).present? %>
+    <%= render "results/kv_row", key: "Registrar",   value: get.(:registrar) if get.(:registrar).present? %>
+    <%= render "results/kv_row", key: "Created",     value: get.(:creation_date) if get.(:creation_date).present? %>
+    <%= render "results/kv_row", key: "Updated",     value: get.(:updated_date) if get.(:updated_date).present? %>
+    <%= render "results/kv_row", key: "Expires",     value: get.(:expiration_date) if get.(:expiration_date).present? %>
+    <%= render "results/kv_row", key: "Registrant",  value: get.(:registrant) if get.(:registrant).present? %>
     <% if Array(get.(:statuses)).any? %>
-      <%= render "results/kv_row", label: "Status", value: Array(get.(:statuses)).join(", ") %>
+      <%= render "results/kv_row", key: "Status", value: Array(get.(:statuses)).join(", ") %>
     <% end %>
     <% if Array(get.(:nameservers)).any? %>
       <div class="flex gap-2 py-[1px]">
-        <span class="text-mute w-40 shrink-0">Nameservers</span>
+        <span class="text-mute w-[110px] flex-shrink-0">Nameservers</span>
         <span class="text-fg break-all"><%= safe_join(Array(get.(:nameservers)), tag.br) %></span>
       </div>
     <% end %>
