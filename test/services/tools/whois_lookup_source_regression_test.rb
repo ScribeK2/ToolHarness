@@ -65,4 +65,33 @@ class WhoisLookupSourceRegressionTest < ActiveSupport::TestCase
     assert head_copyable, "truncated raw must be click-to-copy"
     assert full_copyable, "expanded raw must also be click-to-copy"
   end
+
+  # RDAP results: Raw block shows whois_text by default; the literal JSON is a
+  # hidden sibling that the `:json` cmdline verb reveals.
+  test "RDAP raw block defaults to whois_text with json source hidden" do
+    html = render_partial(
+      record_type: :domain, source: :rdap_registry, success: true,
+      query: "example.com", registrar: "Reg", nameservers: [], statuses: [], entities: [],
+      whois_text: "Domain Name: example.com\nRegistrar: Reg",
+      raw_data: "{\n  \"ldhName\": \"example.com\"\n}"
+    )
+    assert_match 'data-rdap-format="whois"', html
+    assert_match 'data-rdap-format="json"', html
+    assert_match "Domain Name: example.com", html
+    # The json block carries the `hidden` class so whois shows first.
+    assert_match(/data-rdap-format="json"[^>]*class="[^"]*hidden/, html,
+                 "json source block must start hidden")
+  end
+
+  # WHOIS fallback has no RDAP JSON to reformat — raw_data is already whois-style
+  # text, so there is no whois/json toggle.
+  test "WHOIS fallback (no whois_text) shows raw text and no json toggle" do
+    html = render_partial(
+      record_type: :domain, source: :whois_fallback, success: true,
+      query: "example.com", registrar: "Reg", nameservers: [],
+      raw_data: "Domain Name: EXAMPLE.COM\nRegistrar: Reg"
+    )
+    refute_match 'data-rdap-format="json"', html
+    assert_match "Domain Name: EXAMPLE.COM", html
+  end
 end

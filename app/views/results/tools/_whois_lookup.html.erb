@@ -62,13 +62,29 @@
     <% end %>
   <% end %>
 
-  <% if get.(:raw_data).present? %>
+  <% raw_json = get.(:raw_data); whois_text = get.(:whois_text) %>
+  <% if whois_text.present? %>
+    <%# RDAP path: whois-style by default, literal JSON hidden behind `:json`.
+        Each format is its own kv_row, so both keep the universal [data-truncated]
+        `:raw` toggle + click-to-copy. The `:json` verb (cmdline_controller) flips
+        the [data-rdap-format] blocks' `hidden` class. %>
+    <div class="py-2 border-t border-line mt-2">
+      <h3 class="text-[11px] tracking-[0.18em] uppercase text-fg font-bold mb-1">
+        <span aria-hidden="true">▸ </span>Raw
+        <span class="normal-case tracking-normal font-normal text-mute">— <code>:raw</code> expands · <code>:json</code> shows source</span>
+      </h3>
+      <div data-rdap-format="whois">
+        <%= render "results/kv_row", key: "", value: whois_text %>
+      </div>
+      <div data-rdap-format="json" class="hidden">
+        <%= render "results/kv_row", key: "", value: raw_json %>
+      </div>
+    </div>
+  <% elsif raw_json.present? %>
+    <%# WHOIS-fallback path: raw_data is already whois-style text. No toggle. %>
     <div class="py-2 border-t border-line mt-2">
       <h3 class="text-[11px] tracking-[0.18em] uppercase text-fg font-bold mb-1"><span aria-hidden="true">▸ </span>Raw</h3>
-      <%# Render via the shared kv_row so the raw blob gets the universal
-          [data-truncated] toggle (driven by the `:raw` cmdline verb), the normal
-          text color, and click-to-copy — matching every other tool's surface. %>
-      <%= render "results/kv_row", key: "", value: get.(:raw_data) %>
+      <%= render "results/kv_row", key: "", value: raw_json %>
     </div>
   <% end %>
 </div>
