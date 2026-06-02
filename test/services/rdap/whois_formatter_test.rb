@@ -102,4 +102,45 @@ class Rdap::WhoisFormatterTest < ActiveSupport::TestCase
       Rdap::WhoisFormatter.format({ "ldhName" => "x.com" }, record_type: :autnum)
     end
   end
+
+  def ip_response
+    {
+      "objectClassName" => "ip network",
+      "handle" => "NET-8-8-8-0-1",
+      "startAddress" => "8.8.8.0",
+      "endAddress" => "8.8.8.255",
+      "name" => "GOGL",
+      "type" => "DIRECT ALLOCATION",
+      "country" => "US",
+      "parentHandle" => "NET-8-0-0-0-1",
+      "events" => [
+        { "eventAction" => "registration", "eventDate" => "2014-03-14T00:00:00Z" },
+        { "eventAction" => "last changed", "eventDate" => "2023-12-28T00:00:00Z" }
+      ],
+      "entities" => [
+        {
+          "roles" => ["registrant"],
+          "vcardArray" => ["vcard", [["fn", {}, "text", "Google LLC"]]]
+        },
+        {
+          "roles" => ["abuse"],
+          "vcardArray" => ["vcard", [["email", {}, "text", "network-abuse@google.com"]]]
+        }
+      ]
+    }
+  end
+
+  test "ip output is whois-style with the ARIN-style field set" do
+    out = Rdap::WhoisFormatter.format(ip_response, record_type: :ip)
+    assert_match(/^NetRange: 8\.8\.8\.0 - 8\.8\.8\.255$/, out)
+    assert_match(%r{^CIDR: 8\.8\.8\.0/24$}, out)
+    assert_match(/^NetName: GOGL$/, out)
+    assert_match(/^NetType: DIRECT ALLOCATION$/, out)
+    assert_match(/^Country: US$/, out)
+    assert_match(/^Organization: Google LLC$/, out)
+    assert_match(/^RegDate: 2014-03-14T/, out)
+    assert_match(/^Updated: 2023-12-28T/, out)
+    assert_match(/^Abuse Contact Email: network-abuse@google\.com$/, out)
+    assert_match(/^Parent: NET-8-0-0-0-1$/, out)
+  end
 end
