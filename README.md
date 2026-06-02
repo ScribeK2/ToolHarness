@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/icon.png" alt="ToolHarness Logo" width="120" height="120">
+  <img src="app/assets/images/logo_mark.svg" alt="ToolHarness Logo" width="140" height="140">
 </p>
 
 <h1 align="center">ToolHarness</h1>

@@ -1,9 +1,6 @@
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg" aria-labelledby="title" role="img">
   <title id="title">ToolHarness</title>
-  <desc>ToolHarness logo — a "TH" monogram framed in brackets, evoking a harness/framework that holds your tools. Tokyo Night palette with a neo-brutalist hard shadow.</desc>
-
-  <!-- Rounded tile (transparent outside) -->
-  <rect x="40" y="40" width="944" height="944" rx="208" fill="#24283b" stroke="#1a1b26" stroke-width="12"/>
+  <desc>ToolHarness mark — transparent background, no tile. A "TH" monogram framed in brackets.</desc>
 
   <!-- Hard offset shadow -->
   <g transform="translate(18 22)" fill="#16161e">
