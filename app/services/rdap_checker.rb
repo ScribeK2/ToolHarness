@@ -135,7 +135,10 @@ class RdapChecker
     lo = IPAddr.new(start_a); hi = IPAddr.new(end_a)
     range = (hi.to_i - lo.to_i + 1)
     bits = lo.ipv6? ? 128 : 32
-    prefix = bits - Math.log2(range).to_i
+    # ceil → smallest CIDR that *covers* the range; .to_i (floor) would emit a
+    # too-small block for non-power-of-2 ranges. Matches Rdap::WhoisFormatter#cidr
+    # so the curated "CIDR" row and the whois Raw block never disagree.
+    prefix = bits - Math.log2(range).ceil
     "#{start_a}/#{prefix}"
   rescue StandardError
     nil

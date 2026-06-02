@@ -133,6 +133,22 @@ class RdapCheckerTest < ActiveSupport::TestCase
     end
   end
 
+  test "IP CIDR is the smallest block covering a non-power-of-2 range" do
+    # 8.8.8.0–8.8.8.4 is 5 addresses; the covering CIDR is /29 (8 addresses),
+    # not the /30 (4) that a floor would wrongly produce. Must match the value
+    # Rdap::WhoisFormatter emits in the whois Raw block.
+    body = IP_RDAP.merge("startAddress" => "8.8.8.0", "endAddress" => "8.8.8.4")
+    boot = Rdap::Bootstrap.new
+    boot.stub(:base_for, "https://rdap.arin.net/registry/") do
+      c = RdapChecker.new("8.8.8.0", bootstrap: boot)
+      c.stub(:http_get_json, ->(_) { { status: 200, body: body } }) do
+        r = c.check
+        assert_equal "8.8.8.0/29", r[:cidr]
+        assert_match(%r{^CIDR: 8\.8\.8\.0/29$}, r[:whois_text])
+      end
+    end
+  end
+
   test "RDAP domain results get expiry issues" do
     expired = DOMAIN_RDAP.merge("events" => [{ "eventAction" => "expiration", "eventDate" => "2020-01-01T00:00:00Z" }])
     boot = Rdap::Bootstrap.new
