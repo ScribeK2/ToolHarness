@@ -62,7 +62,7 @@
     <% end %>
   <% end %>
 
-  <% raw_json = get.(:raw_data); whois_text = get.(:whois_text) %>
+  <% raw_data = get.(:raw_data); whois_text = get.(:whois_text) %>
   <% if whois_text.present? %>
     <%# RDAP path: whois-style by default, literal JSON hidden behind `:json`.
         Each format is its own kv_row, so both keep the universal [data-truncated]
@@ -77,14 +77,14 @@
         <%= render "results/kv_row", key: "", value: whois_text %>
       </div>
       <div data-rdap-format="json" class="hidden">
-        <%= render "results/kv_row", key: "", value: raw_json %>
+        <%= render "results/kv_row", key: "", value: raw_data %>
       </div>
     </div>
-  <% elsif raw_json.present? %>
+  <% elsif raw_data.present? %>
     <%# WHOIS-fallback path: raw_data is already whois-style text. No toggle. %>
     <div class="py-2 border-t border-line mt-2">
       <h3 class="text-[11px] tracking-[0.18em] uppercase text-fg font-bold mb-1"><span aria-hidden="true">▸ </span>Raw</h3>
-      <%= render "results/kv_row", key: "", value: raw_json %>
+      <%= render "results/kv_row", key: "", value: raw_data %>
     </div>
   <% end %>
 </div>
