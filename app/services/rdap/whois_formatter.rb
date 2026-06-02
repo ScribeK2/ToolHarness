@@ -9,7 +9,11 @@ module Rdap
     module_function
 
     def format(response, record_type:)
-      record_type.to_sym == :ip ? format_ip(response) : format_domain(response)
+      case record_type.to_sym
+      when :ip     then format_ip(response)
+      when :domain then format_domain(response)
+      else raise ArgumentError, "Unknown record_type: #{record_type}"
+      end
     end
 
     def format_domain(d)
@@ -96,10 +100,13 @@ module Rdap
     end
 
     # RDAP status (RFC 8056, space-lowercase) -> EPP camelCase like `rdap -w`.
+    # Non-conforming registries sometimes send the EPP form directly; pass those
+    # through unchanged rather than mangling them to lowercase.
     EPP_OVERRIDES = { "active" => "ok" }.freeze
     def epp_status(status)
       s = status.to_s.strip
       return EPP_OVERRIDES[s] if EPP_OVERRIDES.key?(s)
+      return s if s !~ /\s/ && s =~ /[A-Z]/ # already camelCase (single word, has uppercase)
       words = s.split(/\s+/)
       ([ words.first&.downcase ] + words.drop(1).map(&:capitalize)).join
     end
@@ -109,7 +116,7 @@ module Rdap
       lo = IPAddr.new(start_a)
       hi = IPAddr.new(end_a)
       bits = lo.ipv6? ? 128 : 32
-      prefix = bits - Math.log2(hi.to_i - lo.to_i + 1).to_i
+      prefix = bits - Math.log2(hi.to_i - lo.to_i + 1).ceil
       "#{start_a}/#{prefix}"
     rescue StandardError
       nil

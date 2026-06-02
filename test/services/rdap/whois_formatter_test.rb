@@ -73,4 +73,33 @@ class Rdap::WhoisFormatterTest < ActiveSupport::TestCase
     assert_equal "Domain Name: bare.com", out
     refute_match(/Registrar:/, out)
   end
+
+  test "already-camelCased status strings pass through unchanged" do
+    out = Rdap::WhoisFormatter.format(
+      { "ldhName" => "x.com", "status" => ["serverDeleteProhibited"] },
+      record_type: :domain
+    )
+    assert_match(/^Domain Status: serverDeleteProhibited$/, out)
+  end
+
+  test "DNSSEC reflects delegationSigned true/false and is omitted when absent" do
+    signed = Rdap::WhoisFormatter.format(
+      { "ldhName" => "x.com", "secureDNS" => { "delegationSigned" => true } }, record_type: :domain
+    )
+    assert_match(/^DNSSEC: signedDelegation$/, signed)
+
+    unsigned = Rdap::WhoisFormatter.format(
+      { "ldhName" => "x.com", "secureDNS" => { "delegationSigned" => false } }, record_type: :domain
+    )
+    assert_match(/^DNSSEC: unsigned$/, unsigned)
+
+    absent = Rdap::WhoisFormatter.format({ "ldhName" => "x.com" }, record_type: :domain)
+    refute_match(/DNSSEC:/, absent)
+  end
+
+  test "format raises on an unknown record_type" do
+    assert_raises(ArgumentError) do
+      Rdap::WhoisFormatter.format({ "ldhName" => "x.com" }, record_type: :autnum)
+    end
+  end
 end
