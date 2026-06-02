@@ -96,6 +96,7 @@ class RdapChecker
     h = base_result.merge(
       success: true, source: source,
       raw_data: JSON.pretty_generate(d),
+      whois_text: Rdap::WhoisFormatter.format(d, record_type: :domain),
       registrar: registrar_name(d),
       expiration_date: event_date(events, "expiration"),
       creation_date:   event_date(events, "registration"),
@@ -115,6 +116,7 @@ class RdapChecker
     base_result.merge(
       success: true, source: source,
       raw_data: JSON.pretty_generate(d),
+      whois_text: Rdap::WhoisFormatter.format(d, record_type: :ip),
       ip_range: ([ start_a, end_a ].all?(&:present?) ? "#{start_a} – #{end_a}" : nil),
       cidr: cidr_from(start_a, end_a),
       network_name: d["name"],
