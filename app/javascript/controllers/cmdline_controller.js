@@ -2,9 +2,9 @@ import { Controller } from "@hotwired/stimulus"
 import { Prefs } from "lib/prefs"
 
 const KNOWN = ["run", "tool", "target", "copy", "export", "pin", "history",
-               "expiring", "raw", "help", "set", "purge", "q",
+               "expiring", "raw", "json", "help", "set", "purge", "q",
                "c", "d", "db", "w", "h", "limit", "timeout", "investigate"]
-const CLIENT_ONLY = ["copy", "set", "q", "raw", "tool", "target", "pin", "expiring", "history", "help",
+const CLIENT_ONLY = ["copy", "set", "q", "raw", "json", "tool", "target", "pin", "expiring", "history", "help",
                      "c", "d", "db", "w", "h", "limit", "timeout"]
 
 export default class extends Controller {
@@ -104,6 +104,11 @@ export default class extends Controller {
           el.dataset.expanded = expand ? "true" : "false"
           el.querySelector("[data-truncated-head]")?.classList.toggle("hidden", expand)
           el.querySelector("[data-truncated-full]")?.classList.toggle("hidden", !expand)
+        })
+        break
+      case "json":
+        document.querySelectorAll("[data-rdap-format]").forEach(el => {
+          el.classList.toggle("hidden")
         })
         break
       case "tool":
