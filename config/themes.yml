@@ -1,0 +1,13 @@
+# Theme registry — picker metadata only. Palette colors live in
+# app/assets/tailwind/themes/<key>.css. The first entry is the default.
+- { key: tokyonight-storm,       label: "Tokyo Night Storm",     scheme: dark }
+- { key: tokyonight-day,         label: "Tokyo Night Day",       scheme: light }
+- { key: catppuccin-mocha,       label: "Catppuccin Mocha",      scheme: dark }
+- { key: catppuccin-latte,       label: "Catppuccin Latte",      scheme: light }
+- { key: kanagawa-wave,          label: "Kanagawa Wave",         scheme: dark }
+- { key: kanagawa-lotus,         label: "Kanagawa Lotus",        scheme: light }
+- { key: gruvbox-material-dark,  label: "Gruvbox Material Dark", scheme: dark }
+- { key: gruvbox-material-light, label: "Gruvbox Material Light", scheme: light }
+- { key: everforest-dark,        label: "Everforest Dark",       scheme: dark }
+- { key: everforest-light,       label: "Everforest Light",      scheme: light }
+- { key: nord,                   label: "Nord",                  scheme: dark }
