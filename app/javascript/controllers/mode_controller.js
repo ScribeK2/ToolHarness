@@ -61,6 +61,8 @@ export default class extends Controller {
 
   handleKey(event) {
     if (event.metaKey || event.ctrlKey || event.altKey) return
+    // A modal overlay (e.g. the theme picker) is open and owns all keys — yield.
+    if (document.body.dataset.overlayActive === "true") return
     // The SQL workbench owns its own keyboard contract (modal NORMAL/INSERT/COMMAND,
     // its own `:` cmdline, its own `?` recipes palette). Yield to it when mounted.
     if (document.body.dataset.sqlWorkbenchActive === "true") return

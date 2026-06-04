@@ -1,0 +1,38 @@
+<%# Theme picker overlay. The theme-picker Stimulus controller lives on <body>
+    (so the status-bar pill and cmdline can reach it); this overlay is its
+    `overlay` target and the rows are its `row` targets. Hidden by default.
+    Swatches scope data-theme onto themselves so each theme's own CSS colors
+    them — there are no color literals in this markup. %>
+<div data-theme-picker-target="overlay"
+     class="hidden fixed inset-0 bg-bg/95 z-50 flex items-center justify-center"
+     aria-modal="true" role="dialog" aria-label="Theme picker">
+  <div class="bg-sunken border border-mute max-w-md w-full p-4 text-xs font-mono">
+    <h4 class="text-purple uppercase tracking-[0.18em] text-[10px] font-bold mb-2">
+      <span aria-hidden="true">// </span>theme
+    </h4>
+
+    <% ToolHarness::Themes.all.each do |t| %>
+      <div data-theme-picker-target="row"
+           data-key="<%= t[:key] %>"
+           data-label="<%= t[:label] %>"
+           data-scheme="<%= t[:scheme] %>"
+           data-action="click->theme-picker#select"
+           class="grid grid-cols-[14px_auto_1fr] items-center gap-2 px-2 py-[3px] cursor-pointer">
+        <span class="text-purple" data-caret> </span>
+        <span class="inline-flex gap-[2px]" data-theme="<%= t[:key] %>">
+          <i class="w-2.5 h-2.5 inline-block" style="background: var(--color-bg); outline: 1px solid var(--color-line)"></i>
+          <i class="w-2.5 h-2.5 inline-block" style="background: var(--color-blue)"></i>
+          <i class="w-2.5 h-2.5 inline-block" style="background: var(--color-green)"></i>
+          <i class="w-2.5 h-2.5 inline-block" style="background: var(--color-red)"></i>
+          <i class="w-2.5 h-2.5 inline-block" style="background: var(--color-yellow)"></i>
+          <i class="w-2.5 h-2.5 inline-block" style="background: var(--color-purple)"></i>
+        </span>
+        <span class="truncate"><%= t[:label] %></span>
+      </div>
+    <% end %>
+
+    <div class="text-mute text-[10px] mt-3 border-t border-line pt-2 leading-relaxed">
+      j/k nav · ⏎ apply · ESC cancel
+    </div>
+  </div>
+</div>

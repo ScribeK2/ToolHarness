@@ -14,7 +14,7 @@
     <%= javascript_importmap_tags %>
   </head>
   <body class="h-screen overflow-hidden text-fg bg-bg flex flex-col font-mono"
-        data-controller="tour mode"
+        data-controller="tour mode theme-picker"
         data-mode-state-value="NORMAL">
     <%= render "layouts/update_banner" %>
     <%= render "workbench/flash_strip" if notice.present? || alert.present? %>
@@ -41,5 +41,6 @@
     <%= render "workbench/cmdline" %>
     <%= render "workbench/status_bar" %>
     <%= render "workbench/help_overlay" %>
+    <%= render "workbench/theme_picker" %>
   </body>
 </html>
