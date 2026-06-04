@@ -1,0 +1,16 @@
+<%# FOUC-free theme boot. Runs in <head> before the stylesheet so the persisted
+    theme (and its color-scheme) is applied before first paint. nonce-ready so it
+    survives a future CSP being enabled. Keep this dependency-free: no imports. %>
+<%= javascript_tag nonce: true do %>
+  (function () {
+    const SCHEMES = <%= ToolHarness::Themes.scheme_map.to_json.html_safe %>;
+    const DEFAULT = <%= ToolHarness::Themes.default_key.to_json.html_safe %>;
+    // Value is JSON (written via Prefs.set), so JSON.parse round-trips it.
+    let key = null;
+    try { key = JSON.parse(localStorage.getItem("th.theme")); } catch (e) { key = null; }
+    if (!key || !SCHEMES[key]) key = DEFAULT;
+    const el = document.documentElement;
+    el.dataset.theme = key;
+    el.style.colorScheme = SCHEMES[key];
+  })();
+<% end %>
