@@ -23,4 +23,10 @@ class ThemePickerTest < ActionView::TestCase
     assert_includes rendered, %(data-theme-picker-target="row")
     assert_includes rendered, %(data-theme-picker-target="overlay")
   end
+
+  test "status bar renders a theme pill that opens the picker" do
+    render "workbench/status_bar"
+    assert_includes rendered, "data-theme-pill"
+    assert_includes rendered, "click->theme-picker#open"
+  end
 end
