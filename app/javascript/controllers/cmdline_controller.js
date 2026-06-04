@@ -3,9 +3,9 @@ import { Prefs } from "lib/prefs"
 
 const KNOWN = ["run", "tool", "target", "copy", "export", "pin", "history",
                "expiring", "raw", "json", "help", "set", "purge", "q",
-               "c", "d", "db", "w", "h", "limit", "timeout", "investigate"]
+               "c", "d", "db", "w", "h", "limit", "timeout", "investigate", "theme"]
 const CLIENT_ONLY = ["copy", "set", "q", "raw", "json", "tool", "target", "pin", "expiring", "history", "help",
-                     "c", "d", "db", "w", "h", "limit", "timeout"]
+                     "c", "d", "db", "w", "h", "limit", "timeout", "theme"]
 
 export default class extends Controller {
   static targets = ["input", "runId"]
@@ -110,6 +110,13 @@ export default class extends Controller {
         document.querySelectorAll("[data-rdap-format]").forEach(el => {
           el.classList.toggle("hidden")
         })
+        break
+      case "theme":
+        if (rest[0]) {
+          document.dispatchEvent(new CustomEvent("theme:set", { detail: { key: rest[0] } }))
+        } else {
+          document.dispatchEvent(new Event("theme:open"))
+        }
         break
       case "tool":
         window.location = "/workbench?tool=" + encodeURIComponent(rest[0] || "")
