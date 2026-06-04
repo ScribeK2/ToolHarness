@@ -1,0 +1,18 @@
+[data-theme="gruvbox-material-dark"] {
+  color-scheme: dark;
+  --color-bg:       #282828;
+  --color-surface:  #32302f;
+  --color-elevated: #45403d;
+  --color-sunken:   #1d2021;
+  --color-line:     #3c3836;
+  --color-fg:       #ddc7a1;
+  --color-fg-dim:   #d4be98;
+  --color-mute:     #928374;
+  --color-blue:     #7daea3;
+  --color-cyan:     #89b482;
+  --color-green:    #a9b665;
+  --color-purple:   #d3869b;
+  --color-orange:   #e78a4e;
+  --color-red:      #ea6962;
+  --color-yellow:   #d8a657;
+}

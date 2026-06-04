@@ -1,0 +1,18 @@
+[data-theme="everforest-dark"] {
+  color-scheme: dark;
+  --color-bg:       #2d353b;
+  --color-surface:  #343f44;
+  --color-elevated: #3d484d;
+  --color-sunken:   #232a2e;
+  --color-line:     #475258;
+  --color-fg:       #d3c6aa;
+  --color-fg-dim:   #9da9a0;
+  --color-mute:     #7a8478;
+  --color-blue:     #7fbbb3;
+  --color-cyan:     #83c092;
+  --color-green:    #a7c080;
+  --color-purple:   #d699b6;
+  --color-orange:   #e69875;
+  --color-red:      #e67e80;
+  --color-yellow:   #dbbc7f;
+}

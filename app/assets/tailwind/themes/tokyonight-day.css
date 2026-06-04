@@ -1,0 +1,18 @@
+[data-theme="tokyonight-day"] {
+  color-scheme: light;
+  --color-bg:       #e1e2e7;
+  --color-surface:  #d6d8df;
+  --color-elevated: #c4c8da;
+  --color-sunken:   #d0d5e3;
+  --color-line:     #c4c8da;
+  --color-fg:       #3760bf;
+  --color-fg-dim:   #6172b0;
+  --color-mute:     #848cb5;
+  --color-blue:     #2e7de9;
+  --color-cyan:     #007197;
+  --color-green:    #587539;
+  --color-purple:   #9854f1;
+  --color-orange:   #b15c00;
+  --color-red:      #f52a65;
+  --color-yellow:   #8c6c3e;
+}

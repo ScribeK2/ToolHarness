@@ -1,0 +1,18 @@
+[data-theme="nord"] {
+  color-scheme: dark;
+  --color-bg:       #2e3440;
+  --color-surface:  #3b4252;
+  --color-elevated: #434c5e;
+  --color-sunken:   #272c36;
+  --color-line:     #3b4252;
+  --color-fg:       #eceff4;
+  --color-fg-dim:   #d8dee9;
+  --color-mute:     #616e88;
+  --color-blue:     #81a1c1;
+  --color-cyan:     #88c0d0;
+  --color-green:    #a3be8c;
+  --color-purple:   #b48ead;
+  --color-orange:   #d08770;
+  --color-red:      #bf616a;
+  --color-yellow:   #ebcb8b;
+}

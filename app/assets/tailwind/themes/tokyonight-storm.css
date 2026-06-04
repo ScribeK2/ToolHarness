@@ -1,0 +1,18 @@
+[data-theme="tokyonight-storm"] {
+  color-scheme: dark;
+  --color-bg:       #1a1b26;
+  --color-surface:  #24283b;
+  --color-elevated: #2f334d;
+  --color-sunken:   #16161e;
+  --color-line:     #2a2c3a;
+  --color-fg:       #c0caf5;
+  --color-fg-dim:   #a9b1d6;
+  --color-mute:     #565f89;
+  --color-blue:     #7aa2f7;
+  --color-cyan:     #7dcfff;
+  --color-green:    #9ece6a;
+  --color-purple:   #bb9af7;
+  --color-orange:   #ff9e64;
+  --color-red:      #f7768e;
+  --color-yellow:   #e0af68;
+}

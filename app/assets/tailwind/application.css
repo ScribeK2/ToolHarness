@@ -2,6 +2,18 @@
 
 @import "tailwindcss";
 
+@import "./themes/tokyonight-storm.css";
+@import "./themes/tokyonight-day.css";
+@import "./themes/catppuccin-mocha.css";
+@import "./themes/catppuccin-latte.css";
+@import "./themes/kanagawa-wave.css";
+@import "./themes/kanagawa-lotus.css";
+@import "./themes/gruvbox-material-dark.css";
+@import "./themes/gruvbox-material-light.css";
+@import "./themes/everforest-dark.css";
+@import "./themes/everforest-light.css";
+@import "./themes/nord.css";
+
 /* ===============================================
    ToolHarness — Brutalist Tokyo Night Storm
    =============================================== */
@@ -42,6 +54,9 @@
 }
 
 @layer base {
+  /* Default color scheme for the :root / Tokyo Night Storm fallback */
+  :root { color-scheme: dark; }
+
   html, body {
     background-color: var(--color-bg);
     color: var(--color-fg);
@@ -186,3 +201,4 @@
   font-size: 1.25rem;
   cursor: pointer;
 }
+

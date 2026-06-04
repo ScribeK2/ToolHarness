@@ -1,0 +1,18 @@
+[data-theme="kanagawa-lotus"] {
+  color-scheme: light;
+  --color-bg:       #f2ecbc;
+  --color-surface:  #e5ddb0;
+  --color-elevated: #dcd5ac;
+  --color-sunken:   #e7dba0;
+  --color-line:     #cfc7a0;
+  --color-fg:       #545464;
+  --color-fg-dim:   #716e61;
+  --color-mute:     #8a8980;
+  --color-blue:     #4d699b;
+  --color-cyan:     #4e8ca2;
+  --color-green:    #6f894e;
+  --color-purple:   #624c83;
+  --color-orange:   #cc6d00;
+  --color-red:      #c84053;
+  --color-yellow:   #77713f;
+}

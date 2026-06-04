@@ -1,0 +1,18 @@
+[data-theme="kanagawa-wave"] {
+  color-scheme: dark;
+  --color-bg:       #1f1f28;
+  --color-surface:  #2a2a37;
+  --color-elevated: #363646;
+  --color-sunken:   #16161d;
+  --color-line:     #363646;
+  --color-fg:       #dcd7ba;
+  --color-fg-dim:   #c8c093;
+  --color-mute:     #727169;
+  --color-blue:     #7e9cd8;
+  --color-cyan:     #7fb4ca;
+  --color-green:    #98bb6c;
+  --color-purple:   #957fb8;
+  --color-orange:   #ffa066;
+  --color-red:      #e82424;
+  --color-yellow:   #e6c384;
+}

@@ -1,0 +1,18 @@
+[data-theme="catppuccin-mocha"] {
+  color-scheme: dark;
+  --color-bg:       #1e1e2e;
+  --color-surface:  #313244;
+  --color-elevated: #45475a;
+  --color-sunken:   #181825;
+  --color-line:     #313244;
+  --color-fg:       #cdd6f4;
+  --color-fg-dim:   #bac2de;
+  --color-mute:     #6c7086;
+  --color-blue:     #89b4fa;
+  --color-cyan:     #89dceb;
+  --color-green:    #a6e3a1;
+  --color-purple:   #cba6f7;
+  --color-orange:   #fab387;
+  --color-red:      #f38ba8;
+  --color-yellow:   #f9e2af;
+}
