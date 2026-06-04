@@ -17,7 +17,8 @@ class ThemeCompletenessTest < ActiveSupport::TestCase
   test "every registered theme has a complete per-file CSS block and is imported in application.css" do
     entry_css = File.read(ENTRY)
 
-    ToolHarness::Themes.keys.each do |key|
+    ToolHarness::Themes.all.each do |theme|
+      key = theme[:key]
       theme_file = THEMES_DIR.join("#{key}.css")
 
       assert theme_file.exist?, "Missing theme file: app/assets/tailwind/themes/#{key}.css"
@@ -32,6 +33,10 @@ class ThemeCompletenessTest < ActiveSupport::TestCase
       block_css = block_match[1]
 
       assert_match(/color-scheme\s*:/, block_css, "#{key}.css block missing color-scheme")
+
+      block_css =~ /color-scheme\s*:\s*(\w+)/
+      assert_equal theme[:scheme], $1,
+                   "#{key}.css color-scheme (#{$1.inspect}) must match registry scheme (#{theme[:scheme].inspect})"
 
       TOKENS.each do |token|
         assert_match(/--#{token}\s*:/, block_css, "#{key}.css block missing --#{token}")
