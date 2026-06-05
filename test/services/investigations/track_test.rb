@@ -39,4 +39,16 @@ class Investigations::TrackTest < ActiveSupport::TestCase
     assert Investigations::Track.exists?("email_delivery")
     assert_not Investigations::Track.exists?("nope")
   end
+
+  test "hosting_website track has the five probes and the HostingWebsiteCorrelator" do
+    t = Investigations::Track.find("hosting_website")
+    assert_equal "hosting_website", t.key
+    assert_equal "Hosting & Website", t.label
+    assert_equal %w[dns_lookup hosting_diagnostic http_inspect ssl_inspect website_health], t.probes
+    assert_equal Investigations::HostingWebsiteCorrelator, t.correlator
+  end
+
+  test "hosting_website probes are all independent (no depends_on)" do
+    assert Investigations::Track.find("hosting_website").specs.all? { |s| s.depends_on.nil? }
+  end
 end

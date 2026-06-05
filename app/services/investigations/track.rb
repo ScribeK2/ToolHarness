@@ -35,6 +35,12 @@ module Investigations
             { tool: "blacklist", depends_on: "dns_lookup", target: :primary_mx_host }
           ],
           correlator: Investigations::EmailDeliveryCorrelator
+        ),
+        "hosting_website" => new(
+          key: "hosting_website",
+          label: "Hosting & Website",
+          probes: %w[dns_lookup hosting_diagnostic http_inspect ssl_inspect website_health],
+          correlator: Investigations::HostingWebsiteCorrelator
         )
       }
     end
