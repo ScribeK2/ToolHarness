@@ -57,4 +57,19 @@ module ApplicationHelper
       .map    { |key, klass| [key.to_s, klass.tool_name] }
       .sort_by { |_key, name| name }
   end
+
+  # Load errors for the SQL workbench config files, surfaced as a warning banner
+  # in the pane. Returns [[filename, message], ...]; empty when both load cleanly.
+  # Triggering the load here is non-destructive — the stores re-read on each read.
+  def sql_config_load_errors
+    sources = [
+      ["connections.yml", ToolHarness::Sql::ConnectionStore.new, :profiles],
+      ["recipes.yml",     ToolHarness::Sql::RecipeStore.new,     :all]
+    ]
+    sources.each_with_object([]) do |(label, store, load_method), errors|
+      store.public_send(load_method) # trigger the YAML load
+      err = store.last_load_error
+      errors << [label, err.message] if err
+    end
+  end
 end

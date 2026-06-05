@@ -38,4 +38,21 @@ class WorkbenchControllerTest < ActionDispatch::IntegrationTest
     assert_match /x\.com/, response.body
     assert_no_match /y\.com/, response.body
   end
+
+  test "view=history excludes runs that belong to an investigation" do
+    ToolRun.create!(tool_key: "whois_lookup", tool_name: "WHOIS", category: "domain",
+                    status: "completed", success: true, input_summary: "orphan-run.com")
+
+    inv = Investigation.create!(domain: "child-run.com", track: "orientation",
+                                status: "completed", verdict_status: "healthy",
+                                completed_at: Time.current, findings: [])
+    inv.tool_runs.create!(tool_key: "dns_lookup", tool_name: "DNS", category: "dns",
+                          status: "completed", success: true, step_order: 0,
+                          input_summary: "child-run.com")
+
+    get "/workbench", params: { view: "history" }
+    assert_response :success
+    assert_match(/orphan-run\.com/, response.body)
+    assert_no_match(/child-run\.com/, response.body)
+  end
 end

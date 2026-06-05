@@ -66,6 +66,8 @@ export default class extends Controller {
     // The SQL workbench owns its own keyboard contract (modal NORMAL/INSERT/COMMAND,
     // its own `:` cmdline, its own `?` recipes palette). Yield to it when mounted.
     if (document.body.dataset.sqlWorkbenchActive === "true") return
+    // The investigation surface owns j/k/Enter/Esc while mounted. Yield to it.
+    if (document.body.dataset.investigationActive === "true") return
 
     // INSERT — only Esc returns to NORMAL
     if (this.stateValue === "INSERT") {
