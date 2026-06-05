@@ -82,4 +82,53 @@ class ToolHarness::ResultPresenterTest < ActiveSupport::TestCase
     assert_equal "boom", sections.first.kvs["message"]
     refute sections.any? { |s| s.title == "Issues" }
   end
+
+  test "renders an array-of-hashes top-level key as a table section" do
+    run = make_run(result_data: {
+      "hops" => [
+        { "hop" => 1, "host" => "gw.local", "rtt_ms" => 1.2 },
+        { "hop" => 2, "host" => "isp.net",  "rtt_ms" => 8.5 }
+      ]
+    })
+    section = ToolHarness::ResultPresenter.new(run).sections.first
+    assert_equal "Hops", section.title
+    refute_nil section.table
+    assert_equal %w[hop host rtt_ms], section.table.columns.map(&:key)
+    assert_equal ["Hop", "Host", "Rtt Ms"], section.table.columns.map(&:label)
+    assert_equal [true, false, true], section.table.columns.map(&:numeric)
+    assert_equal({ "hop" => "1", "host" => "gw.local", "rtt_ms" => "1.2" }, section.table.rows.first)
+  end
+
+  test "renders an array-of-scalars top-level key as kv rows, not a table" do
+    run = make_run(result_data: { "a_records" => ["1.1.1.1", "2.2.2.2"] })
+    section = ToolHarness::ResultPresenter.new(run).sections.first
+    assert_nil section.table
+    assert_equal({ "[0]" => "1.1.1.1", "[1]" => "2.2.2.2" }, section.kvs)
+  end
+
+  test "renders a mixed array (not all hashes) as kv rows, not a table" do
+    run = make_run(result_data: { "items" => [{ "a" => 1 }, "loose"] })
+    section = ToolHarness::ResultPresenter.new(run).sections.first
+    assert_nil section.table
+  end
+
+  test "builds table columns from the union of ragged row keys, filling missing cells" do
+    run = make_run(result_data: {
+      "rows" => [
+        { "a" => "x", "b" => "y" },
+        { "a" => "z", "c" => "w" }
+      ]
+    })
+    table = ToolHarness::ResultPresenter.new(run).sections.first.table
+    assert_equal %w[a b c], table.columns.map(&:key)
+    assert_equal({ "a" => "x", "b" => "y", "c" => "—" }, table.rows.first)
+    assert_equal({ "a" => "z", "b" => "—", "c" => "w" }, table.rows.last)
+  end
+
+  test "formats nested-array cells as comma-joined strings (non-numeric column)" do
+    run = make_run(result_data: { "hops" => [{ "rtts" => [1.1, 2.2, 3.3] }] })
+    table = ToolHarness::ResultPresenter.new(run).sections.first.table
+    assert_equal false, table.columns.first.numeric
+    assert_equal "1.1, 2.2, 3.3", table.rows.first["rtts"]
+  end
 end
