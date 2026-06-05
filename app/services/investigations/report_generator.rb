@@ -38,7 +38,13 @@ module Investigations
     def boundary_section
       boxes = ["registry back-end (gated — only some reps have registry access)"]
       codes = @inv.findings.map { |f| f["code"] }
-      boxes << "Pterodactyl container internals (panel only — no container/sudo access)" if codes.intersect?(%w[resolves_not_serving])
+      hosting_codes = %w[resolves_not_serving site_server_error site_unreachable wp_critical_error maintenance_mode ssl_expired]
+      if @inv.track == "hosting_website" || codes.intersect?(hosting_codes)
+        boxes << "Pterodactyl container internals (panel only — no container/sudo access)"
+      end
+      if codes.intersect?(%w[site_server_error wp_critical_error])
+        boxes << "application/PHP layer inside the container (error logs, plugin/theme/DB state — not visible from outside)"
+      end
       # Codes from BOTH correlators: orientation emits no_mx/mail_ports_closed, the
       # email track emits the rest. Listed together so an orientation investigation that
       # surfaces a mail issue still names the mail-server box, not only email_delivery runs.

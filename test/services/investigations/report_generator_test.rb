@@ -55,6 +55,18 @@ class Investigations::ReportGeneratorTest < ActiveSupport::TestCase
     assert_match(/Graylog/, md)
   end
 
+  test "boundary section names the container and app/PHP layer for hosting_website" do
+    inv = Investigation.create!(domain: "example.com", track: "hosting_website", status: "completed",
+                                started_at: 1.minute.ago, completed_at: Time.current,
+                                verdict_status: "critical",
+                                findings: [{ "severity" => "critical", "code" => "wp_critical_error",
+                                             "title" => "WordPress critical error", "message" => "boom",
+                                             "provenance" => ["website_health"], "recommendation" => "check logs" }])
+    md = Investigations::ReportGenerator.new(inv).to_markdown
+    assert_match(/Pterodactyl container internals/i, md)
+    assert_match(/application\/PHP layer/i, md)
+  end
+
   test "evidence section marks a skipped probe as SKIPPED with its reason" do
     inv = Investigation.create!(domain: "example.com", track: "email_delivery", status: "completed",
                                 started_at: 1.minute.ago, completed_at: Time.current,
