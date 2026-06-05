@@ -24,6 +24,11 @@ Rails.application.routes.draw do
   # Health
   get "up" => "rails/health#show", as: :rails_health_check
 
+  # Credentials management
+  namespace :credentials do
+    resources :entries, only: %i[create destroy]
+  end
+
   # SQL Workbench
   namespace :sql, path: "workbench/sql" do
     resources :profiles, only: %i[new create update destroy], param: :name
