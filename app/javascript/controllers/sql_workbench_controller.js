@@ -391,7 +391,15 @@ export default class extends Controller {
 
       case "w":
         if (rest[0] !== "on" && rest[0] !== "off") return this.flash("usage: :w on | :w off")
-        return this._cmdPatch("/workbench/sql/session", { write_mode: rest[0] === "on" ? "rw" : "ro" })
+        if (rest[0] === "on") {
+          if (rest[1] === "yes") {
+            this.flash("write mode enabled")
+            return this._cmdPatch("/workbench/sql/session", { write_mode: "rw" })
+          }
+          this.flash("enabling writes is dangerous — confirm with ':w on yes'")
+          return
+        }
+        return this._cmdPatch("/workbench/sql/session", { write_mode: "ro" })
 
       case "limit":
         if (!rest[0]) return this.flash("usage: :limit <n>")
