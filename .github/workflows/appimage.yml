@@ -14,8 +14,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04   # locks our glibc 2.35 floor
-    permissions:
-      contents: write       # needed to create the release
+    outputs:
+      version: ${{ steps.version.outputs.version }}
 
     steps:
       - name: Checkout
@@ -52,9 +52,36 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: bash script/build-appimage.sh
 
-      - name: Smoke-test the AppImage
+      - name: Compute SHA256SUMS
         env:
           VERSION: ${{ steps.version.outputs.version }}
+        run: sha256sum "ToolHarness-${VERSION}-x86_64.AppImage" > SHA256SUMS
+
+      - name: Upload AppImage artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: appimage
+          path: |
+            ToolHarness-${{ steps.version.outputs.version }}-x86_64.AppImage
+            SHA256SUMS
+
+  smoke:
+    needs: build
+    runs-on: ubuntu-22.04   # clean runner — no source tree or build state present
+    steps:
+      - name: Install runtime prereqs
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends curl fuse libfuse2
+
+      - name: Download AppImage artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: appimage
+
+      - name: Smoke-test the AppImage
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
           TOOLHARNESS_PORT: "3000"
         run: |
           chmod +x "ToolHarness-${VERSION}-x86_64.AppImage"
@@ -73,24 +100,21 @@ jobs:
           kill $APP_PID 2>/dev/null || true
           exit 1
 
-      - name: Compute SHA256SUMS
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-        run: sha256sum "ToolHarness-${VERSION}-x86_64.AppImage" > SHA256SUMS
+  release:
+    needs: [build, smoke]   # release only after a clean-runner smoke passes
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write       # needed to create the release
+    steps:
+      - name: Download AppImage artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: appimage
 
       - name: Create GitHub Release
-        if: github.event_name == 'push' && github.ref_type == 'tag'
         uses: softprops/action-gh-release@v3
         with:
           files: |
-            ToolHarness-${{ steps.version.outputs.version }}-x86_64.AppImage
-            SHA256SUMS
-
-      - name: Upload artifact (non-tag runs)
-        if: github.event_name != 'push' || github.ref_type != 'tag'
-        uses: actions/upload-artifact@v7
-        with:
-          name: ToolHarness-${{ steps.version.outputs.version }}
-          path: |
-            ToolHarness-${{ steps.version.outputs.version }}-x86_64.AppImage
+            ToolHarness-${{ needs.build.outputs.version }}-x86_64.AppImage
             SHA256SUMS
