@@ -15,6 +15,9 @@ Rails.application.routes.draw do
   # Investigations — domain-anchored orchestration over real ToolRuns
   resources :investigations, only: %i[create show]
 
+  # Bulk-ops — fan a domain-tool over many domains as one Batch
+  resources :batches, only: %i[create show]
+
   # Commands API
   post "commands", to: "commands#create", as: :commands
 

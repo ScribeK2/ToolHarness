@@ -29,6 +29,8 @@
           <%= render "run_history/runs_table" %>
         <% elsif @investigation.present? %>
           <%= render "investigations/surface", investigation: @investigation, selected: @selected %>
+        <% elsif @batch.present? %>
+          <%= render "batches/surface", batch: @batch %>
         <% elsif @custom_partial.present? %>
           <%= render @custom_partial %>
         <% else %>

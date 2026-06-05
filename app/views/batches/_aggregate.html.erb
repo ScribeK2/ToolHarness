@@ -1,0 +1,7 @@
+<div id="batch_aggregate_<%= batch.id %>" class="px-3 py-2 border-b border-line text-fg-dim">
+  <span class="<%= batch.status == 'completed' ? 'text-green' : 'text-amber' %> font-bold"><%= batch.status.upcase %></span>
+  · <%= batch.done_count %>/<%= batch.domain_count %> done
+  · <span class="text-green"><%= batch.success_count %> ok</span>
+  · <span class="text-red"><%= batch.failure_count %> failed</span>
+  · <span class="text-red"><%= batch.total_critical %> critical</span>
+</div>

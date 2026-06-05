@@ -55,4 +55,15 @@ class WorkbenchControllerTest < ActionDispatch::IntegrationTest
     assert_match(/orphan-run\.com/, response.body)
     assert_no_match(/child-run\.com/, response.body)
   end
+
+  test "view=history excludes runs that belong to a batch" do
+    ToolRun.create!(tool_key: "dns_lookup", tool_name: "DNS", category: "dns",
+                    status: "completed", success: true, input_summary: "loose-run.com")
+    batch = Batch.create!(tool_key: "dns_lookup", status: "running", domain_count: 1)
+    batch.tool_runs.create!(tool_key: "dns_lookup", tool_name: "DNS", category: "dns",
+                            status: "completed", success: true, input_summary: "batch-child.com", step_order: 0)
+    get "/workbench", params: { view: "history" }
+    assert_match(/loose-run\.com/, response.body)
+    assert_no_match(/batch-child\.com/, response.body)
+  end
 end
