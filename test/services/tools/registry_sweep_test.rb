@@ -17,6 +17,7 @@ class Tools::RegistrySweepTest < ActiveSupport::TestCase
     dns_lookup
     dns_propagation
     email_auth_check
+    email_validity
     hosting_diagnostic
     http_inspect
     ipinfo
