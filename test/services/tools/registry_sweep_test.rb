@@ -24,6 +24,7 @@ class Tools::RegistrySweepTest < ActiveSupport::TestCase
     ssl_inspect
     subdomain_scan
     ticket_lookup
+    website_health
     whois_lookup
   ].freeze
 
