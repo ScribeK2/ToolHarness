@@ -11,6 +11,7 @@ class Tools::RegistrySweepTest < ActiveSupport::TestCase
   EXPECTED_TOOLS = %i[
     blacklist
     bulk_run
+    credentials
     dkim_check
     dmarc_check
     dns_lookup
