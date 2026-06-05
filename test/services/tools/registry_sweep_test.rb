@@ -38,8 +38,9 @@ class Tools::RegistrySweepTest < ActiveSupport::TestCase
     ping:               { domain: "; injection" },
     blacklist:          { domain: "; injection" },
     hosting_diagnostic: { domain: "; injection" },
-    bulk_run:           { domains: "",         tool_key: "ghost_tool" },
     ticket_lookup:      { ticket_id: "" }
+    # NB: bulk_run is now a custom-partial launcher (execute raises NotImplementedError,
+    # managed via BatchesController) — excluded from VALIDATED_TOOLS, like sql_workbench.
   }.freeze
 
   test "every expected tool is registered" do

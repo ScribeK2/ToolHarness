@@ -14,7 +14,7 @@ class WorkbenchController < ApplicationController
 
     if @view == "history"
       @filter = params[:filter].to_s
-      scope   = ToolRun.recent.where(investigation_id: nil)
+      scope   = ToolRun.recent.where(investigation_id: nil, batch_id: nil)
       @runs   = ToolHarness::RunFilter.apply(scope, @filter).limit(200)
       @errors = ToolHarness::RunFilter.errors_for(@filter)
     end
