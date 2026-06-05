@@ -11,14 +11,44 @@
             data-copy-section-value="<%= letter %>">[y <%= letter %>]</button>
   </div>
 
-  <% section.kvs.each do |k, v| %>
-    <%= render "results/kv_row", key: k, value: v %>
-  <% end %>
+  <% if section.table %>
+    <table class="w-full text-fg" data-controller="sortable-table">
+      <thead>
+        <tr class="text-mute text-left">
+          <% section.table.columns.each do |col| %>
+            <th class="pr-2 <%= 'text-right' if col.numeric %>"
+                data-sort-key="<%= col.key %>"
+                <%= ('data-sort-as="number"').html_safe if col.numeric %>><%= col.label.upcase %></th>
+          <% end %>
+        </tr>
+      </thead>
+      <tbody>
+        <% section.table.rows.each do |row| %>
+          <tr>
+            <% section.table.columns.each do |col| %>
+              <% cell = row[col.key] %>
+              <td class="pr-2 <%= 'text-right text-mute' if col.numeric %> cursor-pointer hover:text-cyan"
+                  data-sort-cell="<%= col.key %>"
+                  data-sort-value="<%= cell %>"
+                  data-controller="copy"
+                  data-action="click->copy#copyValue"
+                  data-copy-value="<%= cell %>"
+                  title="click to copy"><%= cell %></td>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <% section.kvs.each do |k, v| %>
+      <%= render "results/kv_row", key: k, value: v %>
+    <% end %>
 
-  <% section.issues.each do |issue| %>
-    <div class="flex gap-2 py-[1px]">
-      <%= render "results/severity_tag", severity: (issue["severity"] || issue[:severity]) %>
-      <span class="text-fg"><%= issue["title"] || issue[:title] %><% msg = issue["message"] || issue[:message]; if msg.present? %> — <span class="text-fg-dim"><%= msg %></span><% end %></span>
-    </div>
+    <% section.issues.each do |issue| %>
+      <div class="flex gap-2 py-[1px]">
+        <%= render "results/severity_tag", severity: (issue["severity"] || issue[:severity]) %>
+        <span class="text-fg"><%= issue["title"] || issue[:title] %><% msg = issue["message"] || issue[:message]; if msg.present? %> — <span class="text-fg-dim"><%= msg %></span><% end %></span>
+      </div>
+    <% end %>
   <% end %>
 </div>
