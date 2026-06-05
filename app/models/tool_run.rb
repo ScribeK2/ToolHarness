@@ -121,14 +121,16 @@ class ToolRun < ApplicationRecord
   end
 
   after_create_commit :enforce_cap_async
-  after_update_commit :notify_investigation
+  after_update_commit :notify_parent
 
   private
 
-  def notify_investigation
-    return unless investigation_id
+  # Notify whichever parent (investigation or batch) owns this run once it reaches
+  # a terminal status, so the parent's progress job can correlate/aggregate.
+  def notify_parent
     return unless saved_change_to_status? && TERMINAL_STATUSES.include?(status)
-    InvestigationProgressJob.perform_later(investigation_id)
+    InvestigationProgressJob.perform_later(investigation_id) if investigation_id
+    BatchProgressJob.perform_later(batch_id) if batch_id
   end
 
   def enforce_cap_async
