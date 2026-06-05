@@ -44,4 +44,17 @@ class Investigations::OrchestratorTest < ActiveJob::TestCase
       assert_equal "example.com", step.input["domain"]
     end
   end
+
+  test "hosting_website creates five pending runs and enqueues all of them" do
+    inv = nil
+    assert_difference -> { ToolRun.count }, 5 do
+      assert_enqueued_jobs 5, only: ToolRunJob do
+        inv = Investigations::Orchestrator.start(domain: "example.com", track_key: "hosting_website")
+      end
+    end
+    runs = inv.tool_runs.to_a
+    assert_equal %w[dns_lookup hosting_diagnostic http_inspect ssl_inspect website_health], runs.map(&:tool_key)
+    assert runs.all? { |r| r.status == "pending" }
+    assert runs.all? { |r| r.input["domain"] == "example.com" }
+  end
 end
