@@ -10,7 +10,16 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_30_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_05_000000) do
+  create_table "batches", force: :cascade do |t|
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.integer "domain_count", default: 0, null: false
+    t.string "status", default: "running", null: false
+    t.string "tool_key", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "investigations", force: :cascade do |t|
     t.datetime "completed_at"
     t.datetime "created_at", null: false
@@ -170,6 +179,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_30_000000) do
   end
 
   create_table "tool_runs", force: :cascade do |t|
+    t.integer "batch_id"
     t.boolean "cached", default: false, null: false
     t.string "category", null: false
     t.datetime "checked_at"
@@ -193,6 +203,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_30_000000) do
     t.string "tool_key", null: false
     t.string "tool_name", null: false
     t.datetime "updated_at", null: false
+    t.index ["batch_id"], name: "index_tool_runs_on_batch_id"
     t.index ["category"], name: "index_tool_runs_on_category"
     t.index ["input_summary"], name: "index_tool_runs_on_input_summary"
     t.index ["investigation_id"], name: "index_tool_runs_on_investigation_id"
