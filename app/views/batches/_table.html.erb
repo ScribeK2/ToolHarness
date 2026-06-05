@@ -1,0 +1,34 @@
+<div id="batch_table_<%= batch.id %>" class="px-3 py-2">
+  <table class="w-full text-fg" data-controller="sortable-table">
+    <thead>
+      <tr class="text-mute text-left">
+        <th class="pr-2" data-sort-key="domain">DOMAIN</th>
+        <th class="pr-2" data-sort-key="status">STATUS</th>
+        <th class="pr-2">SUMMARY</th>
+        <th class="pr-2 text-right" data-sort-key="crit" data-sort-as="number">CRIT</th>
+        <th class="pr-2 text-right" data-sort-key="ms" data-sort-as="number">ms</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% batch.tool_runs.each do |run|
+           glyph, cls = case run.status
+                        when "completed" then run.success ? ["✓", "text-green"] : ["✗", "text-red"]
+                        when "failed"    then ["✗", "text-red"]
+                        when "skipped"   then ["⊝", "text-mute"]
+                        else                  ["⠿", "text-mute"]
+                        end
+           crit = Array(run.issues).count { |i| (i["severity"] || i[:severity]).to_s == "critical" }
+           dom  = run.input_summary.presence || (run.input.is_a?(Hash) ? (run.input["domain"] || run.input[:domain]) : nil) %>
+        <tr>
+          <td class="pr-2" data-sort-cell="domain">
+            <%= link_to dom, workbench_path(run: run.id), class: "hover:text-cyan", data: { sort_value: dom } %>
+          </td>
+          <td class="pr-2 <%= cls %>" data-sort-cell="status" data-sort-value="<%= run.status %>"><%= glyph %></td>
+          <td class="pr-2"><%= run.summary.presence || run.error %></td>
+          <td class="pr-2 text-right <%= 'text-red' if crit.positive? %>" data-sort-cell="crit"><%= crit %></td>
+          <td class="pr-2 text-right text-mute" data-sort-cell="ms"><%= run.execution_time ? (run.execution_time * 1000).round : "—" %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
