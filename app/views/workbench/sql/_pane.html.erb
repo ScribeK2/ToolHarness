@@ -12,6 +12,20 @@
          data-sql-workbench-active-col-value="0"
          data-auto-orient="<%= auto_orient %>">
 
+  <%# 0. Config load-error banner — malformed connections.yml / recipes.yml. %>
+  <% config_errors = sql_config_load_errors %>
+  <% if config_errors.any? %>
+    <div id="sql_config_warning"
+         data-controller="flash-strip"
+         class="px-3 py-1 border-b border-line bg-elevated text-red text-[11px] flex items-center justify-between">
+      <span>
+        <span aria-hidden="true">⚠ </span>config not loaded —
+        <%= config_errors.map { |file, msg| "#{file}: #{msg}" }.join(" · ") %>
+      </span>
+      <button type="button" data-action="click->flash-strip#dismiss" class="text-mute hover:text-fg ml-3">[dismiss]</button>
+    </div>
+  <% end %>
+
   <%# 1. Connection chip header %>
   <div class="px-3 py-1 border-b border-line bg-sunken flex items-center justify-between text-fg-dim">
     <% if state.present? %>
