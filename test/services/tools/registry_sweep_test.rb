@@ -19,6 +19,7 @@ class Tools::RegistrySweepTest < ActiveSupport::TestCase
     email_auth_check
     hosting_diagnostic
     http_inspect
+    ipinfo
     ping
     spf_check
     sql_workbench
