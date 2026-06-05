@@ -1,7 +1,7 @@
 class InvestigationsController < ApplicationController
-  layout "workbench"
+  include WorkbenchDefaults
 
-  DEFAULT_SLOTS = %w[whois_lookup dns_lookup ssl_inspect email_auth_check http_inspect].freeze
+  layout "workbench"
 
   before_action :set_workbench_defaults
 
