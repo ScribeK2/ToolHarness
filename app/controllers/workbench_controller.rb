@@ -1,7 +1,7 @@
 class WorkbenchController < ApplicationController
-  layout "workbench"
+  include WorkbenchDefaults
 
-  DEFAULT_SLOTS = %w[whois_lookup dns_lookup ssl_inspect email_auth_check http_inspect].freeze
+  layout "workbench"
 
   def show
     @view          = params[:view].to_s
