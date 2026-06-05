@@ -86,4 +86,16 @@ class InvestigationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "form[action=?]", investigations_path  # button_to renders a form posting to /investigations
     assert_match "investigate EMAIL DELIVERY", @response.body
   end
+
+  test "show renders step rows as investigation-controller targets with step URLs" do
+    inv = Investigation.create!(domain: "example.com", track: "orientation", status: "completed",
+                                verdict_status: "healthy", completed_at: Time.current, findings: [])
+    run = inv.tool_runs.create!(tool_key: "whois_lookup", tool_name: "WHOIS Lookup", category: "domain",
+                                status: "completed", success: true, step_order: 0)
+    get investigation_path(inv)
+    assert_response :success
+    assert_match(/data-controller="investigation"/, response.body)
+    assert_match(/data-investigation-target="row"/, response.body)
+    assert_match(/data-step-url="#{Regexp.escape(investigation_path(inv, step: run.id))}"/, response.body)
+  end
 end
