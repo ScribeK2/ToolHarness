@@ -23,4 +23,19 @@ class ToolHarness::Sql::SecretBoxTest < ActiveSupport::TestCase
     cipher = SB.encrypt("foo")
     assert_equal "foo", SB.decrypt(cipher)
   end
+
+  test "a salt produces a key-separated ciphertext: same salt roundtrips" do
+    cipher = SB.encrypt("p4ss", key: "k" * 64, salt: "purpose.a")
+    assert_equal "p4ss", SB.decrypt(cipher, key: "k" * 64, salt: "purpose.a")
+  end
+
+  test "decrypt with a different salt raises a DecryptError" do
+    cipher = SB.encrypt("p4ss", key: "k" * 64, salt: "purpose.a")
+    assert_raises(SB::DecryptError) { SB.decrypt(cipher, key: "k" * 64, salt: "purpose.b") }
+  end
+
+  test "default salt path is unchanged (no salt arg)" do
+    cipher = SB.encrypt("p4ss", key: "k" * 64)
+    assert_equal "p4ss", SB.decrypt(cipher, key: "k" * 64)
+  end
 end
