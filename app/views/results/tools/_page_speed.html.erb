@@ -1,0 +1,108 @@
+<%
+  d        = tool_run.result_data.with_indifferent_access
+  scores   = d[:scores] || {}
+  details  = d[:details] || {}
+  field    = details[:field] || {}
+
+  band = ->(score) {
+    s = score.to_i
+    s >= 90 ? "text-green" : (s >= 50 ? "text-yellow" : "text-red")
+  }
+  bar = ->(score) {
+    filled = (score.to_i / 5.0).round
+    filled = [[filled, 0].max, 20].min
+    [filled, 20 - filled]
+  }
+  grade_cls = { "ok" => "sev-ok", "warn" => "sev-warn", "crit" => "sev-crit", "info" => "sev-info" }
+  grade_txt = { "ok" => " OK ", "warn" => "WARN", "crit" => "CRIT", "info" => "INFO" }
+  type_bg   = { "html" => "bg-cyan", "css" => "bg-blue", "js" => "bg-yellow",
+                "img" => "bg-green", "font" => "bg-purple", "media" => "bg-orange" }
+  max_end   = (d[:waterfall] || []).map { |r| r[:end_ms].to_f }.max
+  max_end   = 1.0 if max_end.to_f <= 0
+%>
+
+<%# ── Score ── %>
+<div class="py-2 border-t border-line first:border-t-0">
+  <h3 class="text-[11px] tracking-[0.18em] uppercase text-fg font-bold mb-1"><span aria-hidden="true">▸ </span>Score</h3>
+  <% { "PERFORMANCE" => scores[:performance], "STRUCTURE  " => scores[:structure] }.each do |label, score| %>
+    <% f, e = bar.call(score) %>
+    <div class="whitespace-pre">
+      <span class="text-mute"><%= label %></span>  <span class="<%= band.call(score) %>"><%= score || "—" %></span><span class="text-mute">/100</span>  <span class="<%= band.call(score) %>"><%= "█" * f %></span><span class="text-mute"><%= "░" * e %></span>
+    </div>
+  <% end %>
+</div>
+
+<%# ── Web Vitals ── %>
+<div class="py-2 border-t border-line">
+  <h3 class="text-[11px] tracking-[0.18em] uppercase text-fg font-bold mb-1"><span aria-hidden="true">▸ </span>Web Vitals</h3>
+  <table class="w-full text-fg" data-controller="sortable-table">
+    <thead><tr class="text-mute text-left"><th class="pr-2">METRIC</th><th class="pr-2">VALUE</th><th class="pr-2">GRADE</th></tr></thead>
+    <tbody>
+      <% (d[:metrics] || []).each do |m| %>
+        <tr>
+          <td class="pr-2"><%= m[:label] %></td>
+          <td class="pr-2"><%= m[:value].presence || "—" %></td>
+          <td class="pr-2"><span class="sev <%= grade_cls[m[:grade]] %>"><%= grade_txt[m[:grade]] %></span></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<%# ── Page Details ── %>
+<div class="py-2 border-t border-line">
+  <h3 class="text-[11px] tracking-[0.18em] uppercase text-fg font-bold mb-1"><span aria-hidden="true">▸ </span>Page Details</h3>
+  <% [["total size", number_to_human_size(details[:total_bytes].to_i)],
+      ["requests", details[:request_count]],
+      ["fully loaded", "#{details[:fully_loaded_s]}s"],
+      ["final url", d[:final_url]]].each do |k, v| %>
+    <div class="flex gap-2 py-[1px]"><span class="text-mute w-[110px] flex-shrink-0"><%= k %></span><span class="text-fg"><%= v %></span></div>
+  <% end %>
+  <div class="flex gap-2 py-[1px]">
+    <span class="text-mute w-[110px] flex-shrink-0">field data</span>
+    <% if field[:available] %>
+      <span class="text-fg"><span class="text-cyan">CrUX</span> LCP <%= field[:lcp_ms] %>ms · INP <%= field[:inp_ms] %>ms · CLS <%= field[:cls] %> <span class="text-mute">(<%= field[:category] %>)</span></span>
+    <% else %>
+      <span class="text-mute">no field data (low-traffic URL)</span>
+    <% end %>
+  </div>
+</div>
+
+<%# ── Structure ── %>
+<% if (d[:recommendations] || []).any? %>
+  <div class="py-2 border-t border-line">
+    <h3 class="text-[11px] tracking-[0.18em] uppercase text-fg font-bold mb-1"><span aria-hidden="true">▸ </span>Structure <span class="normal-case tracking-normal font-normal text-mute">— ranked by impact</span></h3>
+    <% d[:recommendations].each do |r| %>
+      <div class="flex gap-2 py-[1px]">
+        <span class="sev <%= grade_cls[r[:sev]] %>"><%= grade_txt[r[:sev]] %></span>
+        <span class="text-fg-dim flex-1"><%= r[:title] %></span>
+        <span class="text-mute"><%= r[:saving] %></span>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+
+<%# ── Waterfall ── %>
+<div class="py-2 border-t border-line">
+  <h3 class="text-[11px] tracking-[0.18em] uppercase text-fg font-bold mb-1"><span aria-hidden="true">▸ </span>Waterfall <span class="normal-case tracking-normal font-normal text-mute">— <%= details[:request_count] %> requests · <%= details[:fully_loaded_s] %>s</span></h3>
+  <table class="w-full text-fg" data-controller="sortable-table">
+    <thead><tr class="text-mute text-left"><th class="pr-2">#</th><th class="pr-2">URL</th><th class="pr-2">TYPE</th><th class="pr-2 text-right">SIZE</th><th class="pr-2 text-right">TIME</th><th class="pr-2 w-[180px]">TIMELINE</th></tr></thead>
+    <tbody>
+      <% (d[:waterfall] || []).first(40).each do |row| %>
+        <% left = (row[:start_ms].to_f / max_end * 100).clamp(0, 100)
+           width = ((row[:end_ms].to_f - row[:start_ms].to_f) / max_end * 100).clamp(1, 100) %>
+        <tr>
+          <td class="pr-2 text-mute"><%= row[:n] %></td>
+          <td class="pr-2 truncate max-w-[260px]"><%= row[:url] %></td>
+          <td class="pr-2"><%= row[:type] %></td>
+          <td class="pr-2 text-right text-mute"><%= number_to_human_size(row[:bytes].to_i) %></td>
+          <td class="pr-2 text-right text-mute"><%= (row[:end_ms].to_f / 1000).round(2) %>s</td>
+          <td class="pr-2"><div class="relative h-[8px] bg-surface w-[160px]"><div class="absolute top-0 h-[8px] <%= type_bg[row[:type]] || 'bg-mute' %>" style="left: <%= left %>%; width: <%= width %>%;"></div></div></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <% if (d[:waterfall] || []).size > 40 %>
+    <div class="text-mute mt-1">…<%= d[:waterfall].size - 40 %> more rows</div>
+  <% end %>
+</div>
