@@ -17,6 +17,12 @@ class PagespeedParser
 
   STRUCTURE_MODES = %w[binary numeric metricSavings].freeze
 
+  RESOURCE_TYPES = {
+    "Document" => "html", "Stylesheet" => "css", "Script" => "js",
+    "Image" => "img", "Font" => "font", "Media" => "media",
+    "Fetch" => "xhr", "XHR" => "xhr"
+  }.freeze
+
   def self.parse(body, strategy:) = new(body, strategy:).call
 
   def initialize(body, strategy:)
@@ -27,18 +33,21 @@ class PagespeedParser
   end
 
   def call
+    recs = recommendations
     {
       data: {
-        requested_url: @lighthouse["requestedUrl"],
-        final_url:     @lighthouse["finalDisplayedUrl"] || @lighthouse["finalUrl"],
-        strategy:      @strategy,
-        scores:        { performance: performance_score, structure: structure_score },
-        metrics:       metrics,
-        details:       { total_bytes: total_bytes, request_count: request_count,
-                         fully_loaded_s: fully_loaded_s, field: field_data }
+        requested_url:  @lighthouse["requestedUrl"],
+        final_url:      @lighthouse["finalDisplayedUrl"] || @lighthouse["finalUrl"],
+        strategy:       @strategy,
+        scores:         { performance: performance_score, structure: structure_score },
+        metrics:        metrics,
+        details:        { total_bytes: total_bytes, request_count: request_count,
+                          fully_loaded_s: fully_loaded_s, field: field_data },
+        recommendations: recs,
+        waterfall:       waterfall
       },
-      issues:  [],   # populated in Task 3
-      summary: nil   # populated in Task 3
+      issues:  issues_from(recs),
+      summary: summary
     }
   end
 
@@ -72,6 +81,48 @@ class PagespeedParser
     end
   end
 
+  def recommendations
+    @audits.values.select { |a|
+      a.dig("details", "type") == "opportunity" && a["score"].is_a?(Numeric) && a["score"] < 1
+    }.sort_by { |a|
+      -a.dig("details", "overallSavingsMs").to_f
+    }.map { |a|
+      { sev: rec_sev(a["score"]), title: a["title"].to_s, saving: saving_label(a) }
+    }
+  end
+
+  def rec_sev(score)
+    score < 0.5 ? "crit" : "warn"
+  end
+
+  def saving_label(a)
+    d     = a["details"] || {}
+    bytes = d["overallSavingsBytes"].to_i
+    ms    = d["overallSavingsMs"].to_i
+    if    bytes.positive? then "~#{human_size(bytes)}"
+    elsif ms.positive?    then "~#{(ms / 1000.0).round(1)}s"
+    else                       ""
+    end
+  end
+
+  def issues_from(recs)
+    sev_map = { "crit" => "critical", "warn" => "warning" }
+    recs.select { |r| sev_map.key?(r[:sev]) }.map do |r|
+      { "severity" => sev_map[r[:sev]], "code" => "page_speed_opportunity",
+        "title" => r[:title],
+        "message" => ["Estimated saving", r[:saving]].reject(&:blank?).join(" "),
+        "recommendation" => r[:title] }
+    end
+  end
+
+  def waterfall
+    network_items.map.with_index(1) do |i, n|
+      { n: n, url: i["url"].to_s, type: (RESOURCE_TYPES[i["resourceType"]] || "other"),
+        bytes: i["transferSize"].to_i,
+        start_ms: i["startTime"].to_f.round, end_ms: i["endTime"].to_f.round }
+    end
+  end
+
   def network_items
     @audits.dig("network-requests", "details", "items") || []
   end
@@ -100,5 +151,16 @@ class PagespeedParser
       cls:      metrics.dig("CUMULATIVE_LAYOUT_SHIFT_SCORE", "percentile").to_f / 100.0,
       category: le["overall_category"]
     }
+  end
+
+  def summary
+    lcp = metrics.find { |m| m[:key] == "lcp" }&.dig(:value).presence || "—"
+    "Perf #{performance_score} · LCP #{lcp} · #{request_count} requests · " \
+      "#{human_size(total_bytes)} (#{@strategy})"
+  end
+
+  def human_size(bytes)
+    kb = bytes / 1024.0
+    kb >= 1024 ? "#{(kb / 1024).round(1)} MB" : "#{kb.round} KB"
   end
 end
