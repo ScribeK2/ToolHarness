@@ -21,6 +21,7 @@ class Tools::RegistrySweepTest < ActiveSupport::TestCase
     hosting_diagnostic
     http_inspect
     ipinfo
+    page_speed
     ping
     spf_check
     sql_workbench
@@ -38,6 +39,7 @@ class Tools::RegistrySweepTest < ActiveSupport::TestCase
     ping:               { domain: "; injection" },
     blacklist:          { domain: "; injection" },
     hosting_diagnostic: { domain: "; injection" },
+    page_speed:         { domain: "" },
     ticket_lookup:      { ticket_id: "" }
     # NB: bulk_run is now a custom-partial launcher (execute raises NotImplementedError,
     # managed via BatchesController) — excluded from VALIDATED_TOOLS, like sql_workbench.

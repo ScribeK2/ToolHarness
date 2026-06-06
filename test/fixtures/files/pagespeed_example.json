@@ -1,0 +1,41 @@
+{
+  "loadingExperience": {
+    "overall_category": "FAST",
+    "metrics": {
+      "LARGEST_CONTENTFUL_PAINT_MS": { "percentile": 2400, "category": "FAST" },
+      "INTERACTION_TO_NEXT_PAINT": { "percentile": 180, "category": "FAST" },
+      "CUMULATIVE_LAYOUT_SHIFT_SCORE": { "percentile": 2, "category": "FAST" }
+    }
+  },
+  "lighthouseResult": {
+    "requestedUrl": "https://example.com/",
+    "finalDisplayedUrl": "https://example.com/",
+    "categories": { "performance": { "score": 0.72 } },
+    "audits": {
+      "first-contentful-paint":   { "id": "first-contentful-paint",   "score": 0.90, "scoreDisplayMode": "numeric", "displayValue": "1.4 s" },
+      "speed-index":              { "id": "speed-index",              "score": 0.60, "scoreDisplayMode": "numeric", "displayValue": "2.8 s" },
+      "largest-contentful-paint": { "id": "largest-contentful-paint", "score": 0.50, "scoreDisplayMode": "numeric", "displayValue": "3.1 s" },
+      "total-blocking-time":      { "id": "total-blocking-time",      "score": 0.70, "scoreDisplayMode": "numeric", "displayValue": "210 ms" },
+      "cumulative-layout-shift":  { "id": "cumulative-layout-shift",  "score": 0.95, "scoreDisplayMode": "numeric", "displayValue": "0.04" },
+      "interactive":              { "id": "interactive",              "score": 0.60, "scoreDisplayMode": "numeric", "displayValue": "4.2 s" },
+      "uses-optimized-images":    { "id": "uses-optimized-images",    "score": 0.40, "scoreDisplayMode": "metricSavings", "title": "Serve images in next-gen formats",
+        "details": { "type": "opportunity", "overallSavingsBytes": 430080, "overallSavingsMs": 600 } },
+      "render-blocking-resources":{ "id": "render-blocking-resources","score": 0.30, "scoreDisplayMode": "metricSavings", "title": "Eliminate render-blocking resources",
+        "details": { "type": "opportunity", "overallSavingsMs": 900 } },
+      "uses-text-compression":    { "id": "uses-text-compression",    "score": 0.60, "scoreDisplayMode": "metricSavings", "title": "Enable text compression",
+        "details": { "type": "opportunity", "overallSavingsBytes": 184320 } },
+      "uses-long-cache-ttl":      { "id": "uses-long-cache-ttl",      "score": 1.00, "scoreDisplayMode": "binary", "title": "Serve static assets with an efficient cache policy" },
+      "efficient-animated-content": { "id": "efficient-animated-content", "score": 1.00, "scoreDisplayMode": "binary", "title": "Use video formats for animated content" },
+      "network-requests": {
+        "id": "network-requests", "score": null, "scoreDisplayMode": "informative",
+        "details": { "type": "table", "items": [
+          { "url": "https://example.com/",            "resourceType": "Document",   "transferSize": 12288,  "startTime": 0,   "endTime": 300 },
+          { "url": "https://example.com/css/app.css", "resourceType": "Stylesheet", "transferSize": 46080,  "startTime": 140, "endTime": 420 },
+          { "url": "https://example.com/js/bundle.js","resourceType": "Script",     "transferSize": 317440, "startTime": 300, "endTime": 1100 },
+          { "url": "https://example.com/img/hero.png","resourceType": "Image",      "transferSize": 491520, "startTime": 420, "endTime": 1400 },
+          { "url": "https://example.com/fonts/x.woff2","resourceType": "Font",      "transferSize": 38912,  "startTime": 300, "endTime": 550 }
+        ] }
+      }
+    }
+  }
+}
