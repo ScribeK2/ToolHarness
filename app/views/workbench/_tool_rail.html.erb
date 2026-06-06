@@ -1,4 +1,4 @@
-<% category_order = %i[domain dns ssl email email_auth http hosting diagnostics database general config] %>
+<% category_order = %i[domain dns ssl email email_auth http performance hosting diagnostics database general config] %>
 <% by_cat = ToolHarness::Registry.categories %>
 <% known   = by_cat.keys & category_order %>
 <% unknown = by_cat.keys - known %>
