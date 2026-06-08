@@ -37,7 +37,6 @@ class ToolHarness::HistoricalDns::ProviderTest < ActiveSupport::TestCase
   end
 
   test ".all lists the v1 providers" do
-    skip "providers added in Tasks 3-5"
     ids = ToolHarness::HistoricalDns::Provider.all.map(&:id)
     assert_equal %w[crtsh virustotal whoisfreaks].sort, ids.sort
   end
