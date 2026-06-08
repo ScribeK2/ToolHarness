@@ -18,6 +18,7 @@ class Tools::RegistrySweepTest < ActiveSupport::TestCase
     dns_propagation
     email_auth_check
     email_validity
+    historical_dns
     hosting_diagnostic
     http_inspect
     ipinfo
@@ -40,6 +41,7 @@ class Tools::RegistrySweepTest < ActiveSupport::TestCase
     blacklist:          { domain: "; injection" },
     hosting_diagnostic: { domain: "; injection" },
     page_speed:         { domain: "" },
+    historical_dns:     { domain: "" },
     ticket_lookup:      { ticket_id: "" }
     # NB: bulk_run is now a custom-partial launcher (execute raises NotImplementedError,
     # managed via BatchesController) — excluded from VALIDATED_TOOLS, like sql_workbench.
