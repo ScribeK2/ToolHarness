@@ -32,38 +32,76 @@ module Tools
       agg    = ToolHarness::HistoricalDns::Aggregator.call(records)
       result = build_result(domain, agg, subdomains, providers)
 
-      clean = providers.none? { |p| p[:status] == "error" }
+      # Don't cache a degraded result: an errored provider, or a rate-limited partial
+      # (so adding a paid key + re-running can fetch the full set).
+      clean = providers.none? { |p| %w[error partial].include?(p[:status]) }
       Rails.cache.write(cache_key, result, expires_in: CACHE_TTL) if clean && result.success?
       result
     end
 
     private
 
+    # Providers are independent and I/O-bound (crt.sh is slow), so fan them out concurrently:
+    # the run is bounded by the slowest single provider, not the sum. Credential reads/writes
+    # stay on the main thread (the store persists to a file) — only #fetch runs in threads.
     def collect(domain, store)
-      records = []
+      plan = ToolHarness::HistoricalDns::Provider.all.map do |klass|
+        prov      = klass.new
+        available = prov.available?(store)
+        key       = (available && klass.requires_key?) ? store.secret_for(klass.id) : nil
+        { klass: klass, prov: prov, available: available, key: key }
+      end
+
+      threads = plan.map do |p|
+        next nil unless p[:available]
+        Thread.new do
+          out = p[:prov].fetch(domain, key: p[:key])
+          { records: Array(out[:records]), subdomains: Array(out[:subdomains]), partial: out[:partial] }
+        rescue ToolHarness::HistoricalDns::ProviderError => e
+          { error: e.message }
+        rescue StandardError => e
+          { error: "#{e.class}: #{e.message}" }
+        end
+      end
+      outcomes = threads.map { |t| t&.value }
+
+      records    = []
       subdomains = []
-      providers = []
-      ToolHarness::HistoricalDns::Provider.all.each do |klass|
-        prov = klass.new
-        unless prov.available?(store)
+      providers  = []
+      used_keys  = []
+      plan.each_with_index do |p, i|
+        klass = p[:klass]
+        unless p[:available]
           providers << provider_row(klass, "no_key")
           next
         end
-        begin
-          key = klass.requires_key? ? store.secret_for(klass.id) : nil
-          out = prov.fetch(domain, key: key)
-          store.touch!(klass.id) if klass.requires_key?
-          recs = Array(out[:records]); subs = Array(out[:subdomains])
-          records.concat(recs); subdomains.concat(subs)
+        res = outcomes[i]
+        if res[:error]
+          providers << provider_row(klass, "error", note: res[:error])
+          next
+        end
+        recs = res[:records]
+        subs = res[:subdomains]
+        records.concat(recs)
+        subdomains.concat(subs)
+        used_keys << klass.id if klass.requires_key?
+        if res[:partial]
+          providers << provider_row(klass, "partial", note: partial_note(klass, res[:partial]), count: recs.size + subs.size)
+        else
           status = (recs.empty? && subs.empty?) ? "no_data" : "ok"
           providers << provider_row(klass, status, count: recs.size + subs.size)
-        rescue ToolHarness::HistoricalDns::ProviderError => e
-          providers << provider_row(klass, "error", note: e.message)
-        rescue StandardError => e
-          providers << provider_row(klass, "error", note: "#{e.class}: #{e.message}")
         end
       end
+
+      used_keys.each { |id| store.touch!(id) }
       [records, dedupe_subdomains(subdomains), providers]
+    end
+
+    def partial_note(klass, partial)
+      fetched = Array(partial[:fetched]).map { |t| t.to_s.upcase }
+      skipped = Array(partial[:skipped]).map { |t| t.to_s.upcase }
+      "Fetched #{fetched.join('/')} only — rate-limited after the first request " \
+        "(#{klass.display_name} free tier is ~1 req/min), so #{skipped.join('/')} were skipped."
     end
 
     def provider_row(klass, status, note: nil, count: 0)
@@ -90,7 +128,7 @@ module Tools
       }
       issues   = build_issues(providers)
       any_data = agg[:timeline].any? || subdomains.any?
-      any_ok   = providers.any? { |p| %w[ok no_data].include?(p[:status]) }
+      any_ok   = providers.any? { |p| %w[ok no_data partial].include?(p[:status]) }
 
       if any_data || any_ok
         ToolHarness::Result.new(success: true, tool: self.class.tool_name, data: data,
@@ -129,11 +167,19 @@ module Tools
           "message" => p[:note].to_s,
           "recommendation" => "Showing data from the other sources." }
       end
+      providers.select { |p| p[:status] == "partial" }.each do |p|
+        issues << { "severity" => "warning", "code" => "provider_partial",
+          "title" => "#{p[:name]} returned partial history",
+          "message" => p[:note].to_s,
+          "recommendation" => "Add a paid #{p[:name]} plan for full multi-type history in one pass, " \
+            "or re-run for more types. (This result is not cached.)" }
+      end
       issues
     end
 
     def build_summary(domain, agg, providers)
-      sources = providers.select { |p| p[:status] == "ok" }.map { |p| p[:name] }
+      sources = providers.select { |p| %w[ok partial].include?(p[:status]) }
+                         .map { |p| p[:status] == "partial" ? "#{p[:name]} (partial)" : p[:name] }
       parts   = agg[:changes].group_by { |c| c[:type] }.map { |type, cs| "#{type.to_s.upcase} changed ~#{cs.last[:approx_date]}" }
       head    = parts.any? ? parts.join("; ") : "no record changes detected"
       "#{domain} — #{head}. Sources: #{sources.any? ? sources.join(', ') : 'none'}."

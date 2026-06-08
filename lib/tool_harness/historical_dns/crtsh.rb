@@ -6,6 +6,9 @@ module ToolHarness
       def self.display_name  = "crt.sh"
       def self.requires_key? = false
       def self.record_types  = []
+      # crt.sh is frequently slow (single overloaded Postgres). Give it room — it runs
+      # concurrently with the other providers, so this doesn't lengthen the overall run.
+      def self.read_timeout  = 20
 
       def fetch(domain, key: nil)
         d    = Normalize.host(domain)

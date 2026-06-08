@@ -18,8 +18,11 @@ module ToolHarness
     # { records: [Record], subdomains: [{name:, first_seen:, last_seen:}] }
     # and raise ProviderError on remote failure.
     class Provider
-      OPEN_TIMEOUT = 3
-      READ_TIMEOUT = 9
+      # Per-provider HTTP timeouts (seconds). Subclasses override read_timeout when the
+      # upstream is known-slow (crt.sh). Providers run concurrently, so a longer timeout
+      # on one doesn't slow the overall run.
+      def self.open_timeout = 3
+      def self.read_timeout = 9
 
       def self.id            = raise(NotImplementedError, "#{name} must implement .id")
       def self.display_name  = raise(NotImplementedError, "#{name} must implement .display_name")
@@ -45,8 +48,8 @@ module ToolHarness
         uri  = URI.parse(url)
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl      = (uri.scheme == "https")
-        http.open_timeout = OPEN_TIMEOUT
-        http.read_timeout = READ_TIMEOUT
+        http.open_timeout = self.class.open_timeout
+        http.read_timeout = self.class.read_timeout
         resp = http.get(uri.request_uri, { "Accept" => "application/json" }.merge(headers))
         body = (JSON.parse(resp.body) rescue nil)
         { status: resp.code.to_i, body: body, error: nil }

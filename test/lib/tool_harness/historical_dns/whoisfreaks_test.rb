@@ -99,6 +99,16 @@ class ToolHarness::HistoricalDns::WhoisfreaksTest < ActiveSupport::TestCase
       out = p.fetch("example.com", key: "k")
       assert_equal %i[ns], out[:records].map(&:type).uniq    # only the pre-429 type came back
       assert out[:records].any?, "should return the NS records gathered before the 429"
+      # ...and report which types it got vs skipped so the tool can show PARTIAL.
+      assert_equal :rate_limited, out[:partial][:reason]
+      assert_equal %i[ns], out[:partial][:fetched]
+      assert_equal %i[mx a aaaa txt], out[:partial][:skipped]
     end
+  end
+
+  test "full success reports no partial" do
+    p = provider
+    out = stub_fetch(p) { p.fetch("example.com", key: "k") }
+    assert_nil out[:partial]
   end
 end

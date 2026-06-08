@@ -28,9 +28,11 @@ module ToolHarness
       def fetch(domain, key:)
         d = Normalize.host(domain)
         records = []
+        fetched = []
         rate_limited = false
         self.class.record_types.each do |rtype|
           records.concat(fetch_type(d, rtype, key))
+          fetched << rtype
         rescue ProviderError => e
           raise unless e.category == :rate_limited
           rate_limited = true
@@ -39,7 +41,11 @@ module ToolHarness
         if records.empty? && rate_limited
           raise ProviderError.new(:rate_limited, "WhoisFreaks rate limit reached (free tier is ~1 req/min)")
         end
-        { records: records, subdomains: [] }
+        # When we stopped early on a 429, report which types we got vs skipped so the tool
+        # can show a PARTIAL status instead of a misleading OK.
+        skipped = self.class.record_types - fetched
+        partial = rate_limited ? { reason: :rate_limited, fetched: fetched, skipped: skipped } : nil
+        { records: records, subdomains: [], partial: partial }
       end
 
       private

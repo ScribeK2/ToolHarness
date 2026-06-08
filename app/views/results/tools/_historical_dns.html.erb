@@ -4,7 +4,7 @@
   timeline   = d[:timeline]  || {}
   changes    = d[:changes]   || []
   subdomains = d[:subdomains] || []
-  status_cls = { "ok" => "sev-ok", "no_data" => "sev-info", "no_key" => "sev-info", "error" => "sev-crit" }
+  status_cls = { "ok" => "sev-ok", "no_data" => "sev-info", "no_key" => "sev-info", "partial" => "sev-warn", "error" => "sev-crit" }
   type_order = %w[a aaaa ns mx txt soa cname spf]
 %>
 

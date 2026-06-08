@@ -40,4 +40,10 @@ class ToolHarness::HistoricalDns::ProviderTest < ActiveSupport::TestCase
     ids = ToolHarness::HistoricalDns::Provider.all.map(&:id)
     assert_equal %w[crtsh virustotal whoisfreaks].sort, ids.sort
   end
+
+  test "timeouts default to 3/9 and crt.sh overrides read to 20 (it's known-slow)" do
+    assert_equal 3,  ToolHarness::HistoricalDns::Virustotal.open_timeout
+    assert_equal 9,  ToolHarness::HistoricalDns::Virustotal.read_timeout
+    assert_equal 20, ToolHarness::HistoricalDns::Crtsh.read_timeout
+  end
 end

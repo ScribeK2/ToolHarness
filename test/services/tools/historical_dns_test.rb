@@ -88,6 +88,20 @@ class Tools::HistoricalDnsTest < ActiveSupport::TestCase
     end
   end
 
+  test "rate-limited partial: provider shows 'partial', warns, and is NOT cached" do
+    wf = provider_class(id: "whoisfreaks", requires_key: true,
+           behavior: -> { { records: [R.new(type: :ns, value: "ns1.x.com", first_seen: Date.new(2024, 3, 1), last_seen: Date.new(2026, 6, 1), sources: ["whoisfreaks"])],
+                            subdomains: [], partial: { reason: :rate_limited, fetched: %i[ns], skipped: %i[mx a aaaa txt] } } })
+    Rails.stub(:cache, ActiveSupport::Cache::MemoryStore.new) do
+      res = run_tool(domain: "partial.com", providers: [wf], store_ids: %w[whoisfreaks])
+      assert res.success?
+      wf_row = res.data[:providers].find { |p| p[:id] == "whoisfreaks" }
+      assert_equal "partial", wf_row[:status]
+      assert(res.issues.any? { |i| i["code"] == "provider_partial" })
+      assert_nil Rails.cache.read("toolharness:historical_dns:partial.com"), "partial result must not be cached"
+    end
+  end
+
   test "blank domain fails cleanly without raising" do
     res = nil
     assert_nothing_raised { res = Tools::HistoricalDns.new.run(domain: "") }
