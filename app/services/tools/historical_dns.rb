@@ -14,8 +14,9 @@ module Tools
     def self.timeout        = 45
     def self.result_partial = "results/tools/historical_dns"
 
-    CACHE_TTL     = 12.hours
-    KEY_PROVIDERS = %w[whoisfreaks virustotal].freeze
+    CACHE_TTL        = 12.hours
+    KEY_PROVIDERS    = %w[whoisfreaks virustotal].freeze
+    COLLECT_DEADLINE = 14 # seconds — hard cap on the concurrent provider phase
 
     def execute(params)
       domain = params[:domain].to_s.strip.downcase
@@ -42,8 +43,10 @@ module Tools
     private
 
     # Providers are independent and I/O-bound (crt.sh is slow), so fan them out concurrently:
-    # the run is bounded by the slowest single provider, not the sum. Credential reads/writes
-    # stay on the main thread (the store persists to a file) — only #fetch runs in threads.
+    # the run is bounded by the slowest single provider, not the sum, and capped overall by
+    # COLLECT_DEADLINE so a hung crt.sh can't dominate. Credential reads/writes stay on the
+    # main thread (the store persists to a file) — only #fetch runs in threads, each wrapped
+    # in the Rails executor so autoloading/reloading is thread-safe and actually parallel.
     def collect(domain, store)
       plan = ToolHarness::HistoricalDns::Provider.all.map do |klass|
         prov      = klass.new
@@ -52,18 +55,33 @@ module Tools
         { klass: klass, prov: prov, available: available, key: key }
       end
 
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       threads = plan.map do |p|
         next nil unless p[:available]
         Thread.new do
-          out = p[:prov].fetch(domain, key: p[:key])
-          { records: Array(out[:records]), subdomains: Array(out[:subdomains]), partial: out[:partial] }
+          Rails.application.executor.wrap do
+            out = p[:prov].fetch(domain, key: p[:key])
+            { records: Array(out[:records]), subdomains: Array(out[:subdomains]), partial: out[:partial] }
+          end
         rescue ToolHarness::HistoricalDns::ProviderError => e
           { error: e.message }
         rescue StandardError => e
           { error: "#{e.class}: #{e.message}" }
         end
       end
-      outcomes = threads.map { |t| t&.value }
+
+      # Join under a shared deadline: a straggler past COLLECT_DEADLINE is abandoned (its
+      # thread self-terminates on its own HTTP read timeout) and reported as a timeout error.
+      outcomes = plan.each_index.map do |i|
+        t = threads[i]
+        next nil unless t
+        remaining = COLLECT_DEADLINE - (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started)
+        if t.join([remaining, 0].max)
+          t.value
+        else
+          { error: "#{plan[i][:klass].display_name} timed out after #{COLLECT_DEADLINE}s" }
+        end
+      end
 
       records    = []
       subdomains = []
