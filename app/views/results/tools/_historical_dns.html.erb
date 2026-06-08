@@ -1,0 +1,92 @@
+<%
+  d          = tool_run.result_data.with_indifferent_access
+  providers  = d[:providers] || []
+  timeline   = d[:timeline]  || {}
+  changes    = d[:changes]   || []
+  subdomains = d[:subdomains] || []
+  status_cls = { "ok" => "sev-ok", "no_data" => "sev-info", "no_key" => "sev-info", "error" => "sev-crit" }
+  type_order = %w[a aaaa ns mx txt soa cname spf]
+%>
+
+<%# ── Sources ── %>
+<div class="py-2 border-t border-line first:border-t-0">
+  <h3 class="text-[11px] tracking-[0.18em] uppercase text-fg font-bold mb-1"><span aria-hidden="true">▸ </span>Sources</h3>
+  <% providers.each do |p| %>
+    <div class="flex gap-2 py-[1px]">
+      <span class="text-mute w-[110px] flex-shrink-0"><%= p[:name] %></span>
+      <span class="sev <%= status_cls[p[:status]] || 'sev-info' %>"><%= p[:status].to_s.upcase %></span>
+      <span class="text-mute"><%= p[:note].presence || (p[:record_count].to_i.positive? ? "#{p[:record_count]} records" : "") %></span>
+    </div>
+  <% end %>
+</div>
+
+<%# ── Changes (the migration timeline) ── %>
+<% if changes.any? %>
+  <div class="py-2 border-t border-line">
+    <h3 class="text-[11px] tracking-[0.18em] uppercase text-fg font-bold mb-1"><span aria-hidden="true">▸ </span>Detected Changes</h3>
+    <% changes.each do |c| %>
+      <div class="whitespace-pre-wrap py-[1px]">
+        <span class="sev sev-warn"><%= c[:type].to_s.upcase %></span>
+        <span class="text-mute"> ~<%= c[:approx_date] %> </span>
+        <span class="text-red"><%= Array(c[:from]).join(", ") %></span>
+        <span class="text-mute"> → </span>
+        <span class="text-green"><%= Array(c[:to]).join(", ") %></span>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+
+<%# ── Record timeline ── %>
+<div class="py-2 border-t border-line">
+  <h3 class="text-[11px] tracking-[0.18em] uppercase text-fg font-bold mb-1"><span aria-hidden="true">▸ </span>Record Timeline</h3>
+  <% rows_present = false %>
+  <% type_order.each do |t| %>
+    <% recs = timeline[t]; next if recs.blank? %>
+    <% rows_present = true %>
+    <div class="mt-1 text-mute uppercase text-[11px]"><%= t %></div>
+    <table class="w-full text-fg" data-controller="sortable-table">
+      <thead><tr class="text-mute text-left"><th class="pr-2">VALUE</th><th class="pr-2">FROM</th><th class="pr-2">TO</th><th class="pr-2">NOW</th><th class="pr-2">SRC</th></tr></thead>
+      <tbody>
+        <% recs.each do |m| %>
+          <tr>
+            <td class="pr-2"><%= m[:value] %></td>
+            <td class="pr-2"><%= m[:first_seen] || "—" %></td>
+            <td class="pr-2"><%= m[:last_seen] || "—" %></td>
+            <td class="pr-2"><%= m[:current] ? "●" : "" %></td>
+            <td class="pr-2 text-mute"><%= Array(m[:sources]).join(",") %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+  <% unless rows_present %><div class="text-mute">No record history available from the active sources.</div><% end %>
+</div>
+
+<%# ── Subdomains seen (crt.sh / CT logs) ── %>
+<% if subdomains.any? %>
+  <div class="py-2 border-t border-line">
+    <h3 class="text-[11px] tracking-[0.18em] uppercase text-fg font-bold mb-1"><span aria-hidden="true">▸ </span>Subdomains Seen (CT logs)</h3>
+    <table class="w-full text-fg" data-controller="sortable-table">
+      <thead><tr class="text-mute text-left"><th class="pr-2">NAME</th><th class="pr-2">FIRST</th><th class="pr-2">LAST</th></tr></thead>
+      <tbody>
+        <% subdomains.each do |s| %>
+          <tr><td class="pr-2"><%= s[:name] %></td><td class="pr-2"><%= s[:first_seen] || "—" %></td><td class="pr-2"><%= s[:last_seen] || "—" %></td></tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>
+
+<%# ── Issues (reuses the shared severity tag — accessor matches _dns_propagation.html.erb) ── %>
+<% issues = (tool_run.issues || []).map { |i| i.is_a?(Hash) ? i : i.to_h } %>
+<% if issues.any? %>
+  <div class="py-2 border-t border-line">
+    <h3 class="text-[11px] tracking-[0.18em] uppercase text-fg font-bold mb-1"><span aria-hidden="true">▸ </span>Notes</h3>
+    <% issues.each do |issue| %>
+      <div class="flex gap-2 py-[1px]">
+        <%= render "results/severity_tag", severity: (issue["severity"] || issue[:severity]) %>
+        <span class="text-fg"><%= issue["title"] || issue[:title] %><% msg = issue["message"] || issue[:message] %><%= ": #{msg}" if msg.present? %></span>
+      </div>
+    <% end %>
+  </div>
+<% end %>
