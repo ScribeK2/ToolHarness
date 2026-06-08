@@ -1,18 +1,15 @@
 #!/usr/bin/env sh
 
-# Find foreman executable
-FOREMAN_CMD="foreman"
-if ! command -v foreman > /dev/null 2>&1; then
-  # Try to find foreman in gem bin directories
-  if [ -f ~/.local/share/gem/ruby/3.4.0/bin/foreman ]; then
-    FOREMAN_CMD="$HOME/.local/share/gem/ruby/3.4.0/bin/foreman"
-  elif [ -f ~/.gem/ruby/3.4.0/bin/foreman ]; then
-    FOREMAN_CMD="$HOME/.gem/ruby/3.4.0/bin/foreman"
-  else
-    echo "Foreman not found. Installing..."
-    gem install foreman
-    FOREMAN_CMD="foreman"
-  fi
+# foreman is a bundled dependency (development group) and is run through the
+# project binstub at bin/foreman. The binstub loads the gem directly via
+# Bundler, so it works regardless of how `foreman` resolves on PATH — in
+# particular it sidesteps the mise `foreman` shim, which is on PATH but errors
+# at runtime when foreman isn't activated as a mise tool in this directory.
+#
+# If the binstub is missing (fresh checkout before `bin/setup`), regenerate it.
+if [ ! -x bin/foreman ]; then
+  echo "bin/foreman binstub missing; generating it..."
+  bundle binstubs foreman
 fi
 
 # Default to port 3000 if not specified
@@ -23,4 +20,4 @@ export PORT="${PORT:-3000}"
 export RUBY_DEBUG_OPEN="true"
 export RUBY_DEBUG_LAZY="true"
 
-exec "$FOREMAN_CMD" start -f Procfile.dev "$@"
+exec bin/foreman start -f Procfile.dev "$@"

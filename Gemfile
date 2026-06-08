@@ -61,6 +61,11 @@ end
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
+
+  # Run the Procfile.dev process stack via bin/dev. Bundled (rather than a
+  # global/mise-shim install) so bin/dev resolves it through `bundle exec`
+  # regardless of mise tool activation state.
+  gem "foreman", require: false
 end
 
 group :test do
