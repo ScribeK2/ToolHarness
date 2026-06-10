@@ -10,8 +10,6 @@ class Tools::RegistrySweepTest < ActiveSupport::TestCase
     blacklist
     bulk_run
     credentials
-    dkim_check
-    dmarc_check
     dns_lookup
     dns_propagation
     email_auth_check
@@ -22,7 +20,6 @@ class Tools::RegistrySweepTest < ActiveSupport::TestCase
     ipinfo
     page_speed
     ping
-    spf_check
     sql_workbench
     ssl_inspect
     subdomain_scan
@@ -67,7 +64,7 @@ class Tools::RegistrySweepTest < ActiveSupport::TestCase
       assert klass.form_fields.any?, "#{key}.form_fields is empty"
 
       assert_kind_of Symbol, klass.input_type
-      assert [true, false].include?(klass.cacheable?), "#{key}.cacheable? must return a boolean"
+      assert [ true, false ].include?(klass.cacheable?), "#{key}.cacheable? must return a boolean"
 
       assert_equal key, klass.name.demodulize.underscore.to_sym,
         "#{key}: registry key should match underscored class name"
