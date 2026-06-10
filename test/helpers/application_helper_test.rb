@@ -11,17 +11,17 @@ class ApplicationHelperTest < ActionView::TestCase
   test "domain target offers other domain tools and host tools, not itself" do
     keys = sibling_tools_for(run_for(:whois_lookup)).map(&:first)
 
-    assert_includes keys, "dns_lookup"   # sibling domain tool
-    assert_includes keys, "ping"         # host tool reachable from a domain
-    refute_includes keys, "whois_lookup" # never itself
+    assert_includes keys, "dns_lookup"        # sibling domain tool
+    assert_includes keys, "hosting_diagnostic" # host tool reachable from a domain
+    refute_includes keys, "whois_lookup"      # never itself
   end
 
   test "host target offers only host tools" do
-    keys = sibling_tools_for(run_for(:ping)).map(&:first)
+    keys = sibling_tools_for(run_for(:blacklist)).map(&:first)
 
-    assert_includes keys, "blacklist"    # another host tool
-    refute_includes keys, "dns_lookup"   # domain-only tool excluded
-    refute_includes keys, "ping"         # never itself
+    assert_includes keys, "hosting_diagnostic" # another host tool
+    refute_includes keys, "dns_lookup"         # domain-only tool excluded
+    refute_includes keys, "blacklist"          # never itself
   end
 
   test "special input types yield no siblings" do

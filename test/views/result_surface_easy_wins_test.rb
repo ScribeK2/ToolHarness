@@ -36,7 +36,7 @@ class ResultSurfaceEasyWinsTest < ActionDispatch::IntegrationTest
 
     assert_select "details" do
       assert_select "a[href=?]", workbench_path(tool: "whois_lookup", target: "example.com")
-      assert_select "a[href=?]", workbench_path(tool: "ping", target: "example.com")
+      assert_select "a[href=?]", workbench_path(tool: "hosting_diagnostic", target: "example.com")
     end
     # never links back to the current tool
     assert_select "details a[href*='tool=dns_lookup']", false

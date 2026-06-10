@@ -47,7 +47,7 @@ class ToolRunsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "POST strips scheme and path for host input_type" do
-    post tool_run_create_path(:ping),
+    post tool_run_create_path(:hosting_diagnostic),
       params: { tool_run: { domain: "  HTTPS://Example.com/  " } }
 
     run = ToolRun.order(created_at: :desc).first

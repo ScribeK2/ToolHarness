@@ -27,11 +27,15 @@ module Tools
       mongodb:     27017
     }.freeze
     PORT_TIMEOUT_S = 2
+    DEPTHS = %w[full quick].freeze
 
     def self.tool_name = "Hosting Diagnostic"
     def self.category = :hosting
-    def self.description = "Resolves the host, probes common service ports in parallel (SSH, HTTP, mail, cPanel/WHM, databases), looks up reverse DNS, and reads the HTTPS server banner."
-    def self.form_fields = { domain: :text }
+    def self.description = "Resolves the host and probes common service ports in parallel (SSH, HTTP, mail, cPanel/WHM, databases) with reverse DNS and the HTTPS banner — or, at quick depth, just measures TCP reachability and round-trip time (4 probes, port 443/80)."
+    def self.form_fields = {
+      domain: :text,
+      depth: { type: :select, options: DEPTHS }
+    }
     def self.input_type = :host
     def self.cacheable? = false
     def self.timeout = 30
@@ -47,6 +51,9 @@ module Tools
           summary: "Invalid input"
         )
       end
+
+      depth = params[:depth].presence || "full"
+      return execute_quick(target) if depth == "quick"
 
       ip = valid_ip?(target) ? target : resolve_ip(target)
       unless ip
@@ -196,6 +203,32 @@ module Tools
         base += ". No probed ports open"
       end
       "#{base}."
+    end
+
+    def execute_quick(target)
+      probe = ::TcpPingProbe.check(target)
+      data  = probe[:data].merge(depth: "quick")
+
+      ToolHarness::Result.new(
+        success: probe[:reachable],
+        tool: self.class.tool_name,
+        data: data,
+        issues: probe[:issues],
+        summary: quick_summary(data)
+      )
+    end
+
+    def quick_summary(d)
+      received = d[:received]
+      if received.positive?
+        avg = d[:rtt][:avg]
+        base = "#{received}/#{d[:sent]} TCP probes succeeded on port #{d[:port]}"
+        base += ", avg #{avg}ms RTT" if avg
+        base += " (#{d[:loss_percent]}% loss)" if d[:loss_percent] > 0
+        "#{base}."
+      else
+        "All #{d[:sent]} TCP probes failed — host unreachable on ports #{TcpPingProbe::PROBE_PORTS.join('/')}."
+      end
     end
   end
 end

@@ -18,7 +18,6 @@ class Tools::RegistrySweepTest < ActiveSupport::TestCase
     http_inspect
     ipinfo
     page_speed
-    ping
     sql_workbench
     ssl_inspect
     subdomain_scan
@@ -29,7 +28,6 @@ class Tools::RegistrySweepTest < ActiveSupport::TestCase
   # Tools that have an explicit input validator and return a Result instead
   # of raising or hitting the network. Used by the validation-rejection test.
   VALIDATED_TOOLS = {
-    ping:               { domain: "; injection" },
     blacklist:          { domain: "; injection" },
     hosting_diagnostic: { domain: "; injection" },
     page_speed:         { domain: "" },
