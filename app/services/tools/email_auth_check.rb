@@ -5,7 +5,7 @@ module Tools
     SCOPES = %w[full spf dkim dmarc].freeze
 
     def self.tool_name = "Email Authentication"
-    def self.category = :email_auth
+    def self.category = :email
     def self.description = "Runs SPF, DKIM, and DMARC together with an A–F grade and cross-record issues — or a focused single-record check via the scope selector."
     def self.form_fields = {
       domain: :text,

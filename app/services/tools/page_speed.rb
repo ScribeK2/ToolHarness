@@ -3,7 +3,7 @@ module Tools
     include ToolHarness::Tool
 
     def self.tool_name = "Page Speed Report"
-    def self.category  = :performance
+    def self.category  = :web
     def self.description = "GTmetrix-style page performance report — Lighthouse scores, Web Vitals, " \
       "structure recommendations and a request waterfall via Google PageSpeed Insights. " \
       "An optional Google API key (Credentials tool, id: pagespeed) raises the rate limit."

@@ -23,8 +23,8 @@ class ToolHarness::RegistryTest < ActiveSupport::TestCase
   test "all_categories returns the unique sorted category list" do
     cats = ToolHarness::Registry.all_categories
     assert_includes cats, :dns
-    assert_includes cats, :ssl
-    assert_includes cats, :email_auth
+    assert_includes cats, :web
+    assert_includes cats, :email
     assert_includes cats, :diagnostics
     assert_includes cats, :hosting
     assert_includes cats, :domain
@@ -61,7 +61,7 @@ class ToolHarness::RegistryTest < ActiveSupport::TestCase
   test "categories groups tools by category" do
     by_cat = ToolHarness::Registry.categories
     assert by_cat[:dns].present?
-    assert by_cat[:ssl].present?
+    assert by_cat[:web].present?
     by_cat.each { |cat, tools| assert tools.all? { |t| t.category == cat } }
   end
 end

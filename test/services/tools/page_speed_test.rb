@@ -13,7 +13,7 @@ class Tools::PageSpeedTest < ActiveSupport::TestCase
   end
 
   test "tool metadata: category, partial, select field, path-preserving URL input" do
-    assert_equal :performance, Tools::PageSpeed.category
+    assert_equal :web, Tools::PageSpeed.category
     assert_equal "results/tools/page_speed", Tools::PageSpeed.result_partial
     assert_equal :domain, Tools::PageSpeed.input_type
     assert Tools::PageSpeed.preserve_path_in_input?

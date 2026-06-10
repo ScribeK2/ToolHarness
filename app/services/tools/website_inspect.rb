@@ -3,7 +3,7 @@ module Tools
     include ToolHarness::Tool
 
     def self.tool_name = "Website Inspection"
-    def self.category = :hosting
+    def self.category = :web
     def self.description = "One pass over the site: HTTP health classification, redirect behavior, security headers (HSTS, CSP, X-Frame-Options, etc.), and WordPress detection including critical-error and maintenance states."
     def self.form_fields = { domain: :text }
     def self.input_type = :domain

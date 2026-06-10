@@ -3,7 +3,7 @@ module Tools
     include ToolHarness::Tool
 
     def self.tool_name   = "Email Validity"
-    def self.category    = :email_auth
+    def self.category    = :email
     def self.description = "Validates an email address: format, MX/A deliverability, disposable-domain detection, and a best-effort SMTP mailbox probe (port 25 permitting)."
     def self.form_fields = { email: :text }
     def self.input_type  = :email

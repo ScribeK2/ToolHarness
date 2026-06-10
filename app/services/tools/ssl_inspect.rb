@@ -3,7 +3,7 @@ module Tools
     include ToolHarness::Tool
 
     def self.tool_name = "SSL/TLS Inspection"
-    def self.category = :ssl
+    def self.category = :web
     def self.description = "Connects to the host, parses the certificate chain, probes supported TLS versions, and flags expiration, weak keys, and deprecated protocols."
     def self.form_fields = { domain: :text, port: :number }
     def self.input_type = :domain
