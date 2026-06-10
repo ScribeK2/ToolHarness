@@ -26,7 +26,6 @@ class ApplicationHelperTest < ActionView::TestCase
 
   test "special input types yield no siblings" do
     assert_empty sibling_tools_for(run_for(:bulk_run))
-    assert_empty sibling_tools_for(run_for(:ticket_lookup))
     assert_empty sibling_tools_for(run_for(:sql_workbench))
   end
 

@@ -6,8 +6,6 @@ require "test_helper"
 class Tools::RegistrySweepTest < ActiveSupport::TestCase
   # All real tools should be present. If you add a new tool, expect this list
   # to grow — the count assertion below catches accidental registry drift.
-  # Note: traceroute is feature-flagged off by default (requires CAP_NET_RAW),
-  # so it is excluded unless TOOLHARNESS_TRACEROUTE_ENABLED=1.
   EXPECTED_TOOLS = %i[
     blacklist
     bulk_run
@@ -28,21 +26,18 @@ class Tools::RegistrySweepTest < ActiveSupport::TestCase
     sql_workbench
     ssl_inspect
     subdomain_scan
-    ticket_lookup
     website_health
     whois_lookup
   ].freeze
 
   # Tools that have an explicit input validator and return a Result instead
   # of raising or hitting the network. Used by the validation-rejection test.
-  # Note: traceroute is excluded because it's feature-flagged off by default.
   VALIDATED_TOOLS = {
     ping:               { domain: "; injection" },
     blacklist:          { domain: "; injection" },
     hosting_diagnostic: { domain: "; injection" },
     page_speed:         { domain: "" },
-    historical_dns:     { domain: "" },
-    ticket_lookup:      { ticket_id: "" }
+    historical_dns:     { domain: "" }
     # NB: bulk_run is now a custom-partial launcher (execute raises NotImplementedError,
     # managed via BatchesController) — excluded from VALIDATED_TOOLS, like sql_workbench.
   }.freeze
