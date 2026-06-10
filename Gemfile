@@ -73,8 +73,6 @@ group :test do
   gem "capybara"
   gem "selenium-webdriver"
 
-  # Pin minitest to 5.x — Rails 8.1.1's lib/rails/test_unit/line_filtering.rb
-  # monkey-patches Minitest::Test#run with the 5.x signature; Minitest 6.0
-  # changed it to 3 args and raises ArgumentError at test load time.
-  gem "minitest", "~> 5.25"
+  # minitest/mock was extracted from minitest in 6.0; tests use Object#stub
+  gem "minitest-mock"
 end
