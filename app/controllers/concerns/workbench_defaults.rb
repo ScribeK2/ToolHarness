@@ -6,5 +6,5 @@ module WorkbenchDefaults
   # Tool keys pinned to the top-bar slots 1–5. Referenced as DEFAULT_SLOTS by
   # including controllers via the ancestor chain, and rendered by
   # app/views/workbench/_top_bar.html.erb through @default_slots.
-  DEFAULT_SLOTS = %w[whois_lookup dns_lookup ssl_inspect email_auth_check http_inspect].freeze
+  DEFAULT_SLOTS = %w[whois_lookup dns_lookup ssl_inspect email_auth_check website_inspect].freeze
 end

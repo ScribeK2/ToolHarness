@@ -39,7 +39,7 @@ module Investigations
         "hosting_website" => new(
           key: "hosting_website",
           label: "Hosting & Website",
-          probes: %w[dns_lookup hosting_diagnostic http_inspect ssl_inspect website_health],
+          probes: %w[dns_lookup hosting_diagnostic website_inspect ssl_inspect],
           correlator: Investigations::HostingWebsiteCorrelator
         )
       }
