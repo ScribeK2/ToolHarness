@@ -1,7 +1,8 @@
 module Investigations
-  # Cross-probe synthesis over the email-delivery battery. Ranked, root-cause-first
-  # findings + a triage verdict. Reads result_data via with_indifferent_access. Every
-  # probe is read defensively — a skipped/failed probe simply contributes no finding.
+  # Cross-probe synthesis over the email-delivery battery (dns_lookup, email_auth_check,
+  # hosting_diagnostic, blacklist). Ranked, root-cause-first findings + a triage verdict.
+  # Reads result_data via with_indifferent_access. Every probe is read defensively —
+  # a skipped/failed probe simply contributes no finding.
   class EmailDeliveryCorrelator
     MAIL_PORTS       = %w[smtp smtps submission imap imaps pop3 pop3s].freeze
     # Listing on one of these (names as reported by Tools::Blacklist) is treated as
@@ -32,14 +33,17 @@ module Investigations
 
     private
 
-    def dns       = @runs["dns_lookup"]
-    def spf       = @runs["spf_check"]
-    def dkim      = @runs["dkim_check"]
-    def dmarc     = @runs["dmarc_check"]
-    def hosting   = @runs["hosting_diagnostic"]
-    def blacklist = @runs["blacklist"]
+    def dns        = @runs["dns_lookup"]
+    def email_auth = @runs["email_auth_check"]
+    def hosting    = @runs["hosting_diagnostic"]
+    def blacklist  = @runs["blacklist"]
 
     def data(run) = (run&.result_data || {}).with_indifferent_access
+
+    # The merged email_auth_check run nests each record's raw checker output.
+    def spf_data   = data(email_auth)[:spf]   || {}
+    def dkim_data  = data(email_auth)[:dkim]  || {}
+    def dmarc_data = data(email_auth)[:dmarc] || {}
 
     def mx_records = Array(data(dns)[:mx_records])
     def open_ports = Array(data(hosting)[:open_ports]).map(&:to_s)
@@ -74,55 +78,55 @@ module Investigations
     end
 
     def spf_findings
-      return [] unless spf
-      if issue_codes(spf).include?("too_many_lookups")
+      return [] unless email_auth
+      if issue_codes(email_auth).include?("too_many_lookups")
         return [finding("critical", "spf_permerror", "SPF exceeds the 10-lookup limit",
                         "The SPF record requires more than 10 DNS lookups (a permerror) — receivers treat SPF as broken.",
-                        %w[spf_check], "Flatten includes to get under 10 DNS lookups.")]
+                        %w[email_auth_check], "Flatten includes to get under 10 DNS lookups.")]
       end
-      unless spf.success
+      unless spf_data[:success]
         return [finding("warning", "spf_missing", "No SPF record",
                         "No SPF record was found; receivers can't verify which hosts may send for this domain.",
-                        %w[spf_check], "Publish an SPF record ending in -all or ~all.")]
+                        %w[email_auth_check], "Publish an SPF record ending in -all or ~all.")]
       end
-      all = data(spf)[:all_mechanism]
+      all = spf_data[:all_mechanism]
       qual = all.is_a?(Hash) ? all[:qualifier] : nil
       if qual.nil? || qual == "+"
         return [finding("warning", "spf_permissive", "SPF has no restrictive all mechanism",
                         "The SPF record has no -all/~all (or uses +all), so it does not constrain senders.",
-                        %w[spf_check], "End the SPF record with ~all or -all.")]
+                        %w[email_auth_check], "End the SPF record with ~all or -all.")]
       end
       []
     end
 
     def dkim_findings
-      return [] unless dkim
-      selectors = Array(data(dkim)[:selectors_found])
+      return [] unless email_auth
+      selectors = Array(dkim_data[:selectors_found])
       if selectors.empty?
         return [finding("warning", "dkim_absent", "No DKIM signature found",
                         "No common DKIM selector answered. NOTE: the probe checks only common selectors, so a custom selector cannot be ruled out from outside.",
-                        %w[dkim_check], "Confirm DKIM signing is configured; if it uses a custom selector, verify it directly.")]
+                        %w[email_auth_check], "Confirm DKIM signing is configured; if it uses a custom selector, verify it directly.")]
       end
       testing = selectors.any? { |s| s.is_a?(Hash) && s.dig("parsed", "flags").to_s.include?("y") }
       if testing
         return [finding("warning", "dkim_testing", "DKIM is in testing mode",
                         "A DKIM selector carries the t=y testing flag, so receivers ignore DKIM failures.",
-                        %w[dkim_check], "Remove t=y once DKIM is verified working.")]
+                        %w[email_auth_check], "Remove t=y once DKIM is verified working.")]
       end
       []
     end
 
     def dmarc_findings
-      return [] unless dmarc
-      unless dmarc.success
+      return [] unless email_auth
+      unless dmarc_data[:success]
         return [finding("warning", "dmarc_missing", "No DMARC record",
                         "No DMARC record was found; the domain is spoofable and has no reporting.",
-                        %w[dmarc_check], "Publish a _dmarc record (start at p=none with rua reporting, then tighten).")]
+                        %w[email_auth_check], "Publish a _dmarc record (start at p=none with rua reporting, then tighten).")]
       end
-      if data(dmarc)[:policy].to_s == "none"
+      if dmarc_data[:policy].to_s == "none"
         return [finding("warning", "dmarc_policy_none", "DMARC policy is p=none",
                         "DMARC is published but the policy is none, so failing mail is neither quarantined nor rejected.",
-                        %w[dmarc_check], "Move to p=quarantine then p=reject after monitoring reports.")]
+                        %w[email_auth_check], "Move to p=quarantine then p=reject after monitoring reports.")]
       end
       []
     end
@@ -130,7 +134,7 @@ module Investigations
     def healthy_finding
       finding("info", "mail_externally_healthy", "Mail infrastructure externally healthy",
               "MX routes, mail ports answer, SPF/DKIM/DMARC are present and sane, and the mail host is not blacklisted. If mail is still failing, the cause is inside the mail server — escalate with Graylog Postfix/Dovecot logs.",
-              %w[dns_lookup spf_check dkim_check dmarc_check hosting_diagnostic blacklist],
+              %w[dns_lookup email_auth_check hosting_diagnostic blacklist],
               "Escalate to Tier 3 with this report and the relevant Graylog log lines.")
     end
 

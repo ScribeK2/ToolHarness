@@ -52,17 +52,18 @@ class InvestigationProgressJobTest < ActiveJob::TestCase
     inv = Investigation.create!(domain: "example.com", track: "email_delivery", status: "running", started_at: Time.current)
     inv.tool_runs.create!(tool_key: "dns_lookup", tool_name: "DNS", category: "dns", status: "completed",
                           success: true, step_order: 0, result_data: { "mx_records" => dns_mx })
-    spf_data   = { "all_mechanism" => { "qualifier" => "~" } }
-    dkim_data  = { "selectors_found" => [{ "selector" => "default", "parsed" => { "flags" => "" } }] }
-    dmarc_data = { "policy" => "quarantine" }
-    [["spf_check", spf_data], ["dkim_check", dkim_data], ["dmarc_check", dmarc_data]].each_with_index do |(k, rd), i|
-      inv.tool_runs.create!(tool_key: k, tool_name: k, category: "email_auth", status: "completed",
-                            success: true, step_order: i + 1, result_data: rd)
-    end
+    auth_data = {
+      "spf"   => { "success" => true, "all_mechanism" => { "qualifier" => "~" } },
+      "dkim"  => { "success" => true, "selectors_found" => [{ "selector" => "default", "parsed" => { "flags" => "" } }] },
+      "dmarc" => { "success" => true, "policy" => "quarantine" }
+    }
+    inv.tool_runs.create!(tool_key: "email_auth_check", tool_name: "Email Authentication",
+                          category: "email_auth", status: "completed",
+                          success: true, step_order: 1, result_data: auth_data)
     inv.tool_runs.create!(tool_key: "hosting_diagnostic", tool_name: "Hosting", category: "hosting", status: "completed",
-                          success: true, step_order: 4, result_data: { "open_ports" => ["smtp"] })
+                          success: true, step_order: 2, result_data: { "open_ports" => ["smtp"] })
     bl = inv.tool_runs.create!(tool_key: "blacklist", tool_name: "Blacklist", category: "diagnostics",
-                               status: blacklist_status, step_order: 5, input: { "domain" => "example.com" },
+                               status: blacklist_status, step_order: 3, input: { "domain" => "example.com" },
                                result_data: blacklist_data, success: blacklist_status == "completed")
     [inv, bl]
   end

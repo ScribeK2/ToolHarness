@@ -8,12 +8,16 @@ class Investigations::EmailDeliveryCorrelatorTest < ActiveSupport::TestCase
                 success: success, result_data: data, issues: issues)
   end
 
+  HEALTHY_AUTH_DATA = {
+    "spf"   => { "success" => true, "all_mechanism" => { "type" => "all", "qualifier" => "~" } },
+    "dkim"  => { "success" => true, "selectors_found" => [{ "selector" => "google", "parsed" => { "flags" => "" } }] },
+    "dmarc" => { "success" => true, "policy" => "reject" }
+  }.freeze
+
   def healthy_runs
     [
       run_for("dns_lookup", data: { "mx_records" => [{ "priority" => 10, "host" => "mx.example.com." }] }),
-      run_for("spf_check", data: { "success" => true, "all_mechanism" => { "type" => "all", "qualifier" => "~" } }),
-      run_for("dkim_check", data: { "selectors_found" => [{ "selector" => "google", "parsed" => { "flags" => "" } }] }),
-      run_for("dmarc_check", data: { "success" => true, "policy" => "reject" }),
+      run_for("email_auth_check", data: HEALTHY_AUTH_DATA),
       run_for("hosting_diagnostic", data: { "open_ports" => ["smtp", "imaps"] }),
       run_for("blacklist", data: { "listings" => [] })
     ]
@@ -58,45 +62,89 @@ class Investigations::EmailDeliveryCorrelatorTest < ActiveSupport::TestCase
   end
 
   test "SPF over the lookup limit -> critical spf_permerror" do
-    res = Investigations::EmailDeliveryCorrelator.new(runs_with("spf_check", data: { "success" => true }, issues: [{ "code" => "too_many_lookups" }])).call
+    res = Investigations::EmailDeliveryCorrelator.new(
+      runs_with("email_auth_check", data: { "spf" => { "success" => true } }, issues: [{ "code" => "too_many_lookups" }])
+    ).call
     assert_includes codes(res), "spf_permerror"
     assert_equal "critical", res.verdict_status
   end
 
   test "missing SPF -> warning spf_missing" do
-    res = Investigations::EmailDeliveryCorrelator.new(runs_with("spf_check", data: { "success" => false }, success: false)).call
+    res = Investigations::EmailDeliveryCorrelator.new(
+      runs_with("email_auth_check", data: {
+        "spf"   => { "success" => false },
+        "dkim"  => HEALTHY_AUTH_DATA["dkim"],
+        "dmarc" => HEALTHY_AUTH_DATA["dmarc"]
+      })
+    ).call
     assert_includes codes(res), "spf_missing"
   end
 
   test "SPF without a restrictive all -> warning spf_permissive" do
-    res = Investigations::EmailDeliveryCorrelator.new(runs_with("spf_check", data: { "success" => true, "all_mechanism" => { "qualifier" => "+" } })).call
+    res = Investigations::EmailDeliveryCorrelator.new(
+      runs_with("email_auth_check", data: {
+        "spf"   => { "success" => true, "all_mechanism" => { "qualifier" => "+" } },
+        "dkim"  => HEALTHY_AUTH_DATA["dkim"],
+        "dmarc" => HEALTHY_AUTH_DATA["dmarc"]
+      })
+    ).call
     assert_includes codes(res), "spf_permissive"
   end
 
   test "SPF record with no all mechanism at all -> warning spf_permissive" do
-    res = Investigations::EmailDeliveryCorrelator.new(runs_with("spf_check", data: { "success" => true })).call
+    res = Investigations::EmailDeliveryCorrelator.new(
+      runs_with("email_auth_check", data: {
+        "spf"   => { "success" => true },
+        "dkim"  => HEALTHY_AUTH_DATA["dkim"],
+        "dmarc" => HEALTHY_AUTH_DATA["dmarc"]
+      })
+    ).call
     assert_includes codes(res), "spf_permissive"
   end
 
   test "no DKIM selector -> warning dkim_absent, caveated" do
-    res = Investigations::EmailDeliveryCorrelator.new(runs_with("dkim_check", data: { "selectors_found" => [] })).call
+    res = Investigations::EmailDeliveryCorrelator.new(
+      runs_with("email_auth_check", data: {
+        "spf"   => HEALTHY_AUTH_DATA["spf"],
+        "dkim"  => { "success" => true, "selectors_found" => [] },
+        "dmarc" => HEALTHY_AUTH_DATA["dmarc"]
+      })
+    ).call
     f = res.findings.find { |x| x["code"] == "dkim_absent" }
     assert f
     assert_match(/common selector/i, f["message"])
   end
 
   test "DKIM in testing mode -> warning dkim_testing" do
-    res = Investigations::EmailDeliveryCorrelator.new(runs_with("dkim_check", data: { "selectors_found" => [{ "selector" => "k1", "parsed" => { "flags" => "y" } }] })).call
+    res = Investigations::EmailDeliveryCorrelator.new(
+      runs_with("email_auth_check", data: {
+        "spf"   => HEALTHY_AUTH_DATA["spf"],
+        "dkim"  => { "success" => true, "selectors_found" => [{ "selector" => "k1", "parsed" => { "flags" => "y" } }] },
+        "dmarc" => HEALTHY_AUTH_DATA["dmarc"]
+      })
+    ).call
     assert_includes codes(res), "dkim_testing"
   end
 
   test "missing DMARC -> warning dmarc_missing" do
-    res = Investigations::EmailDeliveryCorrelator.new(runs_with("dmarc_check", data: { "success" => false }, success: false)).call
+    res = Investigations::EmailDeliveryCorrelator.new(
+      runs_with("email_auth_check", data: {
+        "spf"   => HEALTHY_AUTH_DATA["spf"],
+        "dkim"  => HEALTHY_AUTH_DATA["dkim"],
+        "dmarc" => { "success" => false }
+      })
+    ).call
     assert_includes codes(res), "dmarc_missing"
   end
 
   test "DMARC p=none -> warning dmarc_policy_none" do
-    res = Investigations::EmailDeliveryCorrelator.new(runs_with("dmarc_check", data: { "success" => true, "policy" => "none" })).call
+    res = Investigations::EmailDeliveryCorrelator.new(
+      runs_with("email_auth_check", data: {
+        "spf"   => HEALTHY_AUTH_DATA["spf"],
+        "dkim"  => HEALTHY_AUTH_DATA["dkim"],
+        "dmarc" => { "success" => true, "policy" => "none" }
+      })
+    ).call
     assert_includes codes(res), "dmarc_policy_none"
   end
 

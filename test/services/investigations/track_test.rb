@@ -17,11 +17,11 @@ class Investigations::TrackTest < ActiveSupport::TestCase
     assert_includes Investigations::Track.all.map(&:key), "orientation"
   end
 
-  test "email_delivery track has the six probes and the EmailDeliveryCorrelator" do
+  test "email_delivery track has the four probes and the EmailDeliveryCorrelator" do
     t = Investigations::Track.find("email_delivery")
     assert_equal "email_delivery", t.key
     assert_equal "Email Delivery", t.label
-    assert_equal %w[dns_lookup spf_check dkim_check dmarc_check hosting_diagnostic blacklist], t.probes
+    assert_equal %w[dns_lookup email_auth_check hosting_diagnostic blacklist], t.probes
     assert_equal Investigations::EmailDeliveryCorrelator, t.correlator
   end
 
