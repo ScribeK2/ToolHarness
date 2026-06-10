@@ -15,6 +15,22 @@ class ResultSurfaceEasyWinsTest < ActionDispatch::IntegrationTest
     run
   end
 
+  test "pending runs carry the run-poller fallback (broadcast-race guard)" do
+    run = ToolRun.create_pending!(
+      tool_class: ToolHarness::Registry.find_tool(:dns_lookup),
+      params: { domain: "example.com" }
+    )
+    get workbench_path(tool: "dns_lookup", target: "example.com", run: run.id)
+    assert_response :success
+    assert_select "[data-controller~=run-poller][data-run-poller-url-value='#{tool_run_path(run)}']"
+  end
+
+  test "completed runs carry no run-poller" do
+    run = completed_run
+    get workbench_path(tool: "dns_lookup", target: "example.com", run: run.id)
+    assert_select "[data-controller~=run-poller]", false
+  end
+
   test "kv values are click-to-copy with the full value" do
     run = completed_run
     get workbench_path(tool: "dns_lookup", target: "example.com", run: run.id)

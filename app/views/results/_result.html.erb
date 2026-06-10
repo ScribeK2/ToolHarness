@@ -6,7 +6,9 @@
 <div id="<%= dom_id(tool_run) %>" class="text-xs">
   <% case tool_run.status
      when "pending", "processing" %>
-    <div class="flex items-center gap-2 text-fg-dim">
+    <div class="flex items-center gap-2 text-fg-dim"
+         data-controller="run-poller"
+         data-run-poller-url-value="<%= tool_run_path(tool_run) %>">
       <span class="spinner"></span>
       <span><span aria-hidden="true">▸ </span><%= tool_run.tool_name.downcase %> · <%= tool_run.input_summary %> · running…</span>
     </div>

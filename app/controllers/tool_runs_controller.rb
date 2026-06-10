@@ -24,6 +24,20 @@ class ToolRunsController < ApplicationController
     end
   end
 
+  # Poll target for the spinner's run-poller fallback. 204 while the run is
+  # still in flight (leave the spinner and its stream subscription alone);
+  # a replace stream once terminal, mirroring the job's completion broadcast.
+  def show
+    tool_run = ToolRun.find(params[:id])
+    return head :no_content unless ToolRun::TERMINAL_STATUSES.include?(tool_run.status)
+
+    render turbo_stream: turbo_stream.replace(
+      ActionView::RecordIdentifier.dom_id(tool_run),
+      partial: "results/result",
+      locals: { tool_run: tool_run }
+    )
+  end
+
   def rerun
     source     = ToolRun.find(params[:id])
     tool_class = source.tool_class

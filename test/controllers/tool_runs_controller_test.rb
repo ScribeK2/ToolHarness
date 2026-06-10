@@ -71,4 +71,41 @@ class ToolRunsControllerTest < ActionDispatch::IntegrationTest
     run = ToolRun.order(created_at: :desc).first
     assert_equal raw_value, run.input[primary_field.to_s]
   end
+
+  test "GET a pending run returns 204 (poller keeps waiting)" do
+    run = ToolRun.create_pending!(
+      tool_class: Tools::DnsLookup, params: { domain: "example.com" }
+    )
+
+    get tool_run_path(run), headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    assert_response :no_content
+  end
+
+  test "GET a completed run returns a turbo-stream replace with the result" do
+    run = ToolRun.create_pending!(
+      tool_class: Tools::DnsLookup, params: { domain: "example.com" }
+    )
+    run.apply_result!(ToolHarness::Result.new(
+      success: true, tool: "DNS Lookup",
+      data: { "a_records" => [ "1.2.3.4" ] }, summary: "Resolves to 1.2.3.4."
+    ))
+
+    get tool_run_path(run), headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    assert_response :success
+    assert_match(/turbo-stream action="replace" target="tool_run_#{run.id}"/, response.body)
+    assert_match(/Resolves to 1\.2\.3\.4/, response.body)
+  end
+
+  test "GET a failed run returns the replace too (failure is terminal)" do
+    run = ToolRun.create_pending!(
+      tool_class: Tools::DnsLookup, params: { domain: "example.com" }
+    )
+    run.apply_result!(ToolHarness::Result.new(
+      success: false, tool: "DNS Lookup", error: "boom", summary: "failed"
+    ))
+
+    get tool_run_path(run), headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    assert_response :success
+    assert_match(/turbo-stream action="replace" target="tool_run_#{run.id}"/, response.body)
+  end
 end
