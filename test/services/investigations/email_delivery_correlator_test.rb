@@ -9,9 +9,9 @@ class Investigations::EmailDeliveryCorrelatorTest < ActiveSupport::TestCase
   end
 
   HEALTHY_AUTH_DATA = {
-    "spf"   => { "success" => true, "all_mechanism" => { "type" => "all", "qualifier" => "~" } },
-    "dkim"  => { "success" => true, "selectors_found" => [{ "selector" => "google", "parsed" => { "flags" => "" } }] },
-    "dmarc" => { "success" => true, "policy" => "reject" }
+    "spf"   => { "success" => true, "all_mechanism" => { "type" => "all", "qualifier" => "~" }.freeze }.freeze,
+    "dkim"  => { "success" => true, "selectors_found" => [{ "selector" => "google", "parsed" => { "flags" => "" }.freeze }.freeze].freeze }.freeze,
+    "dmarc" => { "success" => true, "policy" => "reject" }.freeze
   }.freeze
 
   def healthy_runs
@@ -63,7 +63,11 @@ class Investigations::EmailDeliveryCorrelatorTest < ActiveSupport::TestCase
 
   test "SPF over the lookup limit -> critical spf_permerror" do
     res = Investigations::EmailDeliveryCorrelator.new(
-      runs_with("email_auth_check", data: { "spf" => { "success" => true } }, issues: [{ "code" => "too_many_lookups" }])
+      runs_with("email_auth_check", data: {
+        "spf"   => { "success" => true },
+        "dkim"  => HEALTHY_AUTH_DATA["dkim"],
+        "dmarc" => HEALTHY_AUTH_DATA["dmarc"]
+      }, issues: [{ "code" => "too_many_lookups" }])
     ).call
     assert_includes codes(res), "spf_permerror"
     assert_equal "critical", res.verdict_status
