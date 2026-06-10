@@ -48,4 +48,17 @@ class ResultSurfaceEasyWinsTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "form[action='#{tool_run_rerun_path(run)}'][method=post] button"
   end
+
+  test "history rows for a retired-key run show no re-run form" do
+    legacy_run = ToolRun.create!(
+      tool_key: "dns_propagation", tool_name: "DNS Propagation", category: "legacy",
+      input_type: "domain", input: { "domain" => "example.com" },
+      input_summary: "example.com", status: "completed", success: true,
+      execution_time: 0.1, issues: [], recommendations: [],
+      result_data: {}
+    )
+    get workbench_path(view: "history")
+    assert_response :success
+    assert_select "form[action='#{tool_run_rerun_path(legacy_run)}']", false
+  end
 end

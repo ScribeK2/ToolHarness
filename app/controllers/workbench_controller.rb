@@ -21,7 +21,7 @@ class WorkbenchController < ApplicationController
     if RETIRED_TOOL_REDIRECTS.key?(params[:tool])
       replacement = RETIRED_TOOL_REDIRECTS[params[:tool]]
       return redirect_to workbench_path(
-        { tool: replacement, target: params[:target].presence }.compact
+        { tool: replacement, target: params[:target].presence, run: params[:run].presence }.compact
       )
     end
 

@@ -20,13 +20,14 @@ view, and exportable.
 
 ## Bundled tools
 
-- **Domain:** WHOIS lookup
-- **DNS:** DNS lookup, subdomain scan
-- **TLS / HTTP:** SSL/TLS inspection, HTTP &amp; security headers
-- **Email auth:** SPF, DKIM, DMARC, combined email-auth overview
-- **Network:** ping, traceroute, hosting diagnostic
+- **Domain:** Registration Lookup (RDAP/WHOIS)
+- **DNS:** DNS Lookup (quick + worldwide propagation), Historical DNS, Subdomain Scan
+- **Web:** SSL/TLS Inspection, Website Inspection (health + security headers + WordPress detection), Page Speed Report
+- **Email:** Email Authentication (SPF/DKIM/DMARC, full or scoped), Email Validity
+- **Hosting:** Hosting Diagnostic (full port sweep or quick TCP reachability)
+- **Diagnostics:** Blacklist Check, IP Intelligence (IPinfo), Bulk Domain Runner
 - **Database:** SQL Workbench &mdash; keyboard-driven ad-hoc SQL against any MySQL-protocol DB (incl. TiDB); read-only by default with a per-connection write toggle
-- **Misc:** blacklist check, bulk domain runner, ticket lookup
+- **Config:** Credentials
 
 The UI is modal (NORMAL / INSERT / CMD / SEARCH), with `:` for a
 cmdline, `/` for target search, `?` for a help overlay, and `j`/`k` /
