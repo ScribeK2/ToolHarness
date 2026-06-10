@@ -4,8 +4,8 @@ require "test_helper"
 # metadata, registry key, and (for tools with explicit input validation)
 # that invalid input is rejected cleanly without raising.
 class Tools::RegistrySweepTest < ActiveSupport::TestCase
-  # All real tools should be present. If you add a new tool, expect this list
-  # to grow — the count assertion below catches accidental registry drift.
+  # All real tools should be present. If you add a new tool, add it here too —
+  # the missing/extra diff in "every expected tool is registered" catches accidental registry drift.
   EXPECTED_TOOLS = %i[
     blacklist
     bulk_run
