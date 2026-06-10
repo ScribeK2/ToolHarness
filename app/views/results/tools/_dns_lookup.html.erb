@@ -1,0 +1,11 @@
+<%# Locals: tool_run.
+    Worldwide-depth runs carry a "resolvers" array — render the propagation
+    grid. Quick-depth runs render the generic sections. %>
+<% if (tool_run.result_data || {})["resolvers"].present? %>
+  <%= render "results/tools/dns_propagation", tool_run: tool_run %>
+<% else %>
+  <% presenter = ToolHarness::ResultPresenter.new(tool_run) %>
+  <% presenter.sections.each_with_index do |section, i| %>
+    <%= render "results/section", section: section, index: i %>
+  <% end %>
+<% end %>

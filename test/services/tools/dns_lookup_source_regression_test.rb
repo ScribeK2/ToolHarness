@@ -1,8 +1,8 @@
 require "test_helper"
 
-class DnsPropagationSourceRegressionTest < ActiveSupport::TestCase
+class DnsLookupSourceRegressionTest < ActiveSupport::TestCase
   FILES = %w[
-    app/services/tools/dns_propagation.rb
+    app/services/tools/dns_lookup.rb
     app/services/propagation_checker.rb
   ].freeze
 
