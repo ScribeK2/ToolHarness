@@ -54,8 +54,8 @@ class ToolRunsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Example.com", run.input["domain"]
   end
 
-  test "POST preserves path for http_inspect" do
-    post tool_run_create_path(:http_inspect),
+  test "POST preserves path for website_inspect" do
+    post tool_run_create_path(:website_inspect),
       params: { tool_run: { domain: "https://example.com/foo?x=1" } }
 
     run = ToolRun.order(created_at: :desc).first

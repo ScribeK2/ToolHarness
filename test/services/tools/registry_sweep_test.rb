@@ -15,13 +15,12 @@ class Tools::RegistrySweepTest < ActiveSupport::TestCase
     email_validity
     historical_dns
     hosting_diagnostic
-    http_inspect
     ipinfo
     page_speed
     sql_workbench
     ssl_inspect
     subdomain_scan
-    website_health
+    website_inspect
     whois_lookup
   ].freeze
 

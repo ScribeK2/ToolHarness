@@ -130,8 +130,8 @@ class ToolHarness::ToolTest < ActiveSupport::TestCase
     assert klass.preserve_path_in_input?
   end
 
-  test "Tools::HttpInspect opts into preserve_path_in_input?" do
-    assert Tools::HttpInspect.preserve_path_in_input?
+  test "Tools::WebsiteInspect opts into preserve_path_in_input?" do
+    assert Tools::WebsiteInspect.preserve_path_in_input?
   end
 
   test "result_partial defaults to nil" do

@@ -61,7 +61,7 @@ class Investigations::ReportGeneratorTest < ActiveSupport::TestCase
                                 verdict_status: "critical",
                                 findings: [{ "severity" => "critical", "code" => "wp_critical_error",
                                              "title" => "WordPress critical error", "message" => "boom",
-                                             "provenance" => ["website_health"], "recommendation" => "check logs" }])
+                                             "provenance" => ["website_inspect"], "recommendation" => "check logs" }])
     md = Investigations::ReportGenerator.new(inv).to_markdown
     assert_match(/Pterodactyl container internals/i, md)
     assert_match(/application\/PHP layer/i, md)
