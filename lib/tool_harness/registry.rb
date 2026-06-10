@@ -22,6 +22,17 @@ module ToolHarness
         tools[key.to_sym]
       end
 
+      # Result partials for retired tool keys — keeps old runs rendering with
+      # full fidelity after the tool class is deleted. Keys without an entry
+      # fall back to the generic ResultPresenter sections.
+      LEGACY_PARTIALS = {
+        "dns_propagation" => "results/tools/dns_propagation"
+      }.freeze
+
+      def legacy_partial(tool_key)
+        LEGACY_PARTIALS[tool_key.to_s]
+      end
+
       def categories
         tools.values.group_by(&:category)
       end
