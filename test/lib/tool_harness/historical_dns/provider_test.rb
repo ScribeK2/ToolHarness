@@ -36,9 +36,9 @@ class ToolHarness::HistoricalDns::ProviderTest < ActiveSupport::TestCase
     assert_equal :unavailable, assert_raises(ToolHarness::HistoricalDns::ProviderError) { p.send(:raise_for_status, 500, nil) }.category
   end
 
-  test ".all lists the v1 providers" do
+  test ".all lists every registered provider" do
     ids = ToolHarness::HistoricalDns::Provider.all.map(&:id)
-    assert_equal %w[crtsh virustotal whoisfreaks].sort, ids.sort
+    assert_equal %w[crtsh livedns mnemonic virustotal whoisfreaks].sort, ids.sort
   end
 
   test "timeouts default to 3/9 and crt.sh overrides read (it's known-slow)" do

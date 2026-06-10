@@ -5,9 +5,11 @@ module Tools
     def self.tool_name = "Historical DNS"
     def self.category  = :dns
     def self.description = "Shows how a domain's DNS records (A/AAAA/NS/MX/TXT) changed over time — " \
-      "to pinpoint when it moved hosting, nameservers, or mail. Aggregates crt.sh (free), " \
-      "VirusTotal (free key, id: virustotal), and WhoisFreaks (paid key, id: whoisfreaks — the only " \
-      "source with NS/MX history). Add keys in the Credentials tool."
+      "to pinpoint when it moved hosting, nameservers, or mail. Works with no API keys: " \
+      "mnemonic (free A/AAAA/CNAME history), a live DNS lookup (current NS/MX/SOA), and crt.sh " \
+      "(subdomain history). Optional keys add depth: VirusTotal (free key, id: virustotal — more " \
+      "A-record history) and WhoisFreaks (paid key, id: whoisfreaks — full NS/MX history). " \
+      "Add keys in the Credentials tool."
     def self.form_fields    = { domain: :text }
     def self.input_type     = :domain
     def self.cacheable?     = false              # self-managed conditional cache (below)
@@ -174,10 +176,11 @@ module Tools
       issues = []
       if KEY_PROVIDERS.all? { |id| providers.find { |p| p[:id] == id }&.dig(:status) == "no_key" }
         issues << { "severity" => "info", "code" => "providers_limited",
-          "title" => "Only free subdomain history is active",
-          "message" => "No API keys configured, so only crt.sh (subdomain history) ran.",
-          "recommendation" => "Add a WhoisFreaks key (id: whoisfreaks) for full A/NS/MX history, " \
-            "or a VirusTotal key (id: virustotal) for A-record history, in the Credentials tool." }
+          "title" => "Running on free sources only",
+          "message" => "No API keys configured. Free sources cover A/AAAA/CNAME history (mnemonic), " \
+            "the current NS/MX/SOA (live DNS), and subdomain history (crt.sh) — but NS/MX history needs a key.",
+          "recommendation" => "Add a WhoisFreaks key (id: whoisfreaks) for full NS/MX history, " \
+            "or a VirusTotal key (id: virustotal) for more A-record history, in the Credentials tool." }
       end
       providers.select { |p| p[:status] == "error" }.each do |p|
         issues << { "severity" => "warning", "code" => "provider_failed",
