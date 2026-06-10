@@ -6,10 +6,10 @@ module Tools
     def self.category  = :dns
     def self.description = "Shows how a domain's DNS records (A/AAAA/NS/MX/TXT) changed over time — " \
       "to pinpoint when it moved hosting, nameservers, or mail. Works with no API keys: " \
-      "mnemonic (free A/AAAA/CNAME history), a live DNS lookup (current NS/MX/SOA), and crt.sh " \
-      "(subdomain history). Optional keys add depth: VirusTotal (free key, id: virustotal — more " \
-      "A-record history) and WhoisFreaks (paid key, id: whoisfreaks — full NS/MX history). " \
-      "Add keys in the Credentials tool."
+      "mnemonic (free A/AAAA/CNAME history), a live DNS lookup (current NS/MX/SOA), and Certspotter " \
+      "(subdomain history from CT logs). A free VirusTotal key (id: virustotal) adds more A-record " \
+      "history — add it in the Credentials tool. (NS/MX history isn't available from any free " \
+      "source; the live lookup shows the current NS/MX.)"
     def self.form_fields    = { domain: :text }
     def self.input_type     = :domain
     def self.cacheable?     = false              # self-managed conditional cache (below)
@@ -17,7 +17,7 @@ module Tools
     def self.result_partial = "results/tools/historical_dns"
 
     CACHE_TTL        = 12.hours
-    KEY_PROVIDERS    = %w[whoisfreaks virustotal].freeze
+    KEY_PROVIDERS    = %w[virustotal].freeze
     COLLECT_DEADLINE = 14 # seconds — hard cap on the concurrent provider phase
 
     def execute(params)
@@ -35,9 +35,9 @@ module Tools
       agg    = ToolHarness::HistoricalDns::Aggregator.call(records)
       result = build_result(domain, agg, subdomains, providers)
 
-      # Don't cache a degraded result: an errored provider, or a rate-limited partial
-      # (so adding a paid key + re-running can fetch the full set).
-      clean = providers.none? { |p| %w[error partial].include?(p[:status]) }
+      # Don't cache a degraded result (an errored provider), so a transient failure
+      # (e.g. a Certspotter rate-limit) doesn't get pinned for the full TTL.
+      clean = providers.none? { |p| p[:status] == "error" }
       Rails.cache.write(cache_key, result, expires_in: CACHE_TTL) if clean && result.success?
       result
     end
@@ -105,23 +105,12 @@ module Tools
         records.concat(recs)
         subdomains.concat(subs)
         used_keys << klass.id if klass.requires_key?
-        if res[:partial]
-          providers << provider_row(klass, "partial", note: partial_note(klass, res[:partial]), count: recs.size + subs.size)
-        else
-          status = (recs.empty? && subs.empty?) ? "no_data" : "ok"
-          providers << provider_row(klass, status, count: recs.size + subs.size)
-        end
+        status = (recs.empty? && subs.empty?) ? "no_data" : "ok"
+        providers << provider_row(klass, status, count: recs.size + subs.size)
       end
 
       used_keys.each { |id| store.touch!(id) }
       [records, dedupe_subdomains(subdomains), providers]
-    end
-
-    def partial_note(klass, partial)
-      fetched = Array(partial[:fetched]).map { |t| t.to_s.upcase }
-      skipped = Array(partial[:skipped]).map { |t| t.to_s.upcase }
-      "Fetched #{fetched.join('/')} only — rate-limited after the first request " \
-        "(#{klass.display_name} free tier is ~1 req/min), so #{skipped.join('/')} were skipped."
     end
 
     def provider_row(klass, status, note: nil, count: 0)
@@ -148,7 +137,7 @@ module Tools
       }
       issues   = build_issues(providers)
       any_data = agg[:timeline].any? || subdomains.any?
-      any_ok   = providers.any? { |p| %w[ok no_data partial].include?(p[:status]) }
+      any_ok   = providers.any? { |p| %w[ok no_data].include?(p[:status]) }
 
       if any_data || any_ok
         ToolHarness::Result.new(success: true, tool: self.class.tool_name, data: data,
@@ -177,10 +166,10 @@ module Tools
       if KEY_PROVIDERS.all? { |id| providers.find { |p| p[:id] == id }&.dig(:status) == "no_key" }
         issues << { "severity" => "info", "code" => "providers_limited",
           "title" => "Running on free sources only",
-          "message" => "No API keys configured. Free sources cover A/AAAA/CNAME history (mnemonic), " \
-            "the current NS/MX/SOA (live DNS), and subdomain history (crt.sh) — but NS/MX history needs a key.",
-          "recommendation" => "Add a WhoisFreaks key (id: whoisfreaks) for full NS/MX history, " \
-            "or a VirusTotal key (id: virustotal) for more A-record history, in the Credentials tool." }
+          "message" => "No VirusTotal key configured. Free sources still cover A/AAAA/CNAME history " \
+            "(mnemonic), the current NS/MX/SOA (live DNS), and subdomain history (Certspotter).",
+          "recommendation" => "Add a free VirusTotal key (id: virustotal) for more A-record history " \
+            "in the Credentials tool." }
       end
       providers.select { |p| p[:status] == "error" }.each do |p|
         issues << { "severity" => "warning", "code" => "provider_failed",
@@ -188,19 +177,11 @@ module Tools
           "message" => p[:note].to_s,
           "recommendation" => "Showing data from the other sources." }
       end
-      providers.select { |p| p[:status] == "partial" }.each do |p|
-        issues << { "severity" => "warning", "code" => "provider_partial",
-          "title" => "#{p[:name]} returned partial history",
-          "message" => p[:note].to_s,
-          "recommendation" => "Add a paid #{p[:name]} plan for full multi-type history in one pass, " \
-            "or re-run for more types. (This result is not cached.)" }
-      end
       issues
     end
 
     def build_summary(domain, agg, providers)
-      sources = providers.select { |p| %w[ok partial].include?(p[:status]) }
-                         .map { |p| p[:status] == "partial" ? "#{p[:name]} (partial)" : p[:name] }
+      sources = providers.select { |p| p[:status] == "ok" }.map { |p| p[:name] }
       parts   = agg[:changes].group_by { |c| c[:type] }.map { |type, cs| "#{type.to_s.upcase} changed ~#{cs.last[:approx_date]}" }
       head    = parts.any? ? parts.join("; ") : "no record changes detected"
       "#{domain} — #{head}. Sources: #{sources.any? ? sources.join(', ') : 'none'}."

@@ -3,8 +3,8 @@ module ToolHarness
     # mnemonic PassiveDNS v3 (https://api.mnemonic.no/pdns/v3/<query>). Free, no API key,
     # no per-minute rate-limit pain for normal use — so this is the zero-config source of
     # real A/AAAA/CNAME *history* (first/last seen). Passive-DNS sensors don't observe
-    # NS/MX, so those types never appear here (use Whoisfreaks for NS/MX history, or
-    # Livedns for the current NS/MX snapshot).
+    # NS/MX, so those types never appear here — Livedns provides the current NS/MX snapshot
+    # (no free source has NS/MX *history*).
     class Mnemonic < Provider
       def self.id            = "mnemonic"
       def self.display_name  = "mnemonic"

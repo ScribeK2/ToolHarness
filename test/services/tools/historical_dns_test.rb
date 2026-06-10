@@ -33,32 +33,31 @@ class Tools::HistoricalDnsTest < ActiveSupport::TestCase
     end
   end
 
-  test "no keys: only crt.sh runs, success with subdomains + providers_limited info" do
-    crt = provider_class(id: "crtsh", requires_key: false,
+  test "no keys: free providers run, keyed providers skipped with a providers_limited info" do
+    cs = provider_class(id: "certspotter", requires_key: false,
             behavior: -> { { records: [], subdomains: [{ name: "mail.example.com", first_seen: Date.new(2023, 1, 1), last_seen: Date.new(2026, 5, 1) }] } })
-    wf  = provider_class(id: "whoisfreaks", requires_key: true, behavior: -> { raise "should not run" })
-    vt  = provider_class(id: "virustotal",  requires_key: true, behavior: -> { raise "should not run" })
+    vt = provider_class(id: "virustotal", requires_key: true, behavior: -> { raise "should not run" })
 
-    res = run_tool(providers: [crt, wf, vt], store_ids: [])
+    res = run_tool(providers: [cs, vt], store_ids: [])
     assert res.success?
     assert_equal 1, res.data[:subdomains].size
     assert(res.issues.any? { |i| i["code"] == "providers_limited" })
     statuses = res.data[:providers].to_h { |p| [p[:id], p[:status]] }
-    assert_equal "no_key", statuses["whoisfreaks"]
-    assert_equal "ok",     statuses["crtsh"]
+    assert_equal "no_key", statuses["virustotal"]
+    assert_equal "ok",     statuses["certspotter"]
   end
 
-  test "partial failure: one provider errors, others' data still returned with a warning" do
-    crt = provider_class(id: "crtsh", requires_key: false, behavior: -> { { records: [], subdomains: [] } })
-    wf  = provider_class(id: "whoisfreaks", requires_key: true,
-            behavior: -> { { records: [R.new(type: :ns, value: "ns1.cloudflare.com", first_seen: Date.new(2024, 3, 1), last_seen: Date.new(2026, 6, 1), sources: ["whoisfreaks"])], subdomains: [] } })
-    vt  = provider_class(id: "virustotal", requires_key: true,
-            behavior: -> { raise HD::ProviderError.new(:rate_limited, "VirusTotal rate limit reached (HTTP 429)") })
+  test "one provider errors: the others' data is still returned with a provider_failed warning" do
+    cs = provider_class(id: "certspotter", requires_key: false, behavior: -> { { records: [], subdomains: [] } })
+    vt = provider_class(id: "virustotal", requires_key: true,
+            behavior: -> { { records: [R.new(type: :a, value: "1.2.3.4", first_seen: Date.new(2024, 3, 1), last_seen: Date.new(2026, 6, 1), sources: ["virustotal"])], subdomains: [] } })
+    mn = provider_class(id: "mnemonic", requires_key: false,
+            behavior: -> { raise HD::ProviderError.new(:unavailable, "mnemonic boom") })
 
-    res = run_tool(providers: [crt, wf, vt], store_ids: %w[whoisfreaks virustotal])
+    res = run_tool(providers: [cs, vt, mn], store_ids: %w[virustotal])
     assert res.success?
-    assert_equal ["ns1.cloudflare.com"], res.data[:timeline]["ns"].map { |m| m[:value] }
-    assert(res.issues.any? { |i| i["code"] == "provider_failed" && i["message"].match?(/rate limit/i) })
+    assert_equal ["1.2.3.4"], res.data[:timeline]["a"].map { |m| m[:value] }
+    assert(res.issues.any? { |i| i["code"] == "provider_failed" && i["message"].match?(/mnemonic boom/i) })
   end
 
   test "all available providers fail: success false with aggregated error" do
@@ -85,20 +84,6 @@ class Tools::HistoricalDnsTest < ActiveSupport::TestCase
         end
       end
       assert_nil Rails.cache.read("toolharness:historical_dns:nope.com"), "degraded result must not be cached"
-    end
-  end
-
-  test "rate-limited partial: provider shows 'partial', warns, and is NOT cached" do
-    wf = provider_class(id: "whoisfreaks", requires_key: true,
-           behavior: -> { { records: [R.new(type: :ns, value: "ns1.x.com", first_seen: Date.new(2024, 3, 1), last_seen: Date.new(2026, 6, 1), sources: ["whoisfreaks"])],
-                            subdomains: [], partial: { reason: :rate_limited, fetched: %i[ns], skipped: %i[mx a aaaa txt] } } })
-    Rails.stub(:cache, ActiveSupport::Cache::MemoryStore.new) do
-      res = run_tool(domain: "partial.com", providers: [wf], store_ids: %w[whoisfreaks])
-      assert res.success?
-      wf_row = res.data[:providers].find { |p| p[:id] == "whoisfreaks" }
-      assert_equal "partial", wf_row[:status]
-      assert(res.issues.any? { |i| i["code"] == "provider_partial" })
-      assert_nil Rails.cache.read("toolharness:historical_dns:partial.com"), "partial result must not be cached"
     end
   end
 

@@ -6,8 +6,8 @@ module ToolHarness
     # AppImage rule). This is the only *free* source for NS/MX/SOA, which passive-DNS
     # providers never observe. It can't show history, so its records are dated "today"
     # (first_seen == last_seen); the Aggregator marks them current, anchoring the timeline's
-    # present so a customer's current nameservers/mail are always visible. Pair with
-    # Whoisfreaks (paid) when full NS/MX *history* is needed.
+    # present so a customer's current nameservers/mail are always visible. (No free source
+    # provides NS/MX *history* — this is the current state only.)
     class Livedns < Provider
       def self.id            = "livedns"
       def self.display_name  = "Live DNS"

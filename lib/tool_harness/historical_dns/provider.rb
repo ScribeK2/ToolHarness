@@ -30,7 +30,7 @@ module ToolHarness
       def self.record_types  = []
 
       # Explicit list — Zeitwerk autoloads each on reference. Add providers here.
-      def self.all = [Crtsh, Mnemonic, Livedns, Virustotal, Whoisfreaks]
+      def self.all = [Certspotter, Mnemonic, Livedns, Virustotal]
 
       def available?(store)
         return true unless self.class.requires_key?
