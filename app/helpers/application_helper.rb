@@ -2,38 +2,21 @@ module ApplicationHelper
   # Ticket-ready, copy-paste formatted summary of a tool run.
   # Multi-line, plain text — no markdown.
   def tool_run_ticket_text(tool_run)
-    lines = []
-    header = "[#{tool_run.tool_name}]"
-    header << " #{tool_run.input_summary}" if tool_run.input_summary.present?
-    lines << header
+    (ticket_header_lines(tool_run) + ["", ticket_footer_line(tool_run)]).join("\n")
+  end
 
-    lines << tool_run.summary if tool_run.summary.present?
+  # Comprehensive variant: ticket header + every result section as aligned
+  # plain text + ticket footer. Degrades to the plain ticket text for failed
+  # runs (header already carries FAILED) and for runs with no section data.
+  def tool_run_full_text(tool_run)
+    return tool_run_ticket_text(tool_run) if tool_run.status == "failed"
 
-    case tool_run.status
-    when "failed"
-      lines << ""
-      lines << "FAILED: #{tool_run.error}" if tool_run.error.present?
-    when "completed"
-      issues = tool_run.issues || []
-      if issues.any?
-        lines << ""
-        lines << "Issues (#{issues.size}):"
-        %w[critical warning info].each do |severity|
-          issues.select { |i| (i["severity"] || i[:severity]).to_s == severity }.each do |issue|
-            i = issue.with_indifferent_access
-            lines << "  - [#{severity.upcase}] #{i[:title]}#{": #{i[:message]}" if i[:message].present?}"
-          end
-        end
-      end
-    end
+    sections = ToolHarness::ResultPresenter.new(tool_run).sections
+                                           .reject { |s| s.title == "Issues" }
+    body = ToolHarness::SectionTextRenderer.new(sections).to_text
+    return tool_run_ticket_text(tool_run) if body.blank?
 
-    lines << ""
-    footer = "Run ##{tool_run.id}"
-    footer << " · #{tool_run.execution_time.round(3)}s" if tool_run.execution_time
-    footer << " · #{tool_run.created_at.utc.strftime('%Y-%m-%d %H:%M UTC')}"
-    lines << footer
-
-    lines.join("\n")
+    (ticket_header_lines(tool_run) + ["", body, "", ticket_footer_line(tool_run)]).join("\n")
   end
 
   # Tools the current run's target can be handed off to. Same input_type,
@@ -71,5 +54,42 @@ module ApplicationHelper
       err = store.last_load_error
       errors << [label, err.message] if err
     end
+  end
+
+  private
+
+  def ticket_header_lines(tool_run)
+    lines = []
+    header = "[#{tool_run.tool_name}]"
+    header << " #{tool_run.input_summary}" if tool_run.input_summary.present?
+    lines << header
+
+    lines << tool_run.summary if tool_run.summary.present?
+
+    case tool_run.status
+    when "failed"
+      lines << ""
+      lines << "FAILED: #{tool_run.error}" if tool_run.error.present?
+    when "completed"
+      issues = tool_run.issues || []
+      if issues.any?
+        lines << ""
+        lines << "Issues (#{issues.size}):"
+        %w[critical warning info].each do |severity|
+          issues.select { |i| (i["severity"] || i[:severity]).to_s == severity }.each do |issue|
+            i = issue.with_indifferent_access
+            lines << "  - [#{severity.upcase}] #{i[:title]}#{": #{i[:message]}" if i[:message].present?}"
+          end
+        end
+      end
+    end
+    lines
+  end
+
+  def ticket_footer_line(tool_run)
+    footer = "Run ##{tool_run.id}"
+    footer << " · #{tool_run.execution_time.round(3)}s" if tool_run.execution_time
+    footer << " · #{tool_run.created_at.utc.strftime('%Y-%m-%d %H:%M UTC')}"
+    footer
   end
 end
