@@ -35,14 +35,14 @@ module ToolHarness
 
       width = kvs.keys.map { |k| k.to_s.length }.max
       kvs.map { |k, v| render_kv(k.to_s, v.to_s, width) }.join("\n")
-end
+    end
 
     def render_kv(key, value, width)
       prefix = key.empty? ? "" : "#{key}:".ljust(width + 3)
       indent = " " * prefix.length
       first, *rest = value.split("\n", -1)
       ([prefix + first.to_s] + rest.map { |l| indent + l }).map(&:rstrip).join("\n")
-end
+    end
 
     def render_table(table)
       widths = table.columns.to_h do |c|
@@ -58,7 +58,7 @@ end
         cell = yield(c)
         c.numeric ? cell.rjust(widths[c.key]) : cell.ljust(widths[c.key])
       end.join("  ").rstrip
-end
+    end
 
     def render_issues(issues)
       issues.map do |issue|
@@ -67,6 +67,6 @@ end
         line << ": #{i["message"]}" if i["message"].present?
         line
       end.join("\n")
-end
+    end
   end
 end
