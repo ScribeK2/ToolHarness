@@ -92,11 +92,13 @@ export default class extends Controller {
 
     // Multi-key sequences
     if (this.pending) {
+      if (k === "Shift") return // modifier keydown — keep waiting for the real key
       const seq = this.pending + k
       this.pending = ""
       event.preventDefault()
       if (seq === "yy") return this.dispatchYank("summary")
       if (seq === "yr") return this.dispatchYank("raw")
+      if (seq === "yF") return this.dispatchYank("full")
       if (seq.startsWith("y") && seq.length === 2) return this.dispatchYank(seq[1])
       if (seq === "gg") return document.dispatchEvent(new Event("rail:top"))
       if (seq === "gh") return Turbo.visit("/workbench?view=history")

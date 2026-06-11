@@ -1,7 +1,8 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Replaces clipboard_controller. Handles four flavors of copy:
+// Replaces clipboard_controller. Handles five flavors of copy:
 //   y s → summary  (data-copy-text-value)
+//   y F → full     (window.toolRunFullText, set per-run)
 //   y r → raw      (window.toolRunRawJson, set per-run)
 //   y <letter> → a specific result section (matches [data-section="<letter>"])
 //   click → copyValue: a single value (data-copy-value), e.g. a kv field or table cell
@@ -24,6 +25,8 @@ export default class extends Controller {
       text = this.getSummary()
     } else if (target === "raw" || target === "r") {
       text = this.getRaw()
+    } else if (target === "full" || target === "F") {
+      text = this.getFull()
     } else {
       text = this.getSection(target)
     }
@@ -31,6 +34,7 @@ export default class extends Controller {
   }
 
   copySummary() { this.write(this.textValue) }
+  copyFull() { this.write(this.getFull()) }
   copySection() { this.write(this.getSection(this.sectionValue)) }
 
   copyValue(e) {
@@ -46,6 +50,10 @@ export default class extends Controller {
 
   getRaw() {
     return window.toolRunRawJson || ""
+  }
+
+  getFull() {
+    return window.toolRunFullText || ""
   }
 
   getSection(letter) {
