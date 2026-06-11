@@ -28,20 +28,21 @@ module ToolHarness
     end
 
     def render_kvs(kvs)
+      # matches ResultPresenter#array_to_kvs index keys ("[0]", "[1]", …)
       if kvs.keys.all? { |k| k.to_s.match?(/\A\[\d+\]\z/) }
         return kvs.values.map(&:to_s).join("\n")
       end
 
       width = kvs.keys.map { |k| k.to_s.length }.max
       kvs.map { |k, v| render_kv(k.to_s, v.to_s, width) }.join("\n")
-    end
+end
 
     def render_kv(key, value, width)
       prefix = key.empty? ? "" : "#{key}:".ljust(width + 3)
       indent = " " * prefix.length
       first, *rest = value.split("\n", -1)
-      ([prefix + first.to_s] + rest.map { |l| indent + l }).join("\n")
-    end
+      ([prefix + first.to_s] + rest.map { |l| indent + l }).map(&:rstrip).join("\n")
+end
 
     def render_table(table)
       widths = table.columns.to_h do |c|
@@ -53,19 +54,19 @@ module ToolHarness
     end
 
     def row_line(columns, widths)
-      columns.map { |c|
+      columns.map do |c|
         cell = yield(c)
         c.numeric ? cell.rjust(widths[c.key]) : cell.ljust(widths[c.key])
-      }.join("  ").rstrip
-    end
+      end.join("  ").rstrip
+end
 
     def render_issues(issues)
       issues.map do |issue|
         i = issue.transform_keys(&:to_s)
-        line = "- [#{(i['severity'] || 'info').upcase}] #{i['title']}"
-        line << ": #{i['message']}" if i["message"].present?
+        line = "- [#{(i["severity"] || "info").upcase}] #{i["title"]}"
+        line << ": #{i["message"]}" if i["message"].present?
         line
       end.join("\n")
-    end
+end
   end
 end

@@ -80,4 +80,16 @@ class ToolHarness::SectionTextRendererTest < ActiveSupport::TestCase
     )
     assert_equal "## One\na:  1\n\n## Two\nb:  2", text
   end
+
+  test "empty-key kv renders without prefix and no trailing spaces" do
+    text = render(Section.new(title: "Issues", kvs: { "" => "no issues found." }))
+    assert_equal "## Issues\nno issues found.", text
+  end
+
+  test "symbol-keyed issues render as string-keyed issues" do
+    text = render(Section.new(title: "Issues", issues: [
+      { severity: "warning", title: "Heads up", message: "check" }
+    ]))
+    assert_equal "## Issues\n- [WARNING] Heads up: check", text
+  end
 end
