@@ -52,4 +52,10 @@ class CopyFullViewTest < ActionDispatch::IntegrationTest
     assert_equal 1, template.size
     assert_includes template.first.text, "FAILED: boom"
   end
+
+  test "the in-tool handoff dropdown carries the dropdown controller" do
+    run = completed_run
+    get workbench_path(tool: "dns_lookup", target: "example.com", run: run.id)
+    assert_select "details[data-controller~=dropdown]"
+  end
 end

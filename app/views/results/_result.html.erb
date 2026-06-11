@@ -29,7 +29,7 @@
       <div class="flex items-center gap-3">
         <% siblings = sibling_tools_for(tool_run) %>
         <% if siblings.any? %>
-          <details class="relative">
+          <details class="relative" data-controller="dropdown">
             <summary class="text-mute hover:text-cyan text-[10px] cursor-pointer list-none">[→] in tool ▾</summary>
             <div class="absolute right-0 z-10 mt-1 bg-elevated border border-line py-1 min-w-[160px]">
               <% siblings.each do |key, name| %>
