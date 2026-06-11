@@ -12,7 +12,7 @@ module ApplicationHelper
     return tool_run_ticket_text(tool_run) if tool_run.status == "failed"
 
     sections = ToolHarness::ResultPresenter.new(tool_run).sections
-                                           .reject { |s| s.title == "Issues" }
+                                           .reject { |s| s.title == ToolHarness::ResultPresenter::ISSUES_TITLE }
     body = ToolHarness::SectionTextRenderer.new(sections).to_text
     return tool_run_ticket_text(tool_run) if body.blank?
 

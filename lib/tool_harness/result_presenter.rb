@@ -9,6 +9,8 @@ module ToolHarness
     Table  = Struct.new(:columns, :rows, keyword_init: true)
     Column = Struct.new(:key, :label, :numeric, keyword_init: true)
 
+    ISSUES_TITLE = "Issues".freeze
+
     def initialize(tool_run)
       @run = tool_run
     end
@@ -53,9 +55,9 @@ module ToolHarness
     def issues_section
       issues = (@run.issues || []).map { |i| i.is_a?(Hash) ? i : i.to_h }
       if issues.empty?
-        Section.new(title: "Issues", kvs: { "" => "no issues found." })
+        Section.new(title: ISSUES_TITLE, kvs: { "" => "no issues found." })
       else
-        Section.new(title: "Issues", issues: issues)
+        Section.new(title: ISSUES_TITLE, issues: issues)
       end
     end
 
