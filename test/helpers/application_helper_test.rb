@@ -26,8 +26,16 @@ class ApplicationHelperTest < ActionView::TestCase
   test "ticket text format is unchanged (regression)" do
     run = make_run(summary: "all good",
                    issues: [{ "severity" => "warning", "title" => "Heads up", "message" => "check this" }])
-    text = tool_run_ticket_text(run)
-    assert_match(/\[Test Tool\]\nall good\n\nIssues \(1\):\n  - \[WARNING\] Heads up: check this\n\nRun #\d+ · [\d.]+s · \d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC/, text)
+    expected = <<~TEXT.strip
+      [Test Tool]
+      all good
+
+      Issues (1):
+        - [WARNING] Heads up: check this
+
+      Run ##{run.id} · #{run.execution_time.round(3)}s · #{run.created_at.utc.strftime('%Y-%m-%d %H:%M UTC')}
+    TEXT
+    assert_equal expected, tool_run_ticket_text(run)
   end
 
   test "full text inserts rendered sections between ticket header and footer" do
