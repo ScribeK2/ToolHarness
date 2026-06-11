@@ -3,7 +3,7 @@
   <script type="application/json" id="raw_<%= dom_id(tool_run) %>"><%= JSON.generate(tool_run.result_data).html_safe %></script>
   <script>window.toolRunRawJson = document.getElementById("raw_<%= dom_id(tool_run) %>").textContent;</script>
 <% end %>
-<% unless tool_run.status.in?(%w[pending processing]) %>
+<% if tool_run.status.in?(ToolRun::TERMINAL_STATUSES) %>
   <template id="full_<%= dom_id(tool_run) %>"><%= tool_run_full_text(tool_run) %></template>
   <script>window.toolRunFullText = document.getElementById("full_<%= dom_id(tool_run) %>").content.textContent;</script>
 <% end %>

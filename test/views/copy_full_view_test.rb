@@ -39,4 +39,17 @@ class CopyFullViewTest < ActionDispatch::IntegrationTest
     get workbench_path(tool: "dns_lookup", target: "example.com", run: run.id)
     assert_select "template[id^=full_]", false
   end
+
+  test "failed runs embed a full-text template that degrades to the ticket text" do
+    run = ToolRun.create_pending!(
+      tool_class: ToolHarness::Registry.find_tool(:dns_lookup),
+      params: { domain: "example.com" }
+    )
+    run.update!(status: "failed", success: false, error: "boom")
+    get workbench_path(tool: "dns_lookup", target: "example.com", run: run.id)
+    assert_response :success
+    template = css_select("template#full_tool_run_#{run.id}")
+    assert_equal 1, template.size
+    assert_includes template.first.text, "FAILED: boom"
+  end
 end
