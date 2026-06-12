@@ -50,9 +50,9 @@ export default class extends Controller {
   refreshOutline() {
     this.itemTargets.forEach((el, i) => {
       if (i === this.index) {
-        el.classList.add("outline", "outline-1", "outline-cyan")
+        el.classList.add("outline", "outline-1", "outline-accent-2")
       } else {
-        el.classList.remove("outline", "outline-1", "outline-cyan")
+        el.classList.remove("outline", "outline-1", "outline-accent-2")
       }
     })
   }

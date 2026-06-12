@@ -280,13 +280,13 @@ export default class extends Controller {
 
   repaintActive(rows) {
     rows.forEach((r) => r.classList.remove("bg-elevated"))
-    rows.forEach((r) => r.querySelectorAll("[data-cell]").forEach((c) => c.classList.remove("outline", "outline-1", "outline-cyan")))
+    rows.forEach((r) => r.querySelectorAll("[data-cell]").forEach((c) => c.classList.remove("outline", "outline-1", "outline-accent-2")))
     const row = rows[this.activeRowValue]
     if (!row) return
     row.classList.add("bg-elevated")
     const cells = row.querySelectorAll("[data-cell]")
     const cell = cells[this.activeColValue]
-    if (cell) cell.classList.add("outline", "outline-1", "outline-cyan")
+    if (cell) cell.classList.add("outline", "outline-1", "outline-accent-2")
     row.scrollIntoView({ block: "nearest" })
   }
 
