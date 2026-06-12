@@ -108,6 +108,7 @@
 
   input::placeholder { color: var(--color-mute); }
 
+  /* contract: every theme's --color-accent-2 must contrast with its --color-bg (selection + focus) */
   ::selection {
     background-color: var(--color-accent-2);
     color: var(--color-bg);
@@ -115,7 +116,9 @@
 
   html {
     scrollbar-color: var(--color-mute) var(--color-sunken); /* Firefox */
+    scrollbar-width: thin;
   }
+  /* Safari only — Chromium/Firefox use scrollbar-color/width above */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
