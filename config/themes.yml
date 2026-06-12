@@ -11,3 +11,4 @@
 - { key: everforest-dark,        label: "Everforest Dark",       scheme: dark }
 - { key: everforest-light,       label: "Everforest Light",      scheme: light }
 - { key: nord,                   label: "Nord",                  scheme: dark }
+- { key: dracula,                label: "Dracula",               scheme: dark }

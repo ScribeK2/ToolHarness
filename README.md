@@ -35,15 +35,16 @@ cmdline, `/` for target search, `?` for a help overlay, and `j`/`k` /
 
 ## Themes
 
-ToolHarness ships 11 runtime-switchable themes (6 dark, 5 light): Tokyo Night
+ToolHarness ships 12 runtime-switchable themes (7 dark, 5 light): Tokyo Night
 Storm (default) & Day, Catppuccin Mocha & Latte, Kanagawa Wave & Lotus, Gruvbox
-Material Dark & Light, Everforest Dark & Light, and Nord. Switch with the
+Material Dark & Light, Everforest Dark & Light, Nord, and Dracula. Switch with the
 `:theme` cmdline verb or the `◆` pill in the status bar — the picker live-previews
 with `j`/`k` and persists per browser.
 
 Each theme is a `[data-theme]` block of `--color-*` CSS variables, including two
 identity accents (`--color-accent`, `--color-accent-2`) that give each family its
-own character — Gruvbox is orange, Everforest green, Kanagawa gold, Nord frost.
+own character — Gruvbox is orange, Everforest green, Kanagawa gold, Nord frost,
+Dracula purple & pink.
 
 To add a theme:
 

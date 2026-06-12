@@ -1,0 +1,20 @@
+[data-theme="dracula"] {
+  color-scheme: dark;
+  --color-bg:       #282a36;
+  --color-surface:  #343746;
+  --color-elevated: #44475a;
+  --color-sunken:   #21222c;
+  --color-line:     #343746;
+  --color-fg:       #f8f8f2;
+  --color-fg-dim:   #d8d8d2;
+  --color-mute:     #6272a4;
+  --color-blue:     #6272a4;
+  --color-cyan:     #8be9fd;
+  --color-green:    #50fa7b;
+  --color-purple:   #bd93f9;
+  --color-orange:   #ffb86c;
+  --color-red:      #ff5555;
+  --color-yellow:   #f1fa8c;
+  --color-accent:   var(--color-purple);
+  --color-accent-2: #ff79c6; /* dracula pink — signature secondary, not in the 7-token palette */
+}
