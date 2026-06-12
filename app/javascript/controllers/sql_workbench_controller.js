@@ -41,11 +41,11 @@ export default class extends Controller {
 
   _renderModePill(mode) {
     if (!this.hasStatusTarget) return
-    const colors = ["text-mauve", "text-green", "text-cyan"]
+    const colors = ["text-purple", "text-green", "text-cyan"]
     colors.forEach(c => this.statusTarget.classList.remove(c))
     if (mode === "INSERT")       { this.statusTarget.classList.add("text-green");  this.statusTarget.textContent = "-- INSERT --" }
     else if (mode === "COMMAND") { this.statusTarget.classList.add("text-cyan");   this.statusTarget.textContent = "-- COMMAND --" }
-    else                         { this.statusTarget.classList.add("text-mauve");  this.statusTarget.textContent = "-- NORMAL --" }
+    else                         { this.statusTarget.classList.add("text-purple"); this.statusTarget.textContent = "-- NORMAL --" }
     this.statusTarget.classList.add("font-bold")
   }
 

@@ -42,7 +42,7 @@
     <div class="text-mute mt-1">hint: <%= hint %></div>
   <% end %>
   <% if recover_keys.any? %>
-    <div class="text-cyan mt-2 text-[10px]">
+    <div class="text-accent-2 mt-2 text-[10px]">
       <%= recover_keys.map { |k| "press '#{k[:key]}' #{k[:label]}" }.join(" · ") %>
     </div>
   <% end %>

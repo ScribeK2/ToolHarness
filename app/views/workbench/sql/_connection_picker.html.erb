@@ -6,7 +6,7 @@
      role="dialog">
   <div class="bg-sunken border border-mute max-w-md w-full p-4 text-xs font-mono">
     <% if local_assigns[:state] == "form" %>
-      <h4 class="text-purple uppercase tracking-[0.18em] text-[10px] font-bold mb-2"><span aria-hidden="true">// </span>new connection</h4>
+      <h4 class="text-accent uppercase tracking-[0.18em] text-[10px] font-bold mb-2"><span aria-hidden="true">// </span>new connection</h4>
       <%= form_with url: sql_profiles_path, method: :post, data: { turbo: true } do |f| %>
         <% %w[name host port user password default_database].each do |field| %>
           <div class="grid grid-cols-[110px_1fr] gap-2 mb-1 items-center">
@@ -39,7 +39,7 @@
         </div>
       <% end %>
     <% else %>
-      <h4 class="text-purple uppercase tracking-[0.18em] text-[10px] font-bold mb-2"><span aria-hidden="true">// </span>connect</h4>
+      <h4 class="text-accent uppercase tracking-[0.18em] text-[10px] font-bold mb-2"><span aria-hidden="true">// </span>connect</h4>
       <% if local_assigns[:error].present? %>
         <div class="text-red mb-2"><%= local_assigns[:error] %></div>
       <% end %>
@@ -51,7 +51,7 @@
                 data: { turbo: true, sql_picker_target: "row" },
                 form_class: "block",
                 class: "w-full text-left grid grid-cols-[14px_1fr_auto] gap-2 px-2 py-1 hover:bg-elevated #{'bg-elevated' if i == 0}" do %>
-            <span class="text-purple"><%= i == 0 ? "▸" : " " %></span>
+            <span class="text-accent"><%= i == 0 ? "▸" : " " %></span>
             <span>
               <span class="text-fg"><%= p[:name] %></span>
               <span class="text-mute text-[10px]">· <%= p[:host] %>:<%= p[:port] %> / <%= p[:default_database] %></span>
@@ -60,7 +60,7 @@
           <% end %>
         <% end %>
       <% end %>
-      <div class="text-cyan border-t border-line/50 mt-2 pt-2">+ new connection (n)</div>
+      <div class="text-accent-2 border-t border-line/50 mt-2 pt-2">+ new connection (n)</div>
       <div class="text-mute text-[10px] mt-2 leading-relaxed">
         ⏎ connect · n new · e edit · dd delete · ESC close<br>
         :c host=10.x port=4000 user=foo — ad-hoc connect, not saved

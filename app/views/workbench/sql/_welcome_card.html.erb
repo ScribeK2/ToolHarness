@@ -3,11 +3,11 @@
 <%# Dismissal is purely client-side — controlled by sql_welcome_controller. %>
 <% if local_assigns[:auto_orient] %>
   <div id="sql_welcome_card"
-       class="absolute top-0 left-0 right-0 m-3 bg-sunken border border-cyan p-3 text-xs font-mono z-10"
+       class="absolute top-0 left-0 right-0 m-3 bg-sunken border border-accent-2 p-3 text-xs font-mono z-10"
        data-controller="sql-welcome"
        role="dialog"
        aria-modal="false">
-    <div class="text-cyan font-bold mb-2">
+    <div class="text-accent-2 font-bold mb-2">
       <span aria-hidden="true">▸ </span>welcome to <%= local_assigns[:profile_name] || "this connection" %>
     </div>
     <div class="text-mute mb-2">
