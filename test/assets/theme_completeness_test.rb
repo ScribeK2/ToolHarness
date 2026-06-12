@@ -9,6 +9,7 @@ class ThemeCompletenessTest < ActiveSupport::TestCase
     color-bg color-surface color-elevated color-sunken color-line
     color-fg color-fg-dim color-mute
     color-blue color-cyan color-green color-purple color-orange color-red color-yellow
+    color-accent color-accent-2
   ].freeze
 
   THEMES_DIR = Rails.root.join("app", "assets", "tailwind", "themes")

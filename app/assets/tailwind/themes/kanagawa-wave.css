@@ -15,4 +15,6 @@
   --color-orange:   #ffa066;
   --color-red:      #e82424;
   --color-yellow:   #e6c384;
+  --color-accent:   var(--color-yellow);
+  --color-accent-2: var(--color-blue);
 }

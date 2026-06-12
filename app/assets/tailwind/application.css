@@ -48,6 +48,10 @@
   --color-info:     var(--color-cyan);
   --color-success:  var(--color-green);
 
+  /* Identity accents — each theme overrides these with its own hues */
+  --color-accent:   var(--color-blue);
+  --color-accent-2: var(--color-cyan);
+
   /* Typography */
   --font-sans: 'Inter', system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: 'IBM Plex Mono', 'JetBrains Mono', ui-monospace, "SF Mono", Menlo, monospace;
