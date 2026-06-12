@@ -77,6 +77,8 @@ export default class extends Controller {
       const btn = row.querySelector("button")
       if (!btn) return
       btn.classList.toggle("bg-elevated", idx === this.activeValue)
+      const caret = row.querySelector("[data-caret]")
+      if (caret) caret.textContent = idx === this.activeValue ? "▸" : " "
     })
   }
 }

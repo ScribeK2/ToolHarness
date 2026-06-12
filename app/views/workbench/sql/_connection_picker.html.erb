@@ -51,7 +51,7 @@
                 data: { turbo: true, sql_picker_target: "row" },
                 form_class: "block",
                 class: "w-full text-left grid grid-cols-[14px_1fr_auto] gap-2 px-2 py-1 hover:bg-elevated #{'bg-elevated' if i == 0}" do %>
-            <span class="text-accent"><%= i == 0 ? "▸" : " " %></span>
+            <span class="text-accent" data-caret><%= i == 0 ? "▸" : " " %></span>
             <span>
               <span class="text-fg"><%= p[:name] %></span>
               <span class="text-mute text-[10px]">· <%= p[:host] %>:<%= p[:port] %> / <%= p[:default_database] %></span>
