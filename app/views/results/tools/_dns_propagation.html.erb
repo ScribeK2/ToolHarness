@@ -33,7 +33,7 @@
     case status.to_s
     when "ok"
       same = consensus && Array(row["values"] || row[:values]).sort == Array(consensus["value"] || consensus[:value]).sort
-      same ? ["✓", "text-cyan"] : ["⚠", "text-amber"]
+      same ? ["✓", "text-cyan"] : ["⚠", "text-yellow"]
     when "nxdomain", "servfail", "refused", "timeout", "error"
       ["✗", "text-red"]
     else
