@@ -100,17 +100,33 @@
   }
 
   input:focus, textarea:focus, select:focus {
-    outline: 1px solid var(--color-cyan);
+    outline: 1px solid var(--color-accent-2);
     outline-offset: 1px;
-    border-color: var(--color-cyan);
+    border-color: var(--color-accent-2);
     box-shadow: none;
   }
 
   input::placeholder { color: var(--color-mute); }
 
   ::selection {
-    background-color: var(--color-cyan);
+    background-color: var(--color-accent-2);
     color: var(--color-bg);
+  }
+
+  html {
+    scrollbar-color: var(--color-mute) var(--color-sunken); /* Firefox */
+  }
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    background: var(--color-sunken);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-mute);
+    border: 1px solid var(--color-line);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-fg-dim);
   }
 }
 
@@ -126,10 +142,10 @@
     font-size: 0.6875rem;
   }
   .btn-primary {
-    background-color: var(--color-blue);
+    background-color: var(--color-accent);
     color: var(--color-bg);
   }
-  .btn-primary:hover { border-top-color: var(--color-cyan); }
+  .btn-primary:hover { border-top-color: var(--color-accent-2); }
   .btn-ghost {
     background-color: transparent;
     color: var(--color-fg-dim);
@@ -137,14 +153,14 @@
   }
   .btn-ghost:hover {
     color: var(--color-fg);
-    border-color: var(--color-cyan);
+    border-color: var(--color-accent-2);
   }
   .btn-danger {
     background-color: transparent;
     color: var(--color-red);
     border-color: var(--color-red);
   }
-  .btn-danger:hover { border-color: var(--color-cyan); }
+  .btn-danger:hover { border-color: var(--color-accent-2); }
 
   /* Mono labels (THE workhorse style) */
   .mono-label {
@@ -171,7 +187,7 @@
 
   .spinner {
     @apply inline-block w-3 h-3 border-2 border-transparent;
-    border-top-color: var(--color-cyan);
+    border-top-color: var(--color-accent-2);
     animation: spin 0.7s linear infinite;
   }
 }

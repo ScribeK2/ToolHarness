@@ -15,6 +15,6 @@
   --color-orange:   #cc6d00;
   --color-red:      #c84053;
   --color-yellow:   #77713f;
-  --color-accent:   var(--color-orange);
+  --color-accent:   var(--color-orange); /* wave uses yellow; lotus yellow #77713f is too muddy for chrome */
   --color-accent-2: var(--color-blue);
 }
