@@ -4,12 +4,12 @@
     <div>
       <%= f.label :tool_key, "Tool to run on each domain", class: "mono-label block mb-1" %>
       <%= f.select :tool_key, Tools::BulkRun.selectable_tools, {},
-            class: "w-full bg-bg border border-line px-2 py-[3px] text-[11px] text-fg focus:border-purple outline-none" %>
+            class: "w-full bg-bg border border-line px-2 py-[3px] text-[11px] text-fg focus:border-accent-2 outline-none" %>
     </div>
     <div>
       <%= f.label :domains, "Domains (one per line, comma, or whitespace separated — max 50)", class: "mono-label block mb-1" %>
       <%= f.text_area :domains, rows: 8, placeholder: "example.com\nanother.com\nthird.org",
-            class: "w-full bg-bg border border-line px-2 py-2 text-[11px] text-fg font-mono placeholder:text-mute focus:border-purple outline-none" %>
+            class: "w-full bg-bg border border-line px-2 py-2 text-[11px] text-fg font-mono placeholder:text-mute focus:border-accent-2 outline-none" %>
     </div>
     <%= f.submit "Run bulk", class: "btn btn-primary cursor-pointer" %>
   <% end %>

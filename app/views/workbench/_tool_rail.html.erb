@@ -13,9 +13,9 @@
     <%= f.select :track,
           Investigations::Track.all.map { |t| [t.label, t.key] },
           { selected: "orientation" },
-          class: "w-full bg-bg border border-line px-2 py-[2px] text-[11px] text-fg focus:border-purple outline-none" %>
+          class: "w-full bg-bg border border-line px-2 py-[2px] text-[11px] text-fg focus:border-accent-2 outline-none" %>
     <%= f.text_field :domain, placeholder: "domain → investigate",
-          class: "w-full bg-bg border border-line px-2 py-[2px] text-[11px] text-fg placeholder:text-mute focus:border-purple outline-none" %>
+          class: "w-full bg-bg border border-line px-2 py-[2px] text-[11px] text-fg placeholder:text-mute focus:border-accent-2 outline-none" %>
   <% end %>
   <% (category_order + unknown).each do |cat| %>
     <% tools = by_cat[cat] %>
@@ -25,9 +25,9 @@
       <% key = klass.name.demodulize.underscore %>
       <% active = @view != "history" && key == @tool_key.to_s %>
       <%= link_to workbench_path(tool: key, target: @target),
-                  class: "rail-item flex items-center gap-2 px-3 py-[3px] text-[11.5px] #{active ? 'bg-elevated text-fg border-l-2 border-purple pl-[10px]' : 'text-fg-dim hover:bg-elevated'}",
+                  class: "rail-item flex items-center gap-2 px-3 py-[3px] text-[11.5px] #{active ? 'bg-elevated text-fg border-l-2 border-accent pl-[10px]' : 'text-fg-dim hover:bg-elevated'}",
                   data: { active: active, rail_target: "item", tool_key: key } do %>
-        <span class="w-3 inline-block text-purple" aria-hidden="true"><%= "▸" if active %></span>
+        <span class="w-3 inline-block text-accent" aria-hidden="true"><%= "▸" if active %></span>
         <span><%= klass.tool_name.downcase %></span>
       <% end %>
     <% end %>

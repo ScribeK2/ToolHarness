@@ -9,7 +9,7 @@
                       end %>
     <% active = selected && run.id == selected.id %>
     <%= link_to investigation_path(investigation, step: run.id),
-                class: "flex items-center gap-2 px-3 py-[3px] text-[11.5px] #{active ? 'bg-elevated text-fg border-l-2 border-purple pl-[10px]' : 'text-fg-dim hover:bg-elevated'}",
+                class: "flex items-center gap-2 px-3 py-[3px] text-[11.5px] #{active ? 'bg-elevated text-fg border-l-2 border-accent pl-[10px]' : 'text-fg-dim hover:bg-elevated'}",
                 data: { investigation_target: "row", step_url: investigation_path(investigation, step: run.id), selected: active.to_s } do %>
       <span class="<%= color %>" aria-hidden="true"><%= glyph %></span>
       <%= content_tag :span, run.tool_name.downcase,

@@ -66,7 +66,7 @@
 <div class="py-2 border-t border-line" data-section="a">
   <div class="flex items-center justify-between mb-1">
     <h3 class="text-[11px] tracking-[0.18em] uppercase text-fg font-bold"><span aria-hidden="true">▸ </span>Resolvers (<%= total %>)</h3>
-    <button type="button" class="text-mute hover:text-cyan text-[10px]"
+    <button type="button" class="text-mute hover:text-accent-2 text-[10px]"
             data-controller="copy" data-action="click->copy#copySection"
             data-copy-section-value="a">[y a]</button>
   </div>
@@ -93,11 +93,11 @@
            ms       = row["latency_ms"] || row[:latency_ms] %>
         <tr>
           <td class="pr-2 <%= cls %>" data-sort-cell="status" data-sort-value="<%= status %>"><%= icon %></td>
-          <td class="pr-2 cursor-pointer hover:text-cyan" data-sort-cell="ip"
+          <td class="pr-2 cursor-pointer hover:text-accent-2" data-sort-cell="ip"
               data-controller="copy" data-action="click->copy#copyValue"
               data-copy-value="<%= ip %>" title="click to copy"><%= ip %></td>
           <td class="pr-2" data-sort-cell="operator"><%= operator %><% if region && region != "Global anycast" %> <span class="text-mute">(<%= region.split.first %>)</span><% end %></td>
-          <td class="pr-2 cursor-pointer hover:text-cyan"
+          <td class="pr-2 cursor-pointer hover:text-accent-2"
               data-controller="copy" data-action="click->copy#copyValue"
               data-copy-value="<%= Array(row["values"] || row[:values]).join(", ") %>"
               title="click to copy"><%= format_value.call(row) %></td>
@@ -115,7 +115,7 @@
   <div class="py-2 border-t border-line" data-section="b">
     <div class="flex items-center justify-between mb-1">
       <h3 class="text-[11px] tracking-[0.18em] uppercase text-fg font-bold"><span aria-hidden="true">▸ </span>Issues</h3>
-      <button type="button" class="text-mute hover:text-cyan text-[10px]"
+      <button type="button" class="text-mute hover:text-accent-2 text-[10px]"
               data-controller="copy" data-action="click->copy#copySection"
               data-copy-section-value="b">[y b]</button>
     </div>

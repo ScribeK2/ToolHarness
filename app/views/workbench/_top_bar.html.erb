@@ -8,7 +8,7 @@
         <%= link_to workbench_path(tool: slot_key, target: @target),
                     class: "hover:text-fg #{'text-fg' if slot_key == @tool_key.to_s}",
                     data: { slot: i + 1 } do %>
-          <span class="text-purple"><%= i + 1 %>:</span><span><%= klass.name.demodulize.underscore.split('_').first %></span>
+          <span class="text-accent"><%= i + 1 %>:</span><span><%= klass.name.demodulize.underscore.split('_').first %></span>
         <% end %>
       <% end %>
     </nav>

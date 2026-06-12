@@ -2,7 +2,7 @@
   <%= turbo_stream_from batch %>
   <div class="flex items-center justify-between px-3 py-2 border-b border-line">
     <span>
-      <span class="bg-purple text-bg px-1 font-bold">BULK</span>
+      <span class="bg-accent text-bg px-1 font-bold">BULK</span>
       <span class="text-cyan"><%= batch.tool_class&.tool_name || batch.tool_key %></span>
       <span class="text-mute" aria-hidden="true">// <%= batch.domain_count %> domains</span>
     </span>

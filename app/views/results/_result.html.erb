@@ -30,27 +30,27 @@
         <% siblings = sibling_tools_for(tool_run) %>
         <% if siblings.any? %>
           <details class="relative" data-controller="dropdown">
-            <summary class="text-mute hover:text-cyan text-[10px] cursor-pointer list-none">[→] in tool ▾</summary>
+            <summary class="text-mute hover:text-accent-2 text-[10px] cursor-pointer list-none">[→] in tool ▾</summary>
             <div class="absolute right-0 z-10 mt-1 bg-elevated border border-line py-1 min-w-[160px]">
               <% siblings.each do |key, name| %>
                 <%= link_to name, workbench_path(tool: key, target: tool_run.primary_input),
-                      class: "block px-3 py-[2px] text-fg hover:bg-line hover:text-cyan whitespace-nowrap" %>
+                      class: "block px-3 py-[2px] text-fg hover:bg-line hover:text-accent-2 whitespace-nowrap" %>
               <% end %>
             </div>
           </details>
         <% end %>
         <% if tool_run.tool_class %>
           <%= button_to tool_run_rerun_path(tool_run),
-                class: "text-mute hover:text-cyan text-[10px]",
+                class: "text-mute hover:text-accent-2 text-[10px]",
                 form_class: "inline" do %>↻ re-run<% end %>
         <% end %>
         <button type="button"
-                class="text-mute hover:text-cyan text-[10px]"
+                class="text-mute hover:text-accent-2 text-[10px]"
                 data-controller="copy"
                 data-action="click->copy#copySummary"
                 data-copy-text-value="<%= tool_run_ticket_text(tool_run) %>">[y s] copy summary</button>
         <button type="button"
-                class="text-mute hover:text-cyan text-[10px]"
+                class="text-mute hover:text-accent-2 text-[10px]"
                 data-controller="copy"
                 data-action="click->copy#copyFull">[y F] copy full</button>
       </div>

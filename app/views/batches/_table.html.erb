@@ -21,7 +21,7 @@
            dom  = run.input_summary.presence || (run.input.is_a?(Hash) ? (run.input["domain"] || run.input[:domain]) : nil) %>
         <tr>
           <td class="pr-2" data-sort-cell="domain">
-            <%= link_to dom, workbench_path(run: run.id), class: "hover:text-cyan", data: { sort_value: dom } %>
+            <%= link_to dom, workbench_path(run: run.id), class: "hover:text-accent-2", data: { sort_value: dom } %>
           </td>
           <td class="pr-2 <%= cls %>" data-sort-cell="status" data-sort-value="<%= run.status %>"><%= glyph %></td>
           <td class="pr-2"><%= run.summary.presence || run.error %></td>
