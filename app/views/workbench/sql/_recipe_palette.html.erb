@@ -31,7 +31,7 @@
            data-sql="<%= r[:sql] %>"
            data-source="starter"
            class="grid grid-cols-[14px_1fr] gap-2 px-2 py-[2px] <%= 'bg-elevated' if i == active_idx %>">
-        <span class="text-accent"><%= i == active_idx ? '▸' : ' ' %></span>
+        <span class="text-accent" data-caret><%= i == active_idx ? '▸' : ' ' %></span>
         <span class="truncate"><%= r[:name] %></span>
       </div>
     <% end %>
@@ -48,7 +48,7 @@
              data-sql="<%= r[:sql] %>"
              data-source="saved"
              class="grid grid-cols-[14px_1fr] gap-2 px-2 py-[2px] <%= 'bg-elevated' if global_idx == active_idx %>">
-          <span class="text-accent"><%= global_idx == active_idx ? '▸' : ' ' %></span>
+          <span class="text-accent" data-caret><%= global_idx == active_idx ? '▸' : ' ' %></span>
           <span class="truncate"><%= r[:name] %></span>
         </div>
       <% end %>
