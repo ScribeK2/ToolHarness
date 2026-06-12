@@ -33,6 +33,28 @@ The UI is modal (NORMAL / INSERT / CMD / SEARCH), with `:` for a
 cmdline, `/` for target search, `?` for a help overlay, and `j`/`k` /
 `1`–`9` for tool-rail navigation.
 
+## Themes
+
+ToolHarness ships 11 runtime-switchable themes (6 dark, 5 light): Tokyo Night
+Storm (default) & Day, Catppuccin Mocha & Latte, Kanagawa Wave & Lotus, Gruvbox
+Material Dark & Light, Everforest Dark & Light, and Nord. Switch with the
+`:theme` cmdline verb or the `◆` pill in the status bar — the picker live-previews
+with `j`/`k` and persists per browser.
+
+Each theme is a `[data-theme]` block of `--color-*` CSS variables, including two
+identity accents (`--color-accent`, `--color-accent-2`) that give each family its
+own character — Gruvbox is orange, Everforest green, Kanagawa gold, Nord frost.
+
+To add a theme:
+
+1. Create `app/assets/tailwind/themes/<key>.css` with a `[data-theme="<key>"]`
+   block defining every token (copy an existing file; don't forget the two
+   `--color-accent*` aliases and `color-scheme`).
+2. Add `@import "./themes/<key>.css";` to `app/assets/tailwind/application.css`.
+3. Register it in `config/themes.yml` (key, label, scheme).
+
+`test/assets/theme_completeness_test.rb` fails CI if any step is missed.
+
 ## Installation (end users)
 
 ToolHarness ships as a single Linux x86_64 AppImage. No Ruby, no Docker, no system packages required.
