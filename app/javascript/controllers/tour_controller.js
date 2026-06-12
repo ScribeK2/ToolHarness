@@ -38,11 +38,11 @@ export default class extends Controller {
 
     const rect = target.getBoundingClientRect()
     const tip = document.createElement("div")
-    tip.className = "fixed border border-cyan bg-bg text-fg text-xs p-2 z-50 max-w-xs"
+    tip.className = "fixed border border-accent-2 bg-bg text-fg text-xs p-2 z-50 max-w-xs"
     tip.innerHTML = `<div class="mb-2">${text}</div>
       <div class="flex justify-between text-mute">
         <span>step ${this.idx + 1}/${STEPS.length}</span>
-        <button data-tour-action="next" class="text-cyan">[next ⏎]</button>
+        <button data-tour-action="next" class="text-accent-2">[next ⏎]</button>
         <button data-tour-action="skip" class="text-mute ml-2">[skip Esc]</button>
       </div>`
     // Position off-screen first so we can measure, then clamp to viewport.

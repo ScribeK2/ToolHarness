@@ -87,11 +87,13 @@ export default class extends Controller {
     if (!hints) return
     const original = hints.textContent
     hints.textContent = `▸ ${msg}`
-    hints.classList.add("text-cyan")
+    hints.classList.add("text-accent-2")
+    hints.classList.remove("text-mute")
     clearTimeout(this.flashTimeout)
     this.flashTimeout = setTimeout(() => {
       hints.textContent = original
-      hints.classList.remove("text-cyan")
+      hints.classList.remove("text-accent-2")
+      hints.classList.add("text-mute")
     }, 1500)
   }
 }

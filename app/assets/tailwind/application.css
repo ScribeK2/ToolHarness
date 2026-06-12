@@ -108,7 +108,7 @@
 
   input::placeholder { color: var(--color-mute); }
 
-  /* contract: every theme's --color-accent-2 must contrast with its --color-bg (selection + focus) */
+  /* contract: every theme's --color-accent and --color-accent-2 must contrast with its --color-bg (accent: btn-primary/badges; accent-2: selection + focus) */
   ::selection {
     background-color: var(--color-accent-2);
     color: var(--color-bg);
