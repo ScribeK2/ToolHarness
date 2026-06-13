@@ -1,0 +1,80 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bin/ci)",
+      "Bash(bin/dev)",
+      "Bash(bin/setup*)",
+      "Bash(bin/rails test*)",
+      "Bash(bin/rails runner *)",
+      "Bash(bin/rails routes*)",
+      "Bash(bin/rails assets:clobber)",
+      "Bash(bin/rubocop*)",
+      "Bash(bin/brakeman*)",
+      "Bash(bin/bundler-audit*)",
+      "Bash(bin/importmap*)",
+      "Bash(bundle exec *)",
+      "Bash(bundle install*)",
+      "Bash(bundle show*)",
+      "Bash(bundle lock*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git fetch*)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git tag *)",
+      "Bash(gh run *)",
+      "Bash(gh pr *)",
+      "Skill(superpowers:brainstorming)",
+      "Skill(superpowers:writing-plans)",
+      "Skill(superpowers:subagent-driven-development)",
+      "Skill(superpowers:test-driven-development)",
+      "Skill(superpowers:verification-before-completion)",
+      "Skill(superpowers:using-git-worktrees)",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_snapshot",
+      "mcp__plugin_playwright_playwright__browser_click",
+      "mcp__plugin_playwright_playwright__browser_press_key",
+      "mcp__plugin_playwright_playwright__browser_evaluate",
+      "mcp__plugin_playwright_playwright__browser_resize",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot"
+    ],
+    "deny": [
+      "Read(.env*)",
+      "Read(**/.env*)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(rm -rf *)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/asset-clobber.sh",
+            "timeout": 30,
+            "async": true
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/release-reminder.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

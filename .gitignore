@@ -57,5 +57,6 @@
 /ToolHarness-*.AppImage.sig
 
 
-# Claude Code runtime state
-.claude/
+# Claude Code: commit shared config (CLAUDE.md, commands, hooks, settings.json);
+# keep machine-specific settings.local.json out of git.
+.claude/settings.local.json
