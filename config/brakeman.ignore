@@ -1,0 +1,17 @@
+{
+  "ignored_warnings": [
+    {
+      "fingerprint": "53c891ba36d06ba29fac467e13fd3d6979020a19b83823c64b0cca95003285b0",
+      "note": "Intentional: website_inspector probes sites regardless of cert validity; verification would defeat the diagnostic."
+    },
+    {
+      "fingerprint": "5da0fd6fec9927cc404524225c451244d83fff64d73b3fbd8de7fcd4cb86d041",
+      "note": "Intentional: ssl_checker tests which TLS versions a host supports; the handshake probe must not verify."
+    },
+    {
+      "fingerprint": "6d2da31275447ed5af998795b06e124cb8f2c15e78e5af027f0d7cfd921a8c3a",
+      "note": "Intentional: hosting_diagnostic grabs server banners from hosts that may have bad certs."
+    }
+  ],
+  "brakeman_version": "8.0.4"
+}

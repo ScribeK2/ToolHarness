@@ -137,7 +137,7 @@ class WebsiteInspector
     end
     evidence << "wp_paths" if body.include?("/wp-content/") || body.include?("/wp-includes/")
     evidence << "wp_json"  if wp_json_ok
-    [ evidence.any?, evidence, version ]
+    [evidence.any?, evidence, version]
   end
 
   def extract_title(body)
@@ -238,9 +238,9 @@ class WebsiteInspector
       server_info: {}, is_wordpress: false, wordpress_evidence: [],
       wp_version: nil, wp_json_available: false, critical_error: false,
       maintenance_mode: false, error: err,
-      issues: [ issue("critical", "site_unreachable", "Site unreachable",
+      issues: [issue("critical", "site_unreachable", "Site unreachable",
                      "No response over HTTPS or HTTP.",
-                     "Confirm the web server/container is running and listening.") ]
+                     "Confirm the web server/container is running and listening.")]
     }
   end
 end

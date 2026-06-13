@@ -7,12 +7,12 @@ class PagespeedParser
   ].freeze
 
   VITALS = [
-    %w[fcp First\ Contentful\ Paint   first-contentful-paint],
-    %w[si  Speed\ Index               speed-index],
+    %w[fcp First\ Contentful\ Paint first-contentful-paint],
+    %w[si Speed\ Index speed-index],
     %w[lcp Largest\ Contentful\ Paint largest-contentful-paint],
-    %w[tbt Total\ Blocking\ Time      total-blocking-time],
-    %w[cls Cumulative\ Layout\ Shift  cumulative-layout-shift],
-    %w[tti Time\ to\ Interactive      interactive]
+    %w[tbt Total\ Blocking\ Time total-blocking-time],
+    %w[cls Cumulative\ Layout\ Shift cumulative-layout-shift],
+    %w[tti Time\ to\ Interactive interactive]
   ].freeze
 
   STRUCTURE_MODES = %w[binary numeric metricSavings].freeze

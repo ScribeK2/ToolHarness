@@ -21,7 +21,7 @@ class WebsiteInspectorTest < ActiveSupport::TestCase
 
   test "healthy WordPress site over HTTPS" do
     body = '<html><head><meta name="generator" content="WordPress 6.4.2"><title>Acme</title></head><body>/wp-content/x</body></html>'
-    headers = { "strict-transport-security" => [ "max-age=63072000" ], "server" => [ "nginx" ] }
+    headers = { "strict-transport-security" => ["max-age=63072000"], "server" => ["nginx"] }
     r = check_with(https: ok(status: 200, body: body, headers: headers),
                    wp_json: ok(status: 200, body: "{}"))
     assert r[:success]

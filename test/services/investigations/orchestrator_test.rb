@@ -15,7 +15,7 @@ class Investigations::OrchestratorTest < ActiveJob::TestCase
 
     runs = inv.tool_runs.to_a
     assert_equal %w[whois_lookup dns_lookup hosting_diagnostic], runs.map(&:tool_key)
-    assert_equal [ 0, 1, 2 ], runs.map(&:step_order)
+    assert_equal [0, 1, 2], runs.map(&:step_order)
     assert runs.all? { |r| r.status == "pending" }
     assert runs.all? { |r| r.input["domain"] == "example.com" }
   end

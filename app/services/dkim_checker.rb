@@ -86,15 +86,15 @@ class DkimChecker
       # Check each selector
       selectors.each do |selector|
         dkim_domain = "#{selector}._domainkey.#{@domain}"
-        
+
         begin
           response = resolver.query(dkim_domain, Dnsruby::Types::TXT)
-          
+
           response.answer.each do |record|
             next unless record.type == Dnsruby::Types::TXT
-            
+
             txt_value = record.strings.join
-            
+
             # Check if it's a valid DKIM record (contains v=DKIM1 or p=)
             if txt_value.include?("v=DKIM1") || txt_value.match?(/p=\s*[A-Za-z0-9+\/=]/)
               parsed = parse_dkim_record(txt_value)
@@ -158,10 +158,10 @@ class DkimChecker
 
     # Parse key-value pairs
     parts = record.split(";").map(&:strip)
-    
+
     parts.each do |part|
       next if part.empty?
-      
+
       if part.include?("=")
         key, value = part.split("=", 2)
         key = key.strip.downcase
@@ -247,4 +247,3 @@ class DkimChecker
     issues
   end
 end
-

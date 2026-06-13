@@ -46,7 +46,7 @@ module Rdap
       lines = []
       start_a = d["startAddress"]
       end_a   = d["endAddress"]
-      add(lines, "NetRange", ([ start_a, end_a ].all?(&:present?) ? "#{start_a} - #{end_a}" : nil))
+      add(lines, "NetRange", ([start_a, end_a].all?(&:present?) ? "#{start_a} - #{end_a}" : nil))
       add(lines, "CIDR", cidr(start_a, end_a))
       add(lines, "NetName", d["name"])
       add(lines, "NetType", d["type"])
@@ -108,7 +108,7 @@ module Rdap
       return EPP_OVERRIDES[s] if EPP_OVERRIDES.key?(s)
       return s if s !~ /\s/ && s =~ /[A-Z]/ # already camelCase (single word, has uppercase)
       words = s.split(/\s+/)
-      ([ words.first&.downcase ] + words.drop(1).map(&:capitalize)).join
+      ([words.first&.downcase] + words.drop(1).map(&:capitalize)).join
     end
 
     def cidr(start_a, end_a)

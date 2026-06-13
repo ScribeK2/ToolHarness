@@ -60,7 +60,7 @@ class Tools::RegistrySweepTest < ActiveSupport::TestCase
       assert klass.form_fields.any?, "#{key}.form_fields is empty"
 
       assert_kind_of Symbol, klass.input_type
-      assert [ true, false ].include?(klass.cacheable?), "#{key}.cacheable? must return a boolean"
+      assert [true, false].include?(klass.cacheable?), "#{key}.cacheable? must return a boolean"
 
       assert_equal key, klass.name.demodulize.underscore.to_sym,
         "#{key}: registry key should match underscored class name"

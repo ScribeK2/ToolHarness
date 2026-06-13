@@ -35,7 +35,7 @@ class Tools::EmailAuthCheckTest < ActiveSupport::TestCase
 
   test "scope=dkim summary reports selectors found" do
     canned = { success: true, selectors_checked: 12,
-               selectors_found: [ { selector: "google" } ], issues: [] }
+               selectors_found: [{ selector: "google" }], issues: [] }
     DkimChecker.stub(:check, canned) do
       res = Tools::EmailAuthCheck.new.execute(domain: "example.com", scope: "dkim")
       assert_match(/1 of 12 selectors found/, res.summary)
@@ -43,7 +43,7 @@ class Tools::EmailAuthCheckTest < ActiveSupport::TestCase
   end
 
   test "scope=dmarc summary reports policy" do
-    canned = { success: true, policy: "reject", percentage: 100, rua: [ "a@b" ], issues: [] }
+    canned = { success: true, policy: "reject", percentage: 100, rua: ["a@b"], issues: [] }
     DmarcChecker.stub(:check, canned) do
       res = Tools::EmailAuthCheck.new.execute(domain: "example.com", scope: "dmarc")
       assert_match(/p=reject/, res.summary)
@@ -52,7 +52,7 @@ class Tools::EmailAuthCheckTest < ActiveSupport::TestCase
 
   test "blank or unknown scope falls back to the full overview" do
     full = { success: true, authentication_grade: "B", authentication_score: 85,
-             spf: { success: true }, dkim: { success: true, selectors_found: [ {} ] },
+             spf: { success: true }, dkim: { success: true, selectors_found: [{}] },
              dmarc: { success: true, policy: "reject" }, issues: [], recommendations: [] }
     DnsChecker.stub(:check, { success: false }) do
       EmailChecker.stub(:check, full) do

@@ -2,6 +2,8 @@
 require "rubygems"
 require "bundler/setup"
 
-ARGV.unshift("--ensure-latest")
+# NOTE: --ensure-latest removed intentionally. It failed CI whenever a newer
+# Brakeman was published upstream (regardless of our code), coupling our build
+# to RubyGems release timing. Dependabot handles the version bump instead.
 
 load Gem.bin_path("brakeman", "brakeman")

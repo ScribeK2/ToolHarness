@@ -91,7 +91,7 @@ module ToolHarness
           begin
             [run_once(sql), true]
           rescue => e2
-            return [Result.new(
+            [Result.new(
               columns: [], rows: [], row_count: 0, time_ms: 0,
               applied_limit: nil, write_affected: nil,
               error_code: mysql_code(e2), error_message: e2.message

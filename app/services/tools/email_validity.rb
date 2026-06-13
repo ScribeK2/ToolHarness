@@ -31,9 +31,9 @@ module Tools
       parts = ["valid format"]
       parts << if raw[:deliverable]
                  "deliverable#{raw[:mx_hosts].to_a.any? ? " (mx: #{raw[:mx_hosts].first})" : ''}"
-               else
+      else
                  "not deliverable"
-               end
+      end
       parts << "disposable" if raw[:disposable]
       parts << "mailbox #{raw[:smtp]}" unless raw[:smtp] == "skipped"
       "#{raw[:email]} — #{parts.join(' · ')}."

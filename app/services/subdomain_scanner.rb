@@ -198,4 +198,3 @@ class SubdomainScanner
     }[category] || 99
   end
 end
-

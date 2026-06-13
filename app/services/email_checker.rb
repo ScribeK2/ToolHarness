@@ -82,7 +82,7 @@ class EmailChecker
         when "-" then score += 20  # -all (reject)
         when "~" then score += 15  # ~all (softfail)
         when "?" then score += 5   # ?all (neutral)
-        # +all gets 0
+          # +all gets 0
         end
       end
     end
@@ -120,12 +120,12 @@ class EmailChecker
 
     # Determine grade
     grade = case score
-            when 90..100 then "A"
-            when 80..89 then "B"
-            when 70..79 then "C"
-            when 60..69 then "D"
-            else "F"
-            end
+    when 90..100 then "A"
+    when 80..89 then "B"
+    when 70..79 then "C"
+    when 60..69 then "D"
+    else "F"
+    end
 
     { score: score, grade: grade }
   end
@@ -273,4 +273,3 @@ class EmailChecker
     recommendations.sort_by { |r| r[:priority] }
   end
 end
-

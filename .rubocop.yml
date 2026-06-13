@@ -1,8 +1,15 @@
 # Omakase Ruby styling for Rails
 inherit_gem: { rubocop-rails-omakase: rubocop.yml }
 
-# Overwrite or add rules to create your own house style
-#
-# # Use `[a, [b, c]]` not `[ a, [ b, c ] ]`
-# Layout/SpaceInsideArrayLiteralBrackets:
-#   Enabled: false
+AllCops:
+  Exclude:
+    - "build/**/*"     # AppImage staging dir (bundled Ruby stdlib) — never lint
+    - "tmp/**/*"
+    - "vendor/**/*"
+    - "node_modules/**/*"
+
+# House style: no space inside array brackets — `[a, b]`, not `[ a, b ]`.
+# Omakase leaves this at RuboCop's `space` default; the codebase is written
+# no-space, so enforce that explicitly rather than churn every literal.
+Layout/SpaceInsideArrayLiteralBrackets:
+  EnforcedStyle: no_space

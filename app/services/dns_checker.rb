@@ -303,4 +303,3 @@ class DnsChecker
     result
   end
 end
-

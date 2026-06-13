@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install system packages (Chrome for system tests, sqlite, vips)
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y \
+            google-chrome-stable curl libjemalloc2 libvips sqlite3
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+
+      - name: Run full CI gauntlet (rubocop, audits, brakeman, tests, system, seeds)
+        env:
+          RAILS_ENV: test
+        run: bin/ci
+
+      - name: Upload system test screenshots on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: screenshots
+          path: tmp/screenshots
+          if-no-files-found: ignore

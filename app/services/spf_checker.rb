@@ -47,7 +47,7 @@ class SpfChecker
     begin
       # Fetch SPF record (TXT record starting with v=spf1)
       spf_records = fetch_spf_records
-      
+
       if spf_records.empty?
         result[:error] = "No SPF record found"
         result[:issues] << {
@@ -70,11 +70,11 @@ class SpfChecker
       else
         result[:success] = true
         result[:raw_record] = spf_records.first
-        
+
         # Parse the SPF record
         parsed = parse_spf_record(spf_records.first)
         result.merge!(parsed)
-        
+
         # Detect issues
         result[:issues] = detect_issues(result)
       end
@@ -108,11 +108,11 @@ class SpfChecker
     )
 
     response = resolver.query(@domain, Dnsruby::Types::TXT)
-    
+
     spf_records = []
     response.answer.each do |record|
       next unless record.type == Dnsruby::Types::TXT
-      
+
       txt_value = record.strings.join
       if txt_value.downcase.start_with?("v=spf1")
         spf_records << txt_value
@@ -136,7 +136,7 @@ class SpfChecker
     }
 
     parts = record.split(/\s+/)
-    
+
     parts.each do |part|
       part = part.strip
       next if part.empty?
@@ -161,7 +161,7 @@ class SpfChecker
           name: modifier_name,
           value: modifier_value
         }
-        
+
         # redirect counts as a DNS lookup
         if modifier_name == "redirect"
           result[:dns_lookup_count] += 1
@@ -325,4 +325,3 @@ class SpfChecker
     issues
   end
 end
-

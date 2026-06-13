@@ -1,0 +1,6 @@
+---
+# The AppImage staging dir (build/appimage/AppDir) bundles the full Ruby
+# stdlib — eval-heavy code that floods Brakeman with ~300 false positives.
+# It is gitignored and never part of the app's attack surface; never scan it.
+skip_files:
+  - build/

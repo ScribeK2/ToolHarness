@@ -37,7 +37,7 @@ class PropagationCheckerTest < ActiveSupport::TestCase
   end
 
   test "normalize CNAME: rdata lowercased, trailing dot stripped" do
-    rrs = [ RR.new(Dnsruby::Types::CNAME, nil, nil, nil, nil, "target.example.com.", nil, nil, nil, nil, nil, nil, nil, 3600) ]
+    rrs = [RR.new(Dnsruby::Types::CNAME, nil, nil, nil, nil, "target.example.com.", nil, nil, nil, nil, nil, nil, nil, 3600)]
     assert_equal ["target.example.com"], normalize("CNAME", rrs)
   end
 
@@ -50,7 +50,7 @@ class PropagationCheckerTest < ActiveSupport::TestCase
   end
 
   test "normalize SOA: mname rname serial" do
-    rrs = [ RR.new(Dnsruby::Types::SOA, nil, nil, nil, nil, nil, nil, "ns1.example.com.", "hostmaster.example.com.", 2026052801, nil, nil, nil, 3600) ]
+    rrs = [RR.new(Dnsruby::Types::SOA, nil, nil, nil, nil, nil, nil, "ns1.example.com.", "hostmaster.example.com.", 2026052801, nil, nil, nil, 3600)]
     assert_equal ["ns1.example.com hostmaster.example.com 2026052801"], normalize("SOA", rrs)
   end
 

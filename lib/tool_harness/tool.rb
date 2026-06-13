@@ -56,7 +56,7 @@ module ToolHarness
       start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
       result = if self.class.cacheable?
-        cache_key = "tool_harness:#{self.class.name.demodulize.underscore}:#{params.sort_by { |k, _| k.to_s }.to_s}"
+        cache_key = "tool_harness:#{self.class.name.demodulize.underscore}:#{params.sort_by { |k, _| k.to_s }}"
         Rails.cache.fetch(cache_key, expires_in: self.class.cache_duration) { execute(params) }
       else
         execute(params)

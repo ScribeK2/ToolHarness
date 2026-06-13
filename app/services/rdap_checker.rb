@@ -81,9 +81,9 @@ class RdapChecker
   def not_found_result(source)
     base_result.merge(
       success: true, source: source,
-      issues: [ { severity: "info", code: "rdap_not_found",
+      issues: [{ severity: "info", code: "rdap_not_found",
                  title: "Not registered", message: "RDAP reports no record for #{@query}.",
-                 recommendation: "The object may be unregistered or available." } ]
+                 recommendation: "The object may be unregistered or available." }]
     )
   end
 
@@ -117,7 +117,7 @@ class RdapChecker
       success: true, source: source,
       raw_data: JSON.pretty_generate(d),
       whois_text: Rdap::WhoisFormatter.format(d, record_type: :ip),
-      ip_range: ([ start_a, end_a ].all?(&:present?) ? "#{start_a} – #{end_a}" : nil),
+      ip_range: ([start_a, end_a].all?(&:present?) ? "#{start_a} – #{end_a}" : nil),
       cidr: cidr_from(start_a, end_a),
       network_name: d["name"],
       network_type: d["type"],

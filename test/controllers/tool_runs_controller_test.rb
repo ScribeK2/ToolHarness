@@ -87,7 +87,7 @@ class ToolRunsControllerTest < ActionDispatch::IntegrationTest
     )
     run.apply_result!(ToolHarness::Result.new(
       success: true, tool: "DNS Lookup",
-      data: { "a_records" => [ "1.2.3.4" ] }, summary: "Resolves to 1.2.3.4."
+      data: { "a_records" => ["1.2.3.4"] }, summary: "Resolves to 1.2.3.4."
     ))
 
     get tool_run_path(run), headers: { "Accept" => "text/vnd.turbo-stream.html" }

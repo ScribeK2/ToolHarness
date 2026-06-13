@@ -10,7 +10,7 @@ class ToolHarness::HistoricalDns::VirustotalTest < ActiveSupport::TestCase
     ],
     "links" => { "next" => "https://www.virustotal.com/api/v3/domains/example.com/resolutions?cursor=PG2" }
   }.freeze
-  PAGE2 = { "data" => [ { "attributes" => { "ip_address" => "5.6.7.8", "date" => 1620000000 } } ] }.freeze
+  PAGE2 = { "data" => [{ "attributes" => { "ip_address" => "5.6.7.8", "date" => 1620000000 } }] }.freeze
 
   test "maps resolutions to A/AAAA records with dates and source, following pagination" do
     p = provider

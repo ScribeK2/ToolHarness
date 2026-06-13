@@ -45,17 +45,17 @@ module Investigations
       return [] unless dns&.success
       addressable = a_records.any? || Array(data(dns)[:aaaa_records]).any? || Array(data(dns)[:cname_records]).any?
       return [] if addressable
-      [ finding("critical", "no_resolution", "Domain does not resolve",
+      [finding("critical", "no_resolution", "Domain does not resolve",
                "No A/AAAA/CNAME records were returned.",
-               %w[dns_lookup], "Check the zone's A record and that the nameservers are authoritative.") ]
+               %w[dns_lookup], "Check the zone's A record and that the nameservers are authoritative.")]
     end
 
     def reachability_findings
       return [] unless site
       if site_health == "unreachable"
-        return [ finding("critical", "site_unreachable", "Site unreachable",
+        return [finding("critical", "site_unreachable", "Site unreachable",
                         "The homepage did not respond over HTTPS or HTTP.",
-                        %w[website_inspect], "Confirm the web server/container is running and listening.") ]
+                        %w[website_inspect], "Confirm the web server/container is running and listening.")]
       end
       out = []
       if %w[server_error down].include?(site_health)
@@ -76,9 +76,9 @@ module Investigations
       return [] unless dns&.success && hosting
       return [] if a_records.empty?
       return [] if (open_ports & WEB_PORTS).any?
-      [ finding("critical", "resolves_not_serving", "Resolves but nothing is serving the web",
+      [finding("critical", "resolves_not_serving", "Resolves but nothing is serving the web",
                "#{a_records.first} is published, but neither HTTP (80) nor HTTPS (443) accepted a connection.",
-               %w[dns_lookup hosting_diagnostic], "The site is down or the web server isn't listening — check the host/container.") ]
+               %w[dns_lookup hosting_diagnostic], "The site is down or the web server isn't listening — check the host/container.")]
     end
 
     def ssl_findings
@@ -107,16 +107,16 @@ module Investigations
 
     def maintenance_findings
       return [] unless site && data(site)[:maintenance_mode]
-      [ finding("warning", "maintenance_mode", "Site in maintenance mode",
+      [finding("warning", "maintenance_mode", "Site in maintenance mode",
                "WordPress is showing the 'briefly unavailable for scheduled maintenance' page — often a stuck update.",
-               %w[website_inspect], "Remove the .maintenance file from the WordPress root inside the container.") ]
+               %w[website_inspect], "Remove the .maintenance file from the WordPress root inside the container.")]
     end
 
     def client_error_findings
       return [] unless site && site_health == "client_error"
-      [ finding("warning", "site_client_error", "Homepage returns a client error",
+      [finding("warning", "site_client_error", "Homepage returns a client error",
                "The homepage responded with HTTP #{data(site)[:status_code]} (e.g. 403/404).",
-               %w[website_inspect], "Check access rules / document root / index file on the host.") ]
+               %w[website_inspect], "Check access rules / document root / index file on the host.")]
     end
 
     def redirect_findings
@@ -124,27 +124,27 @@ module Investigations
       return [] if data(site)[:redirects_to_https]
       http_resp = data(site)[:http_response]
       return [] unless http_resp.is_a?(Hash) && http_resp[:success]
-      [ finding("warning", "no_https_redirect", "HTTP does not redirect to HTTPS",
+      [finding("warning", "no_https_redirect", "HTTP does not redirect to HTTPS",
                "Plain HTTP requests are not redirected to HTTPS.",
-               %w[website_inspect], "Add a 301 redirect from HTTP to HTTPS.") ]
+               %w[website_inspect], "Add a 301 redirect from HTTP to HTTPS.")]
     end
 
     def db_exposure_findings
       return [] unless hosting&.success
       exposed = open_ports & DB_PORTS
       return [] if exposed.empty?
-      [ finding("warning", "database_port_exposed", "Database port reachable from outside",
+      [finding("warning", "database_port_exposed", "Database port reachable from outside",
                "Public connections were accepted on: #{exposed.join(', ')}.",
-               %w[hosting_diagnostic], "Firewall database ports to internal traffic only.") ]
+               %w[hosting_diagnostic], "Firewall database ports to internal traffic only.")]
     end
 
     def header_findings
       return [] unless site&.success
       missing = Array(data(site)[:missing_headers])
       return [] if missing.empty?
-      [ finding("info", "missing_security_headers", "Missing security headers",
+      [finding("info", "missing_security_headers", "Missing security headers",
                "The site is missing: #{missing.join(', ')}.",
-               %w[website_inspect], "Add the missing headers (HSTS, CSP, X-Frame-Options, etc.).") ]
+               %w[website_inspect], "Add the missing headers (HSTS, CSP, X-Frame-Options, etc.).")]
     end
 
     def healthy_finding

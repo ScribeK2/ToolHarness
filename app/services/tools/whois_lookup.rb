@@ -64,7 +64,7 @@ module Tools
     end
 
     def ip_summary(data)
-      parts = [ data[:network_name], data[:cidr] || data[:ip_range], data[:organization] ].compact
+      parts = [data[:network_name], data[:cidr] || data[:ip_range], data[:organization]].compact
       parts.any? ? parts.join(" · ") : "Network data retrieved"
     end
 

@@ -1,6 +1,6 @@
 class DropUsersAndUserIdFromToolRuns < ActiveRecord::Migration[8.1]
   def up
-    remove_index  :tool_runs, [:user_id, :created_at] if index_exists?(:tool_runs, [:user_id, :created_at])
+    remove_index :tool_runs, [:user_id, :created_at] if index_exists?(:tool_runs, [:user_id, :created_at])
     remove_reference :tool_runs, :user, foreign_key: true
     drop_table :users
   end

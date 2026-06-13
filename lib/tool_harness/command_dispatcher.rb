@@ -14,26 +14,26 @@ module ToolHarness
       return Command.new(name: :unknown, args: { raw: s }) unless KNOWN.include?(name)
 
       args = case name
-             when :run        then { tool: rest[0], target: rest[1] }.compact
-             when :investigate then { domain: rest[0], track: rest[1] }.compact
-             when :tool   then { name: rest[0] }.compact
-             when :target then { value: rest.join(" ") }
-             when :copy   then { what: rest[0] || "summary" }
-             when :export then { format: rest[0] || "json" }
-             when :pin    then { tool: rest[0], slot: rest[1]&.to_i }.compact
-             when :history then { filter: rest.join(" ") }
-             when :purge  then parse_kv(rest)
-             when :set    then { key: rest[0], value: rest[1..]&.join(" ") }.compact
-             when :help    then { topic: rest.join(" ") }
-             when :c       then parse_kv(rest)                        # :c host=... port=... user=...  or :c <profile>
-             when :d       then {}
-             when :db      then { name: rest[0] }.compact
-             when :w       then { mode: rest[0] }.compact              # :w on / :w off
-             when :h       then { index: rest[0]&.to_i }.compact
-             when :limit   then { n: rest[0]&.to_i }.compact
-             when :timeout then { n: rest[0]&.to_i }.compact
-             else               {}
-             end
+      when :run        then { tool: rest[0], target: rest[1] }.compact
+      when :investigate then { domain: rest[0], track: rest[1] }.compact
+      when :tool   then { name: rest[0] }.compact
+      when :target then { value: rest.join(" ") }
+      when :copy   then { what: rest[0] || "summary" }
+      when :export then { format: rest[0] || "json" }
+      when :pin    then { tool: rest[0], slot: rest[1]&.to_i }.compact
+      when :history then { filter: rest.join(" ") }
+      when :purge  then parse_kv(rest)
+      when :set    then { key: rest[0], value: rest[1..]&.join(" ") }.compact
+      when :help    then { topic: rest.join(" ") }
+      when :c       then parse_kv(rest)                        # :c host=... port=... user=...  or :c <profile>
+      when :d       then {}
+      when :db      then { name: rest[0] }.compact
+      when :w       then { mode: rest[0] }.compact              # :w on / :w off
+      when :h       then { index: rest[0]&.to_i }.compact
+      when :limit   then { n: rest[0]&.to_i }.compact
+      when :timeout then { n: rest[0]&.to_i }.compact
+      else               {}
+      end
 
       Command.new(name: name, args: args)
     end

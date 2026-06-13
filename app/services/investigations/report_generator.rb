@@ -65,10 +65,10 @@ module Investigations
       lines = ["## Probe evidence"]
       @inv.tool_runs.each do |run|
         status = case run.status
-                 when "failed"  then "FAILED"
-                 when "skipped" then "SKIPPED"
-                 else                "ok"
-                 end
+        when "failed"  then "FAILED"
+        when "skipped" then "SKIPPED"
+        else                "ok"
+        end
         lines << "### #{run.tool_name} (#{status})"
         lines << (run.summary.presence || run.skip_reason.presence || "_no summary_")
       end

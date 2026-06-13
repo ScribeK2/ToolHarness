@@ -17,7 +17,7 @@ class ToolHarness::HostNormalizerTest < ActiveSupport::TestCase
     ["ftp://example.com/path",             "ftp://example.com/path", "ftp://example.com/path"],
     ["example.com",                        "example.com",            "example.com"],
     ["example.com/foo/",                   "example.com",            "example.com/foo"],
-    ["",                                   "",                       ""],
+    ["",                                   "",                       ""]
   ].freeze
 
   CASES.each do |input, expected_strip, expected_preserve|

@@ -7,7 +7,7 @@ require "ipaddr"
 class TcpPingProbe
   PACKET_COUNT      = 4
   PACKET_TIMEOUT_S  = 2
-  PROBE_PORTS       = [ 443, 80 ].freeze # try 443 first; fall back to 80
+  PROBE_PORTS       = [443, 80].freeze # try 443 first; fall back to 80
   MAX_OUTPUT_BYTES  = 16_384
 
   def self.check(target) = new(target).check
@@ -103,7 +103,7 @@ class TcpPingProbe
   end
 
   def build_raw_output(target, port, probes)
-    lines = [ "TCP-connect probe to #{target}:#{port}" ]
+    lines = ["TCP-connect probe to #{target}:#{port}"]
     probes.each_with_index do |p, i|
       if p[:rtt_ms]
         lines << "probe #{i + 1}: connected in #{p[:rtt_ms]} ms"

@@ -16,6 +16,6 @@ class CreateInvestigations < ActiveRecord::Migration[8.1]
     add_index :investigations, :status
 
     add_reference :tool_runs, :investigation, null: true, foreign_key: true
-    add_column   :tool_runs, :step_order, :integer
+    add_column :tool_runs, :step_order, :integer
   end
 end

@@ -50,7 +50,7 @@ class DmarcChecker
 
     begin
       dmarc_records = fetch_dmarc_record
-      
+
       if dmarc_records.empty?
         result[:error] = "No DMARC record found"
         result[:issues] << {
@@ -73,11 +73,11 @@ class DmarcChecker
       else
         result[:success] = true
         result[:raw_record] = dmarc_records.first
-        
+
         # Parse the DMARC record
         parsed = parse_dmarc_record(dmarc_records.first)
         result.merge!(parsed)
-        
+
         # Detect issues
         result[:issues] = detect_issues(result)
       end
@@ -112,11 +112,11 @@ class DmarcChecker
 
     dmarc_domain = "_dmarc.#{@domain}"
     response = resolver.query(dmarc_domain, Dnsruby::Types::TXT)
-    
+
     dmarc_records = []
     response.answer.each do |record|
       next unless record.type == Dnsruby::Types::TXT
-      
+
       txt_value = record.strings.join
       if txt_value.downcase.start_with?("v=dmarc1")
         dmarc_records << txt_value
@@ -145,10 +145,10 @@ class DmarcChecker
 
     # Parse key-value pairs
     parts = record.split(";").map(&:strip)
-    
+
     parts.each do |part|
       next if part.empty?
-      
+
       if part.include?("=")
         key, value = part.split("=", 2)
         key = key.strip.downcase
@@ -184,7 +184,7 @@ class DmarcChecker
 
   def parse_report_addresses(value)
     return [] unless value
-    
+
     value.split(",").map(&:strip).map do |addr|
       # Remove mailto: prefix if present
       addr.gsub(/^mailto:/i, "")
@@ -233,7 +233,7 @@ class DmarcChecker
     elsif result[:subdomain_policy] && result[:policy]
       main_level = POLICIES.dig(result[:policy], :level) || 0
       sub_level = POLICIES.dig(result[:subdomain_policy], :level) || 0
-      
+
       if sub_level < main_level
         issues << {
           severity: SEVERITY_WARNING,
@@ -306,4 +306,3 @@ class DmarcChecker
     issues
   end
 end
-

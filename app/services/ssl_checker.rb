@@ -364,4 +364,3 @@ class SslChecker
     issues
   end
 end
-

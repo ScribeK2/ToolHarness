@@ -27,10 +27,10 @@ module ApplicationHelper
     return [] unless tool_class
 
     allowed = case tool_class.input_type
-              when :domain then %i[domain host]
-              when :host   then %i[host]
-              else []
-              end
+    when :domain then %i[domain host]
+    when :host   then %i[host]
+    else []
+    end
     return [] if allowed.empty?
 
     current_key = tool_run.tool_key.to_sym

@@ -18,10 +18,10 @@ class LegacyRunViewTest < ActionDispatch::IntegrationTest
       tool_key: "dns_propagation", tool_name: "DNS Propagation",
       result_data: {
         "domain" => "example.com", "record_type" => "A",
-        "consensus" => { "value" => [ "93.184.216.34" ], "count" => 1, "total" => 1 },
+        "consensus" => { "value" => ["93.184.216.34"], "count" => 1, "total" => 1 },
         "dissenters" => [], "failures" => [],
-        "resolvers" => [ { "ip" => "1.1.1.1", "operator" => "Cloudflare", "status" => "ok",
-                          "values" => [ "93.184.216.34" ], "ttl" => 300, "latency_ms" => 12 } ]
+        "resolvers" => [{ "ip" => "1.1.1.1", "operator" => "Cloudflare", "status" => "ok",
+                          "values" => ["93.184.216.34"], "ttl" => 300, "latency_ms" => 12 }]
       }
     )
     get workbench_path(run: run.id)

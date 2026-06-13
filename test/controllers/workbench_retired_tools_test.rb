@@ -35,10 +35,10 @@ class WorkbenchRetiredToolsTest < ActionDispatch::IntegrationTest
       execution_time: 0.1, issues: [], recommendations: [],
       result_data: {
         "domain" => "example.com", "record_type" => "A",
-        "consensus" => { "value" => [ "1.2.3.4" ], "count" => 1, "total" => 1 },
+        "consensus" => { "value" => ["1.2.3.4"], "count" => 1, "total" => 1 },
         "dissenters" => [], "failures" => [],
-        "resolvers" => [ { "ip" => "1.1.1.1", "operator" => "Cloudflare", "status" => "ok",
-                           "values" => [ "1.2.3.4" ], "ttl" => 300, "latency_ms" => 12 } ]
+        "resolvers" => [{ "ip" => "1.1.1.1", "operator" => "Cloudflare", "status" => "ok",
+                           "values" => ["1.2.3.4"], "ttl" => 300, "latency_ms" => 12 }]
       }
     )
     get workbench_path(tool: "dns_propagation", target: "example.com", run: run.id)

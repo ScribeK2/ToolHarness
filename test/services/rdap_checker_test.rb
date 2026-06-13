@@ -160,5 +160,4 @@ class RdapCheckerTest < ActiveSupport::TestCase
       end
     end
   end
-
 end

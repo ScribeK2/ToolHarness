@@ -64,10 +64,10 @@ class CommandsController < ApplicationController
     return error_stream("no current run to export") unless run
 
     payload = case args[:format]
-              when "csv"  then to_csv(run)
-              when "md"   then to_md(run)
-              else             JSON.pretty_generate(run.as_json)
-              end
+    when "csv"  then to_csv(run)
+    when "md"   then to_md(run)
+    else             JSON.pretty_generate(run.as_json)
+    end
     filename = "toolrun-#{run.id}.#{args[:format] == 'md' ? 'md' : args[:format]}"
     data_url = "data:text/plain;charset=utf-8,#{ERB::Util.url_encode(payload)}"
 
