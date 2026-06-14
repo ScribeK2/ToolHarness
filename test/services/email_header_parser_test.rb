@@ -114,4 +114,32 @@ class EmailHeaderParserTest < ActiveSupport::TestCase
     al = EmailHeaderParser.new(raw).analyze[:alignment]
     assert_equal true, al[:from_return_path_aligned]
   end
+
+  def fixture(name)
+    Rails.root.join("test/fixtures/files/email_headers/#{name}").read
+  end
+
+  test "gmail fixture: clean pass on all three auth methods, origin is the sender IP" do
+    a = EmailHeaderParser.new(fixture("gmail.txt")).analyze
+    assert a[:ok]
+    assert_equal "pass", a[:auth][:dmarc]
+    assert_equal "203.0.113.5", a[:origin_ip]
+    assert_equal 2, a[:timeline][:hops].size
+  end
+
+  test "spoofed fixture: dmarc fail + From/Return-Path misalignment" do
+    a = EmailHeaderParser.new(fixture("spoofed.txt")).analyze
+    assert_equal "fail", a[:auth][:dmarc]
+    assert_equal false, a[:alignment][:from_return_path_aligned]
+    assert_equal "yourbank.test", a[:alignment][:from_domain]
+    assert_equal "evil.test", a[:alignment][:return_path_domain]
+  end
+
+  test "minimal fixture: parses, no timeline, nil auth — never raises" do
+    a = EmailHeaderParser.new(fixture("minimal.txt")).analyze
+    assert a[:ok]
+    assert_empty a[:timeline][:hops]
+    assert_nil a[:auth][:spf]
+    assert_nil a[:origin_ip]
+  end
 end
