@@ -60,4 +60,22 @@ class EmailHeaderParserTest < ActiveSupport::TestCase
     assert_equal 1, t[:originating_index]          # skip the 127.0.0.1 hop
     assert_equal "203.0.113.5", EmailHeaderParser.new(raw).analyze[:origin_ip]
   end
+
+  test "parses spf/dkim/dmarc/compauth from Authentication-Results" do
+    raw = <<~RAW
+      Authentication-Results: mx.dest.com; spf=pass smtp.mailfrom=ex.com; dkim=pass header.d=ex.com; dmarc=fail (p=reject) header.from=ex.com; compauth=fail reason=001
+      From: a@ex.com
+    RAW
+    a = EmailHeaderParser.new(raw).analyze[:auth]
+    assert_equal "pass", a[:spf]
+    assert_equal "pass", a[:dkim]
+    assert_equal "fail", a[:dmarc]
+    assert_equal "fail", a[:compauth]
+  end
+
+  test "auth verdicts are nil when the header is absent" do
+    a = EmailHeaderParser.new("From: a@ex.com\nReceived: from a by b; Wed, 14 Jun 2026 10:00:00 -0700").analyze[:auth]
+    assert_nil a[:spf]
+    assert_nil a[:dmarc]
+  end
 end

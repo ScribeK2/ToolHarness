@@ -17,7 +17,8 @@ class EmailHeaderParser
       ok: true,
       headers: headers,
       timeline: timeline,
-      origin_ip: origin_ip(timeline)
+      origin_ip: origin_ip(timeline),
+      auth: parse_auth(headers["authentication-results"])
     }
   end
 
@@ -109,6 +110,13 @@ class EmailHeaderParser
   def origin_ip(timeline)
     idx = timeline[:originating_index]
     idx && timeline[:hops][idx][:from_ip]
+  end
+
+  def parse_auth(value)
+    text = value.to_s
+    %i[spf dkim dmarc compauth].index_with do |method|
+      text[/\b#{method}=([a-zA-Z]+)/, 1]&.downcase
+    end
   end
 
   def public_ip?(ip)
