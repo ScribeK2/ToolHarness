@@ -53,4 +53,15 @@ class WorkbenchFlowTest < ApplicationSystemTestCase
     assert_text "[AUTH RESULTS]"
     assert_text "203.0.113.5" # originating IP rendered (parse-derived, no network needed)
   end
+
+  test "email header analyzer: spoofed message surfaces severity-tagged findings" do
+    headers = Rails.root.join("test/fixtures/files/email_headers/spoofed.txt").read
+    visit workbench_path(tool: "email_header_analyzer")
+    fill_in "tool_run[headers]", with: headers
+    click_button "RUN"
+    # Findings block + the critical spoofing verdict are parse-derived (no network).
+    assert_text "[FINDINGS]", wait: 15
+    assert_text "Possible spoofing"
+    assert_text "DMARC failed at the receiving server"
+  end
 end

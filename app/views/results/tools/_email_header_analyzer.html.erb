@@ -10,7 +10,22 @@
   verdict_cls = ->(v) { v == "pass" ? "text-green" : (v == "fail" ? "text-red" : "text-fg-dim") }
   verdict_txt = ->(v) { v.present? ? v.upcase : "—" }
   fmt_delay   = ->(s) { s.nil? ? "" : (s < 60 ? "+#{s.round}s" : "+#{(s / 60.0).round(1)}m") }
+
+  issues = (tool_run.issues || []).map { |i| i.is_a?(Hash) ? i : i.to_h }
 %>
+
+<%# ── Findings (severity-tagged; the headline verdict) ── %>
+<% if issues.any? %>
+  <div class="py-2 border-t border-line first:border-t-0">
+    <div class="mono-label mb-1">[FINDINGS]</div>
+    <% issues.each do |issue| %>
+      <div class="flex gap-2 py-[1px]">
+        <%= render "results/severity_tag", severity: (issue["severity"] || issue[:severity]) %>
+        <span class="text-fg"><%= issue["title"] || issue[:title] %><% msg = issue["message"] || issue[:message] %><%= ": #{msg}" if msg.present? %></span>
+      </div>
+    <% end %>
+  </div>
+<% end %>
 
 <%# ── Delivery path ── %>
 <div class="py-2 border-t border-line first:border-t-0">
