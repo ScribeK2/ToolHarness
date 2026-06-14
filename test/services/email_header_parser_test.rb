@@ -115,6 +115,16 @@ class EmailHeaderParserTest < ActiveSupport::TestCase
     assert_equal true, al[:from_return_path_aligned]
   end
 
+  test "IPv6 ULA / private source IPs are not treated as the origin" do
+    raw = <<~RAW
+      Received: from a (a [203.0.113.7]) by mx; Wed, 14 Jun 2026 10:01:00 -0700
+      Received: from v6 (v6 [IPv6:fd00::1]) by a; Wed, 14 Jun 2026 10:00:00 -0700
+      From: a@ex.com
+    RAW
+    a = EmailHeaderParser.new(raw).analyze
+    assert_equal "203.0.113.7", a[:origin_ip]   # the fd00::1 ULA hop must be skipped
+  end
+
   def fixture(name)
     Rails.root.join("test/fixtures/files/email_headers/#{name}").read
   end

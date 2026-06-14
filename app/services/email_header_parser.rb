@@ -120,11 +120,12 @@ class EmailHeaderParser
     end
   end
 
+  # Public = not private (incl. IPv6 ULA fc00::/7), loopback, or link-local —
+  # for both IPv4 and IPv6. IPAddr#private?/#loopback?/#link_local? cover both
+  # families. Only public origins are pivoted through enrichment.
   def public_ip?(ip)
     addr = IPAddr.new(ip)
-    return false if addr.loopback? || addr.link_local?
-    return false if addr.ipv4? && (addr.private? || addr.to_s.start_with?("169.254"))
-    !(addr.ipv4? && addr.private?)
+    !(addr.private? || addr.loopback? || addr.link_local?)
   rescue IPAddr::Error
     false
   end
@@ -160,6 +161,9 @@ class EmailHeaderParser
     org(a) == org(b)
   end
 
+  # NOTE: naive last-two-labels org domain; no Public Suffix List (AppImage has
+  # no host deps), so multi-part ccTLDs like co.uk collapse to "co.uk". Acceptable
+  # for a Tier-2 signal that is always weighed against the auth verdicts.
   def org(domain)
     domain.split(".").last(2).join(".")
   end

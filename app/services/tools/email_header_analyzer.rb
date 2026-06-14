@@ -57,8 +57,7 @@ module Tools
     def rdap_name(ip)
       r = RdapChecker.check(ip)
       return nil unless r && r[:success]
-      raw = r[:raw_data] || {}
-      raw["name"] || raw["handle"]
+      r[:network_name].presence || r[:organization].presence
     rescue StandardError
       nil
     end

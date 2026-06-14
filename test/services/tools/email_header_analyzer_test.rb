@@ -6,7 +6,7 @@ class Tools::EmailHeaderAnalyzerTest < ActiveSupport::TestCase
   end
 
   # Stub every network boundary origin enrichment touches, so tests stay offline.
-  def with_stubs(rdap: { success: true, raw_data: {} }, listings: [],
+  def with_stubs(rdap: { success: true }, listings: [],
                  ipinfo_token: nil, ipinfo: { success: true }, &blk)
     store = Object.new
     store.define_singleton_method(:secret_for) { |_id| ipinfo_token }
@@ -53,7 +53,8 @@ class Tools::EmailHeaderAnalyzerTest < ActiveSupport::TestCase
   end
 
   test "enriches origin IP: RDAP name, blacklist listings, IPinfo when key present" do
-    rdap = { success: true, raw_data: { "name" => "EXAMPLE-NET", "handle" => "NET-203-0-113-0" } }
+    rdap = { success: true, network_name: "EXAMPLE-NET", organization: "Example Org",
+             raw_data: '{"name":"EXAMPLE-NET"}' }   # raw_data is a JSON STRING, like the real checker
     ipi  = { success: true, asn: { id: "AS64500", name: "Example ISP" }, org: "Example ISP",
              city: "Reno", country: "US", privacy: { hosting: true } }
     with_stubs(rdap: rdap, listings: [{ name: "Spamhaus ZEN" }], ipinfo_token: "tok", ipinfo: ipi) do
@@ -68,7 +69,7 @@ class Tools::EmailHeaderAnalyzerTest < ActiveSupport::TestCase
   end
 
   test "no IPinfo key -> ipinfo block nil, other enrichment still runs" do
-    rdap = { success: true, raw_data: { "name" => "EXAMPLE-NET" } }
+    rdap = { success: true, network_name: "EXAMPLE-NET", raw_data: '{"name":"EXAMPLE-NET"}' }
     with_stubs(rdap: rdap, listings: [], ipinfo_token: nil) do
       res = Tools::EmailHeaderAnalyzer.new.execute(headers: fixture("spoofed.txt"))
       assert_nil res.data[:origin][:ipinfo]
