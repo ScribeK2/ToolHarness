@@ -42,9 +42,42 @@ module Tools
 
     private
 
-    # Task 7 will extend this with live RDAP/blacklist/IPinfo enrichment.
     def origin_block(parsed)
-      { ip: parsed[:origin_ip] }
+      ip = parsed[:origin_ip]
+      return { ip: nil } unless ip
+
+      {
+        ip: ip,
+        rdap_name: rdap_name(ip),
+        blacklist_listings: blacklist_listings(ip),
+        ipinfo: ipinfo_block(ip)
+      }
+    end
+
+    def rdap_name(ip)
+      r = RdapChecker.check(ip)
+      return nil unless r && r[:success]
+      raw = r[:raw_data] || {}
+      raw["name"] || raw["handle"]
+    rescue StandardError
+      nil
+    end
+
+    def blacklist_listings(ip)
+      res = Tools::Blacklist.new.execute(domain: ip)
+      (res.data[:listings] || []).map { |l| l[:name] || l["name"] }.compact
+    rescue StandardError
+      []
+    end
+
+    def ipinfo_block(ip)
+      token = ToolHarness::CredentialStore.new.secret_for("ipinfo")
+      return nil if token.blank?
+      raw = IpinfoChecker.check(ip, token: token)
+      return nil unless raw && raw[:success]
+      { asn: raw[:asn], org: raw[:org], city: raw[:city], country: raw[:country], privacy: raw[:privacy] }
+    rescue StandardError
+      nil
     end
 
     def build_issues(parsed, origin)
