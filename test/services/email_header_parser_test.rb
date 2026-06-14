@@ -78,4 +78,28 @@ class EmailHeaderParserTest < ActiveSupport::TestCase
     assert_nil a[:spf]
     assert_nil a[:dmarc]
   end
+
+  test "computes identity-domain alignment and surfaces spam score" do
+    raw = <<~RAW
+      Return-Path: <bounce@mailer.ex.com>
+      From: "Brand" <noreply@ex.com>
+      Reply-To: support@ex.com
+      Message-ID: <abc.123@ex.com>
+      X-Spam-Score: 7.4
+      From-Should-Not-Override: x
+      Date: Wed, 14 Jun 2026 10:00:00 -0700
+    RAW
+    al = EmailHeaderParser.new(raw).analyze[:alignment]
+    assert_equal "ex.com", al[:from_domain]
+    assert_equal "mailer.ex.com", al[:return_path_domain]
+    assert_equal false, al[:from_return_path_aligned]   # ex.com != mailer.ex.com
+    assert_equal true,  al[:message_id_aligned]         # message-id domain ex.com == from
+    assert_in_delta 7.4, al[:spam_score], 0.001
+  end
+
+  test "alignment treats organizational-domain match as aligned" do
+    raw = "From: a@ex.com\nReturn-Path: <b@ex.com>\nMessage-ID: <z@ex.com>"
+    al = EmailHeaderParser.new(raw).analyze[:alignment]
+    assert_equal true, al[:from_return_path_aligned]
+  end
 end

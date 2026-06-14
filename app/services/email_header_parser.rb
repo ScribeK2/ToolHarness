@@ -18,7 +18,8 @@ class EmailHeaderParser
       headers: headers,
       timeline: timeline,
       origin_ip: origin_ip(timeline),
-      auth: parse_auth(headers["authentication-results"])
+      auth: parse_auth(headers["authentication-results"]),
+      alignment: build_alignment(headers, timeline)
     }
   end
 
@@ -126,5 +127,48 @@ class EmailHeaderParser
     !(addr.ipv4? && addr.private?)
   rescue IPAddr::Error
     false
+  end
+
+  def build_alignment(headers, timeline)
+    from_d  = domain_of(headers["from"])
+    rp_d    = domain_of(headers["return-path"])
+    mid_d   = domain_of(headers["message-id"])
+    {
+      from_domain: from_d,
+      return_path_domain: rp_d,
+      reply_to_domain: domain_of(headers["reply-to"]),
+      message_id_domain: mid_d,
+      from_return_path_aligned: aligned?(from_d, rp_d),
+      message_id_aligned: aligned?(from_d, mid_d),
+      date_skew_s: date_skew(headers["date"], timeline),
+      spam_score: spam_score(headers)
+    }
+  end
+
+  # Extract the domain from an address / message-id / "Name <a@b.com>" value.
+  def domain_of(value)
+    return nil if value.to_s.empty?
+    value[/@([A-Za-z0-9.\-]+)/, 1]&.downcase&.sub(/[>\s)]+\z/, "")
+  end
+
+  # Aligned when the domains are exactly equal (case-insensitive).
+  # A subdomain (mailer.ex.com) is NOT considered aligned with its parent (ex.com)
+  # because it may represent a different sending infrastructure.
+  def aligned?(a, b)
+    return false if a.nil? || b.nil?
+    a == b
+  end
+
+  def date_skew(date_value, timeline)
+    return nil if date_value.to_s.empty?
+    first = timeline[:hops].filter_map { |h| h[:time] }.first
+    return nil unless first
+    d = parse_time(date_value)
+    d && (parse_time(first) - d).to_f.abs
+  end
+
+  def spam_score(headers)
+    val = headers.find { |k, _| k.start_with?("x-spam-score") || k == "x-spam-status" }&.last
+    val && val[/-?\d+(\.\d+)?/]&.to_f
   end
 end
