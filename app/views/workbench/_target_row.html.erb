@@ -7,19 +7,32 @@
                 method: :post, scope: :tool_run,
                 data: { turbo: true },
                 class: "flex flex-col" do |f| %>
-    <div class="h-10 px-3 flex items-center gap-3">
-      <span class="mono-label">target<span aria-hidden="true"> ›</span></span>
-      <% normalize_input = @tool_class && %i[domain host].include?(@tool_class.input_type) %>
-      <%= f.text_field primary, value: @target,
-            autocomplete: "off", spellcheck: "false",
-            class: "flex-1",
-            data: {
-              workbench_target: "input",
-              controller: normalize_input ? "domain-normalizer" : nil,
-              domain_normalizer_preserve_path_value: normalize_input ? @tool_class.preserve_path_in_input?.to_s : nil
-            }.compact %>
-      <button type="submit" class="btn btn-primary cursor-pointer" aria-label="Run">RUN<span aria-hidden="true"> ⏎</span></button>
-    </div>
+    <% if fields[primary] == :textarea %>
+      <div class="px-3 py-2 flex flex-col gap-2">
+        <span class="mono-label">paste headers<span aria-hidden="true"> ›</span></span>
+        <%= f.text_area primary, value: @target, rows: 12, spellcheck: "false",
+              autocomplete: "off",
+              class: "w-full font-mono text-xs bg-surface border border-line p-2",
+              data: { workbench_target: "input" } %>
+        <div class="flex justify-end">
+          <button type="submit" class="btn btn-primary cursor-pointer" aria-label="Run">RUN<span aria-hidden="true"> ⏎</span></button>
+        </div>
+      </div>
+    <% else %>
+      <div class="h-10 px-3 flex items-center gap-3">
+        <span class="mono-label">target<span aria-hidden="true"> ›</span></span>
+        <% normalize_input = @tool_class && %i[domain host].include?(@tool_class.input_type) %>
+        <%= f.text_field primary, value: @target,
+              autocomplete: "off", spellcheck: "false",
+              class: "flex-1",
+              data: {
+                workbench_target: "input",
+                controller: normalize_input ? "domain-normalizer" : nil,
+                domain_normalizer_preserve_path_value: normalize_input ? @tool_class.preserve_path_in_input?.to_s : nil
+              }.compact %>
+        <button type="submit" class="btn btn-primary cursor-pointer" aria-label="Run">RUN<span aria-hidden="true"> ⏎</span></button>
+      </div>
+    <% end %>
 
     <% extras = fields.except(primary) %>
     <% if extras.any? %>

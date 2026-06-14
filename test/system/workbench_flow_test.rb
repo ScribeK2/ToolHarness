@@ -38,4 +38,9 @@ class WorkbenchFlowTest < ApplicationSystemTestCase
       assert_selector "[data-mode-badge]", text: "NORMAL"
     end
   end
+
+  test "email header analyzer renders a textarea primary input" do
+    visit workbench_path(tool: "email_header_analyzer")
+    assert_selector "textarea[name='tool_run[headers]']"
+  end
 end
