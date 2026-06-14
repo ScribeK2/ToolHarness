@@ -43,4 +43,14 @@ class WorkbenchFlowTest < ApplicationSystemTestCase
     visit workbench_path(tool: "email_header_analyzer")
     assert_selector "textarea[name='tool_run[headers]']"
   end
+
+  test "email header analyzer: paste headers -> rendered delivery path & auth" do
+    headers = Rails.root.join("test/fixtures/files/email_headers/gmail.txt").read
+    visit workbench_path(tool: "email_header_analyzer")
+    fill_in "tool_run[headers]", with: headers
+    click_button "RUN"
+    assert_text "[DELIVERY PATH]", wait: 15
+    assert_text "[AUTH RESULTS]"
+    assert_text "203.0.113.5" # originating IP rendered (parse-derived, no network needed)
+  end
 end
