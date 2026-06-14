@@ -81,4 +81,11 @@ class Tools::EmailHeaderAnalyzerTest < ActiveSupport::TestCase
     res = Tools::EmailHeaderAnalyzer.new.execute(headers: fixture("minimal.txt"))
     assert_nil res.data[:origin][:ip]
   end
+
+  test "minimal headers (no Return-Path/Message-ID) -> no misalignment issue" do
+    res = Tools::EmailHeaderAnalyzer.new.execute(headers: fixture("minimal.txt"))
+    assert res.success
+    titles = res.issues.map { |i| i["title"] }
+    assert(titles.none? { |t| t =~ /align/i }, "should not flag alignment when there is nothing to compare, got: #{titles.inspect}")
+  end
 end

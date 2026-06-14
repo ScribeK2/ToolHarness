@@ -97,7 +97,10 @@ module Tools
       end
 
       al = parsed[:alignment]
-      misaligned = al[:from_return_path_aligned] == false || al[:message_id_aligned] == false
+      from_present   = al[:from_domain].present?
+      rp_misaligned  = from_present && al[:return_path_domain].present? && al[:from_return_path_aligned] == false
+      mid_misaligned = from_present && al[:message_id_domain].present? && al[:message_id_aligned] == false
+      misaligned = rp_misaligned || mid_misaligned
       auth_failed = auth[:dmarc] == "fail" || auth[:spf] == "fail"
       if misaligned && auth_failed
         issues << { "severity" => "critical", "title" => "Possible spoofing: identity misalignment + failed auth",

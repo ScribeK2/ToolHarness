@@ -55,7 +55,7 @@
   <% rows.each do |label, val| %>
     <div><span class="text-mute"><%= label %>:</span> <span class="text-fg"><%= val || "—" %></span></div>
   <% end %>
-  <% unless al[:from_return_path_aligned] %>
+  <% if al[:from_domain].present? && al[:return_path_domain].present? && !al[:from_return_path_aligned] %>
     <div class="text-yellow mt-1">⚠ From / Return-Path domains do not align</div>
   <% end %>
 </div>
