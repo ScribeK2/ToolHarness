@@ -92,9 +92,21 @@ class EmailHeaderParserTest < ActiveSupport::TestCase
     al = EmailHeaderParser.new(raw).analyze[:alignment]
     assert_equal "ex.com", al[:from_domain]
     assert_equal "mailer.ex.com", al[:return_path_domain]
-    assert_equal false, al[:from_return_path_aligned]   # ex.com != mailer.ex.com
-    assert_equal true,  al[:message_id_aligned]         # message-id domain ex.com == from
+    # relaxed (DMARC-style) alignment: mailer.ex.com shares org domain ex.com
+    assert_equal true, al[:from_return_path_aligned]
+    assert_equal true, al[:message_id_aligned]
     assert_in_delta 7.4, al[:spam_score], 0.001
+  end
+
+  test "cross-organization domains are flagged as not aligned" do
+    raw = <<~RAW
+      Return-Path: <attacker@evil.test>
+      From: Your Bank <security@yourbank.test>
+      Message-ID: <999@evil.test>
+    RAW
+    al = EmailHeaderParser.new(raw).analyze[:alignment]
+    assert_equal false, al[:from_return_path_aligned]
+    assert_equal false, al[:message_id_aligned]
   end
 
   test "alignment treats organizational-domain match as aligned" do

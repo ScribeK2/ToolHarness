@@ -151,12 +151,17 @@ class EmailHeaderParser
     value[/@([A-Za-z0-9.\-]+)/, 1]&.downcase&.sub(/[>\s)]+\z/, "")
   end
 
-  # Aligned when the domains are exactly equal (case-insensitive).
-  # A subdomain (mailer.ex.com) is NOT considered aligned with its parent (ex.com)
-  # because it may represent a different sending infrastructure.
+  # Aligned when equal or sharing the same organizational domain (last two
+  # labels) — DMARC relaxed alignment. Reduces false spoofing flags on
+  # legitimate ESP bounce-subdomains (e.g. mailer.ex.com vs ex.com).
   def aligned?(a, b)
     return false if a.nil? || b.nil?
-    a == b
+    return true if a == b
+    org(a) == org(b)
+  end
+
+  def org(domain)
+    domain.split(".").last(2).join(".")
   end
 
   def date_skew(date_value, timeline)
