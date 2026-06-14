@@ -32,4 +32,32 @@ class EmailHeaderParserTest < ActiveSupport::TestCase
   test "returns ok:false when no recognizable headers are present" do
     assert_not EmailHeaderParser.new("just some random text\nno colons here").analyze[:ok]
   end
+
+  test "builds a chronological timeline with per-hop delay and total transit" do
+    raw = <<~RAW
+      Received: from relay.ex.com (relay.ex.com [203.0.113.9]) by mx.dest.com with ESMTPS id Z2; Wed, 14 Jun 2026 10:02:00 -0700
+      Received: from sender.ex.com (sender.ex.com [203.0.113.5]) by relay.ex.com with ESMTP id Z1 for <u@dest.com>; Wed, 14 Jun 2026 10:00:00 -0700
+      From: a@ex.com
+    RAW
+    t = EmailHeaderParser.new(raw).analyze[:timeline]
+    # chronological: oldest (sender->relay) first
+    assert_equal "sender.ex.com", t[:hops].first[:from_host]
+    assert_equal "203.0.113.5", t[:hops].first[:from_ip]
+    assert_equal "ESMTP", t[:hops].first[:with]
+    assert_nil t[:hops].first[:delay_s]            # first hop has no predecessor
+    assert_equal 120.0, t[:hops].last[:delay_s]    # 2 minutes between hops
+    assert_equal 120.0, t[:total_transit_s]
+    assert_equal 0, t[:originating_index]          # first public IP
+  end
+
+  test "private/loopback source IPs do not count as the originating hop" do
+    raw = <<~RAW
+      Received: from gw (gw [203.0.113.5]) by mx; Wed, 14 Jun 2026 10:01:00 -0700
+      Received: from localhost (localhost [127.0.0.1]) by gw; Wed, 14 Jun 2026 10:00:00 -0700
+      From: a@ex.com
+    RAW
+    t = EmailHeaderParser.new(raw).analyze[:timeline]
+    assert_equal 1, t[:originating_index]          # skip the 127.0.0.1 hop
+    assert_equal "203.0.113.5", EmailHeaderParser.new(raw).analyze[:origin_ip]
+  end
 end
