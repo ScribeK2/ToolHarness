@@ -17,15 +17,15 @@ module ToolHarness
     end
 
     def critical_issues
-      issues.select { |i| i[:severity] == "critical" }
+      issues_with_severity("critical")
     end
 
     def warnings
-      issues.select { |i| i[:severity] == "warning" }
+      issues_with_severity("warning")
     end
 
     def info_issues
-      issues.select { |i| i[:severity] == "info" }
+      issues_with_severity("info")
     end
 
     def has_issues?
@@ -53,6 +53,12 @@ module ToolHarness
 
     def to_json(*)
       to_h.to_json(*)
+    end
+
+    private
+
+    def issues_with_severity(level)
+      issues.select { |i| (i["severity"] || i[:severity]) == level }
     end
   end
 end

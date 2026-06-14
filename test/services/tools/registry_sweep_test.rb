@@ -12,6 +12,7 @@ class Tools::RegistrySweepTest < ActiveSupport::TestCase
     credentials
     dns_lookup
     email_auth_check
+    email_header_analyzer
     email_validity
     historical_dns
     hosting_diagnostic
@@ -27,10 +28,11 @@ class Tools::RegistrySweepTest < ActiveSupport::TestCase
   # Tools that have an explicit input validator and return a Result instead
   # of raising or hitting the network. Used by the validation-rejection test.
   VALIDATED_TOOLS = {
-    blacklist:          { domain: "; injection" },
-    hosting_diagnostic: { domain: "; injection" },
-    page_speed:         { domain: "" },
-    historical_dns:     { domain: "" }
+    blacklist:              { domain: "; injection" },
+    email_header_analyzer:  { headers: "" },
+    hosting_diagnostic:     { domain: "; injection" },
+    page_speed:             { domain: "" },
+    historical_dns:         { domain: "" }
     # NB: bulk_run is now a custom-partial launcher (execute raises NotImplementedError,
     # managed via BatchesController) — excluded from VALIDATED_TOOLS, like sql_workbench.
   }.freeze

@@ -1,0 +1,97 @@
+<%
+  d         = tool_run.result_data.with_indifferent_access
+  timeline  = d[:timeline] || {}
+  hops      = timeline[:hops] || []
+  auth      = d[:auth] || {}
+  al        = d[:alignment] || {}
+  origin    = d[:origin] || {}
+  ipinfo    = origin[:ipinfo]
+
+  verdict_cls = ->(v) { v == "pass" ? "text-green" : (v == "fail" ? "text-red" : "text-fg-dim") }
+  verdict_txt = ->(v) { v.present? ? v.upcase : "—" }
+  fmt_delay   = ->(s) { s.nil? ? "" : (s < 60 ? "+#{s.round}s" : "+#{(s / 60.0).round(1)}m") }
+
+  issues = (tool_run.issues || []).map { |i| i.is_a?(Hash) ? i : i.to_h }
+%>
+
+<%# ── Findings (severity-tagged; the headline verdict) ── %>
+<% if issues.any? %>
+  <div class="py-2 border-t border-line first:border-t-0">
+    <div class="mono-label mb-1">[FINDINGS]</div>
+    <% issues.each do |issue| %>
+      <div class="flex gap-2 py-[1px]">
+        <%= render "results/severity_tag", severity: (issue["severity"] || issue[:severity]) %>
+        <span class="text-fg"><%= issue["title"] || issue[:title] %><% msg = issue["message"] || issue[:message] %><%= ": #{msg}" if msg.present? %></span>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+
+<%# ── Delivery path ── %>
+<div class="py-2 border-t border-line first:border-t-0">
+  <div class="mono-label mb-1">[DELIVERY PATH]</div>
+  <% if hops.empty? %>
+    <div class="text-fg-dim">No Received headers parsed.</div>
+  <% else %>
+    <% hops.each do |h| %>
+      <div class="flex items-baseline gap-2">
+        <span class="text-mute">[<%= h[:index] %>]</span>
+        <span class="text-fg">from <%= h[:from_host] || "?" %><% if h[:from_ip] %> (<span class="text-yellow"><%= h[:from_ip] %></span>)<% end %></span>
+        <span class="text-mute">→ by <%= h[:by_host] || "?" %></span>
+        <% if h[:with] %><span class="text-fg-dim">[<%= h[:with] %>]</span><% end %>
+        <% if h[:delay_s] %><span class="text-mute"><%= fmt_delay.call(h[:delay_s]) %></span><% end %>
+      </div>
+    <% end %>
+    <% if timeline[:total_transit_s] %>
+      <div class="text-mute mt-1">total transit: <%= fmt_delay.call(timeline[:total_transit_s]).sub("+", "") %></div>
+    <% end %>
+  <% end %>
+</div>
+
+<%# ── Auth results ── %>
+<div class="py-2 border-t border-line">
+  <div class="mono-label mb-1">[AUTH RESULTS]</div>
+  <div class="flex gap-6">
+    <% %i[spf dkim dmarc].each do |m| %>
+      <span><span class="text-mute"><%= m.to_s.upcase %></span>
+        <span class="<%= verdict_cls.call(auth[m]) %>">[<%= verdict_txt.call(auth[m]) %>]</span></span>
+    <% end %>
+    <% if auth[:compauth].present? %>
+      <span><span class="text-mute">COMPAUTH</span> <span class="<%= verdict_cls.call(auth[:compauth]) %>">[<%= verdict_txt.call(auth[:compauth]) %>]</span></span>
+    <% end %>
+  </div>
+</div>
+
+<%# ── Alignment ── %>
+<div class="py-2 border-t border-line">
+  <div class="mono-label mb-1">[ALIGNMENT]</div>
+  <% rows = { "From" => al[:from_domain], "Return-Path" => al[:return_path_domain],
+              "Reply-To" => al[:reply_to_domain], "Message-ID" => al[:message_id_domain] } %>
+  <% rows.each do |label, val| %>
+    <div><span class="text-mute"><%= label %>:</span> <span class="text-fg"><%= val || "—" %></span></div>
+  <% end %>
+  <% if al[:from_domain].present? && al[:return_path_domain].present? && !al[:from_return_path_aligned] %>
+    <div class="text-yellow mt-1">⚠ From / Return-Path domains do not align</div>
+  <% end %>
+</div>
+
+<%# ── Origin ── %>
+<div class="py-2 border-t border-line">
+  <div class="mono-label mb-1">[ORIGIN]</div>
+  <% if origin[:ip].blank? %>
+    <div class="text-fg-dim">No originating public IP identified.</div>
+  <% else %>
+    <div><span class="text-mute">IP:</span> <span class="text-yellow"><%= origin[:ip] %></span>
+      <% if origin[:rdap_name] %><span class="text-mute">· <%= origin[:rdap_name] %></span><% end %></div>
+    <% if origin[:blacklist_listings].present? %>
+      <div class="text-red">blacklisted: <%= origin[:blacklist_listings].join(", ") %></div>
+    <% else %>
+      <div class="text-green">no blacklist hits</div>
+    <% end %>
+    <% if ipinfo %>
+      <div class="text-fg"><%= [ipinfo.dig(:asn, :name), ipinfo[:org], ipinfo[:city], ipinfo[:country]].compact.join(" · ") %></div>
+    <% else %>
+      <div class="text-fg-dim">[no IPinfo key — add one in the Credentials tool for geo/privacy intel]</div>
+    <% end %>
+  <% end %>
+</div>

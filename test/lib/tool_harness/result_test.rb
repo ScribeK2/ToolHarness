@@ -64,4 +64,17 @@ class ToolHarness::ResultTest < ActiveSupport::TestCase
     assert_equal false, ToolHarness::Result.new(success: nil).success?
     assert_equal false, ToolHarness::Result.new(success: false).success?
   end
+
+  test "severity helpers recognize both string-keyed and symbol-keyed issues" do
+    issues = [
+      { "severity" => "critical", "title" => "string crit" },
+      { severity: "critical", title: "symbol crit" },
+      { "severity" => "warning", "title" => "string warn" },
+      { severity: "info", title: "symbol info" }
+    ]
+    res = ToolHarness::Result.new(success: true, tool: "t", issues: issues)
+    assert_equal 2, res.critical_issues.size
+    assert_equal 1, res.warnings.size
+    assert_equal 1, res.info_issues.size
+  end
 end
