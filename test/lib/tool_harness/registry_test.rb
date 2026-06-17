@@ -65,13 +65,13 @@ class ToolHarness::RegistryTest < ActiveSupport::TestCase
     by_cat.each { |cat, tools| assert tools.all? { |t| t.category == cat } }
   end
 
-  # ---- catalog shape: 16 tools in 8 categories ----
+  # ---- catalog shape: 17 tools in 8 categories ----
 
   EXPECTED_CATALOG = {
     domain:      %i[whois_lookup],
     dns:         %i[dns_lookup historical_dns subdomain_scan],
     web:         %i[ssl_inspect website_inspect page_speed],
-    email:       %i[email_auth_check email_header_analyzer email_validity],
+    email:       %i[email_auth_check email_header_analyzer email_validity mail_log_analyzer],
     hosting:     %i[hosting_diagnostic],
     diagnostics: %i[blacklist bulk_run ipinfo],
     database:    %i[sql_workbench],
@@ -88,7 +88,7 @@ class ToolHarness::RegistryTest < ActiveSupport::TestCase
                  "unexpected extra categories"
   end
 
-  test "catalog is exactly 16 tools" do
-    assert_equal 16, ToolHarness::Registry.tools.size
+  test "catalog is exactly 17 tools" do
+    assert_equal 17, ToolHarness::Registry.tools.size
   end
 end

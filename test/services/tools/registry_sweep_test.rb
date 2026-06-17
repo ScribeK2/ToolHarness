@@ -17,6 +17,7 @@ class Tools::RegistrySweepTest < ActiveSupport::TestCase
     historical_dns
     hosting_diagnostic
     ipinfo
+    mail_log_analyzer
     page_speed
     sql_workbench
     ssl_inspect
@@ -30,6 +31,7 @@ class Tools::RegistrySweepTest < ActiveSupport::TestCase
   VALIDATED_TOOLS = {
     blacklist:              { domain: "; injection" },
     email_header_analyzer:  { headers: "" },
+    mail_log_analyzer:      { log: "" },
     hosting_diagnostic:     { domain: "; injection" },
     page_speed:             { domain: "" },
     historical_dns:         { domain: "" }
