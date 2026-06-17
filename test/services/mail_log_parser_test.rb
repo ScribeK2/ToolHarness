@@ -117,4 +117,29 @@ class MailLogParserTest < ActiveSupport::TestCase
     res = MailLogParser.new(log).analyze
     assert_equal 2, res[:unparsed_count]
   end
+
+  test "long Postfix queue ids (enable_long_queue_ids) are grouped" do
+    log = <<~LOG
+      postfix/qmgr[2790]: 4Xk8R2p1Zc7Yb3Na12: from=<a@client.com>, size=10, nrcpt=1 (queue active)
+      postfix/smtp[2820]: 4Xk8R2p1Zc7Yb3Na12: to=<x@example.net>, relay=mx[198.51.100.5]:25, dsn=2.0.0, status=sent (250 OK)
+    LOG
+    res = MailLogParser.new(log).analyze
+    assert_equal 1, res[:messages].size
+    assert_equal "4Xk8R2p1Zc7Yb3Na12", res[:messages].first[:queue_id]
+    assert_equal "DELIVERED", res[:messages].first[:verdict]
+  end
+
+  test "IPv6 relay address is extracted" do
+    log = "postfix/smtp[2820]: AB12CD34: to=<u@example.net>, relay=mx.example.net[IPv6:2001:db8::25]:25, dsn=2.0.0, status=sent (250 OK)"
+    r = MailLogParser.new(log).analyze[:messages].first[:recipients].first
+    assert_equal "mx.example.net", r[:relay_host]
+    assert_equal "2001:db8::25", r[:relay_ip]
+  end
+
+  test "IPv6 NOQUEUE rejection client ip is extracted" do
+    log = "postfix/smtpd[2811]: NOQUEUE: reject: RCPT from unknown[IPv6:2001:db8::bad]: 554 5.7.1 blocked; from=<s@bad.com> to=<v@ourdomain.com> proto=ESMTP"
+    rej = MailLogParser.new(log).analyze[:rejections].first
+    assert_equal "2001:db8::bad", rej[:client_ip]
+    assert_equal "v@ourdomain.com", rej[:to]
+  end
 end

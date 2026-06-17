@@ -9,7 +9,7 @@ class MailLogParser
   PF_TAG = %r{postfix(?:/[\w.-]+)*/(smtpd|cleanup|qmgr|smtp|lmtp|bounce)\[\d+\]:\s*(.*)\z}
   DC_TAG = %r{\bdovecot:\s*(.*)\z}
   # "<qid>: rest" — Postfix queue ids are 6–16 alphanumerics.
-  QID    = /\A([0-9A-Za-z]{6,16}):\s*(.*)\z/
+  QID    = /\A([0-9A-Za-z]{6,}):\s*(.*)\z/
 
   def initialize(raw)
     @raw = raw.to_s
@@ -75,7 +75,7 @@ class MailLogParser
 
     case daemon
     when "smtpd"
-      if (c = rest.match(/client=([^\s\[]+)\[([0-9a-fA-F.:]+)\]/))
+      if (c = rest.match(/client=([^\s\[]+)\[(?:IPv6:)?([0-9a-fA-F.:]+)\]/))
         rec[:client_host] = c[1]
         rec[:client_ip]   = c[2]
       end
@@ -109,7 +109,7 @@ class MailLogParser
   def parse_outcome(rest, local:)
     relay = rest[/relay=([^,]+)/, 1].to_s.strip
     relay_host = relay[/\A([^\[\s]+)/, 1]
-    relay_ip   = relay[/\[([0-9a-fA-F.:]+)\]/, 1]
+    relay_ip   = relay[/\[(?:IPv6:)?([0-9a-fA-F.:]+)\]/, 1]
     is_local   = local || relay.include?("dovecot") || relay.include?("/dovecot-lmtp")
     {
       to:         rest[/to=<([^>]*)>/, 1],
@@ -125,7 +125,7 @@ class MailLogParser
   end
 
   def parse_rejection(payload, ts)
-    m = payload.match(/from\s+([^\s\[]+)\[([0-9a-fA-F.:]+)\]:\s*(.*)\z/)
+    m = payload.match(/from\s+([^\s\[]+)\[(?:IPv6:)?([0-9a-fA-F.:]+)\]:\s*(.*)\z/)
     return nil unless m
     body = m[3]
     reply = body.split(/;\s*from=/, 2).first.to_s.strip
