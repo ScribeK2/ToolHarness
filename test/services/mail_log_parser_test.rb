@@ -113,9 +113,10 @@ class MailLogParserTest < ActiveSupport::TestCase
   end
 
   test "counts lines it cannot recognize" do
-    log = "this is noise\npostfix/qmgr[1]: ZZ99: from=<a@b.com>, size=1, nrcpt=1 (queue active)\nmore noise"
+    log = "this is noise\npostfix/qmgr[1]: 9F2A1B3C4D: from=<a@b.com>, size=1, nrcpt=1 (queue active)\nmore noise"
     res = MailLogParser.new(log).analyze
     assert_equal 2, res[:unparsed_count]
+    assert_equal 1, res[:messages].size
   end
 
   test "long Postfix queue ids (enable_long_queue_ids) are grouped" do
@@ -176,6 +177,10 @@ class MailLogParserDecodeTest < ActiveSupport::TestCase
 
   test "unknown 5xx falls back to permanent failure" do
     assert_match(/permanent/i, reason_for("5.9.9", "599 weird"))
+  end
+
+  test "permanent 5.x dsn with connection-like text does not decode as temporary" do
+    assert_match(/permanent/i, reason_for("5.4.4", "550 5.4.4 No route to host"))
   end
 
   test "rejection reason is decoded too" do

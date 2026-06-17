@@ -161,7 +161,7 @@ class MailLogParser
       "Greylisted or rate-limited — temporary, will retry"
     elsif dsn&.start_with?("5.7") || text.match?(/blocked|spam|blacklist|blocklist|policy|denied|reputation/i)
       "Rejected by recipient policy (spam / blocklist / policy)"
-    elsif dsn&.start_with?("4.4") || text.match?(/timed out|timeout|connection refused|no route|unable to connect|conversation timed out/i)
+    elsif (dsn&.start_with?("4.4") || text.match?(/timed out|timeout|connection refused|no route|unable to connect|conversation timed out/i)) && !dsn&.start_with?("5")
       "Could not connect to recipient server — temporary, will retry"
     elsif dsn&.start_with?("4.3", "5.3")
       "Receiving mail system error (problem on their side)"
