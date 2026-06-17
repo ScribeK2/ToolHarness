@@ -120,7 +120,7 @@ class MailLogParser
       dsn:        rest[/\bdsn=([\d.]+)/, 1],
       status:     rest[/\bstatus=(\w+)/, 1],
       reply:      rest[/status=\w+\s+\((.*)\)\s*\z/, 1],
-      reason:     nil # populated in a later task
+      reason:     decode_reason(rest[/\bdsn=([\d.]+)/, 1], rest[/status=\w+\s+\((.*)\)\s*\z/, 1])
     }
   end
 
@@ -137,9 +137,41 @@ class MailLogParser
       from:        body[/from=<([^>]*)>/, 1],
       to:          body[/to=<([^>]*)>/, 1],
       reply:       reply,
-      reason:      nil, # populated in a later task
+      reason:      decode_reason(reply[/\b([45]\.\d+\.\d+)\b/, 1], reply),
       time:        ts
     }
+  end
+
+  # Best-effort: map enhanced DSN (X.Y.Z) first, then the basic SMTP code.
+  # The raw reply is always shown alongside, so a miss never hides anything.
+  def decode_reason(dsn, reply)
+    text = reply.to_s
+    code = text[/\b([245]\d\d)\b/, 1]
+    if dsn&.start_with?("5.1.1", "5.1.0") || text.match?(/user unknown|no such user|does not exist|recipient address rejected/i)
+      "Recipient mailbox doesn't exist at the receiving server"
+    elsif dsn&.start_with?("5.1.2")
+      "Recipient domain doesn't exist / bad MX"
+    elsif dsn == "5.2.2" || dsn == "4.2.2" || text.match?(/mailbox full|over\s?quota/i)
+      "Recipient mailbox is full (over quota)"
+    elsif dsn&.start_with?("5.7.25", "5.7.26")
+      "Rejected — sender IP reverse-DNS / DMARC / authentication policy"
+    elsif dsn&.start_with?("5.7", "4.7") && text.match?(/greylist|try again|rate/i)
+      "Greylisted or rate-limited — temporary, will retry"
+    elsif code == "421" || text.match?(/greylist|try again later|rate limit/i)
+      "Greylisted or rate-limited — temporary, will retry"
+    elsif dsn&.start_with?("5.7") || text.match?(/blocked|spam|blacklist|blocklist|policy|denied|reputation/i)
+      "Rejected by recipient policy (spam / blocklist / policy)"
+    elsif dsn&.start_with?("4.4") || text.match?(/timed out|timeout|connection refused|no route|unable to connect|conversation timed out/i)
+      "Could not connect to recipient server — temporary, will retry"
+    elsif dsn&.start_with?("4.3", "5.3")
+      "Receiving mail system error (problem on their side)"
+    elsif dsn == "2.0.0" || code == "250"
+      "Accepted by the receiving server"
+    elsif code&.start_with?("5") || dsn&.start_with?("5")
+      "Permanent failure (recipient server refused) — see raw reply"
+    elsif code&.start_with?("4") || dsn&.start_with?("4")
+      "Temporary failure (will retry) — see raw reply"
+    end
   end
 
   # bounced > deferred > sent. No recipients (qid seen, no delivery line) =>

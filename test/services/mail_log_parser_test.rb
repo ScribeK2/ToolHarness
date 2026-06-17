@@ -143,3 +143,44 @@ class MailLogParserTest < ActiveSupport::TestCase
     assert_equal "v@ourdomain.com", rej[:to]
   end
 end
+
+class MailLogParserDecodeTest < ActiveSupport::TestCase
+  def reason_for(dsn, reply, status: "bounced")
+    log = "postfix/smtp[1]: DEC0DE01: to=<u@example.net>, relay=mx[198.51.100.5]:25, dsn=#{dsn}, status=#{status} (#{reply})"
+    MailLogParser.new(log).analyze[:messages].first[:recipients].first[:reason]
+  end
+
+  test "5.1.1 decodes to mailbox does not exist" do
+    assert_match(/mailbox doesn't exist/i, reason_for("5.1.1", "550 5.1.1 User unknown"))
+  end
+
+  test "5.2.2 / over quota decodes to mailbox full" do
+    assert_match(/full|quota/i, reason_for("5.2.2", "552 5.2.2 Over quota"))
+  end
+
+  test "5.7.x / blocked decodes to policy rejection" do
+    assert_match(/policy|spam|blocklist/i, reason_for("5.7.1", "554 5.7.1 Message rejected as spam"))
+  end
+
+  test "4.7.x greylisting decodes to temporary retry" do
+    assert_match(/greylist|rate|temporary|retry/i, reason_for("4.7.1", "451 4.7.1 Greylisting, try again later", status: "deferred"))
+  end
+
+  test "4.4.1 connection failure decodes to could not connect" do
+    assert_match(/connect|retry|temporary/i, reason_for("4.4.1", "conversation timed out", status: "deferred"))
+  end
+
+  test "2.0.0 sent decodes to accepted" do
+    assert_match(/accepted/i, reason_for("2.0.0", "250 2.0.0 OK", status: "sent"))
+  end
+
+  test "unknown 5xx falls back to permanent failure" do
+    assert_match(/permanent/i, reason_for("5.9.9", "599 weird"))
+  end
+
+  test "rejection reason is decoded too" do
+    log = "postfix/smtpd[1]: NOQUEUE: reject: RCPT from unknown[185.220.101.1]: 554 5.7.1 blocked using zen.spamhaus.org; from=<s@bad.com> to=<v@ourdomain.com> proto=ESMTP"
+    rej = MailLogParser.new(log).analyze[:rejections].first
+    assert_match(/policy|spam|blocklist/i, rej[:reason])
+  end
+end
