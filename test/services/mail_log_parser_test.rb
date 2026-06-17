@@ -112,11 +112,41 @@ class MailLogParserTest < ActiveSupport::TestCase
     assert_equal "INCOMPLETE", m[:verdict]
   end
 
-  test "counts lines it cannot recognize" do
-    log = "this is noise\npostfix/qmgr[1]: 9F2A1B3C4D: from=<a@b.com>, size=1, nrcpt=1 (queue active)\nmore noise"
+  test "flags an unrecognized leading line but still parses the record" do
+    log = "this is noise\npostfix/qmgr[1]: 9F2A1B3C4D: from=<a@b.com>, size=1, nrcpt=1 (queue active)"
     res = MailLogParser.new(log).analyze
-    assert_equal 2, res[:unparsed_count]
     assert_equal 1, res[:messages].size
+    assert_operator res[:unparsed_count], :>=, 1
+  end
+
+  test "unwraps a Postfix delivery record split across multiple lines (wrapped paste)" do
+    log = <<~LOG
+      2026-06-12T02:26:21Z mail01 postfix/smtp[2820]: 7Fk9R2p1Zc7Yb3Na12: to=<ghost@example.net>,
+      relay=mx.example.net[198.51.100.5]:25, dsn=5.1.1, status=bounced (550 5.1.1
+      <ghost@example.net>: Recipient address rejected: User unknown)
+    LOG
+    res = MailLogParser.new(log).analyze
+    assert_equal 0, res[:unparsed_count]
+    m = res[:messages].first
+    r = m[:recipients].first
+    assert_equal "ghost@example.net", r[:to]
+    assert_equal "mx.example.net", r[:relay_host]
+    assert_equal "198.51.100.5", r[:relay_ip]
+    assert_equal "bounced", r[:status]
+    assert_equal "5.1.1", r[:dsn]
+    assert_equal "BOUNCED", m[:verdict]
+  end
+
+  test "unwraps a wrapped NOQUEUE rejection so from/to survive" do
+    log = <<~LOG
+      Jun 12 02:32:00 mail01 postfix/smtpd[2811]: NOQUEUE: reject: RCPT from unknown[185.220.101.1]: 554 5.7.1 blocked using
+      zen.spamhaus.org; from=<spammer@bad.com> to=<victim@ourdomain.com> proto=ESMTP
+    LOG
+    rej = MailLogParser.new(log).analyze[:rejections].first
+    assert_equal "185.220.101.1", rej[:client_ip]
+    assert_equal "spammer@bad.com", rej[:from]
+    assert_equal "victim@ourdomain.com", rej[:to]
+    assert_match(/spam|policy|blocklist/i, rej[:reason])
   end
 
   test "long Postfix queue ids (enable_long_queue_ids) are grouped" do

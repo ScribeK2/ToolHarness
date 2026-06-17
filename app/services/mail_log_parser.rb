@@ -20,10 +20,7 @@ class MailLogParser
     rejections  = []
     unparsed    = 0
 
-    @raw.gsub("\r\n", "\n").each_line do |line|
-      line = line.chomp
-      next if line.strip.empty?
-
+    logical_lines.each do |line|
       if (m = line.match(PF_TAG))
         handle_postfix(m[1], m[2], extract_time(line), messages, rejections)
       elsif line.match(DC_TAG)
@@ -47,6 +44,29 @@ class MailLogParser
   end
 
   private
+
+  # Graylog copies often hard-wrap long records across several physical lines.
+  # A real record always carries a program tag (postfix/<daemon>[pid]: or
+  # dovecot:); a wrapped continuation fragment never does — so fold any line
+  # without a tag onto the previous logical line. Leading fragments with no
+  # preceding record stand alone (and fall through to unparsed).
+  def logical_lines
+    lines = []
+    @raw.gsub("\r\n", "\n").each_line do |raw|
+      line = raw.chomp
+      next if line.strip.empty?
+      if record_start?(line) || lines.empty?
+        lines << line
+      else
+        lines[-1] = "#{lines[-1]} #{line.strip}"
+      end
+    end
+    lines
+  end
+
+  def record_start?(line)
+    line.match?(PF_TAG) || line.match?(DC_TAG)
+  end
 
   def extract_time(line)
     if (m = line.match(/\A(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?)/))
