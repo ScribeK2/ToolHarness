@@ -1,0 +1,84 @@
+<%# Mail Log Analyzer — brutalist delivery reconstruction. %>
+<%
+  d          = (tool_run.result_data || {}).with_indifferent_access
+  messages   = d[:messages]   || []
+  rejections = d[:rejections] || []
+  unparsed   = d[:unparsed_count] || 0
+
+  verdict_token = ->(v) {
+    { "DELIVERED" => "text-green", "BOUNCED" => "text-red",
+      "REJECTED"  => "text-red",   "DEFERRED" => "text-yellow",
+      "INCOMPLETE" => "text-mute" }[v] || "text-fg"
+  }
+
+  issues = (tool_run.issues || []).map { |i| i.is_a?(Hash) ? i : i.to_h }
+%>
+
+<% if issues.any? %>
+  <div class="py-2 border-t border-line first:border-t-0">
+    <div class="mono-label mb-1">[FINDINGS]</div>
+    <% issues.each do |issue| %>
+      <div class="flex gap-2 py-[1px]">
+        <%= render "results/severity_tag", severity: (issue["severity"] || issue[:severity]) %>
+        <span class="text-fg"><%= issue["title"] || issue[:title] %><% msg = issue["message"] || issue[:message] %><%= ": #{msg}" if msg.present? %></span>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+
+<% messages.each do |m| %>
+  <% m = m.with_indifferent_access %>
+  <div class="py-2 border-t border-line first:border-t-0 font-mono">
+    <div class="mb-2">
+      <span class="<%= verdict_token.call(m[:verdict]) %>">[<%= m[:verdict] %>]</span>
+      <span class="text-fg"> MESSAGE <%= m[:queue_id] %></span>
+      <span class="text-mute"> <%= m[:time] %></span>
+    </div>
+    <div class="text-sm">
+      <div><span class="text-mute">from</span> <span class="text-fg"><%= m[:from] || "—" %></span></div>
+      <div><span class="text-mute">client</span> <span class="text-fg"><%= [m[:client_host], m[:client_ip] && "[#{m[:client_ip]}]"].compact.join(" ").presence || "—" %></span></div>
+      <div><span class="text-mute">message-id</span> <span class="text-fg"><%= m[:message_id] || "—" %></span></div>
+      <% if m[:size] || m[:nrcpt] %>
+        <div><span class="text-mute">size/nrcpt</span> <span class="text-fg"><%= m[:size] || "—" %> / <%= m[:nrcpt] || "—" %></span></div>
+      <% end %>
+    </div>
+    <div class="mt-2">
+      <% (m[:recipients] || []).each do |r| %>
+        <% r = r.with_indifferent_access %>
+        <div class="border-t border-line pt-1 mt-1 text-sm">
+          <div>
+            <span class="text-mute">to=</span><span class="text-fg"><%= r[:to] %></span>
+            <% if r[:local] %> <span class="text-cyan">[local]</span><% end %>
+            <span class="text-mute"> via </span>
+            <span class="text-fg"><%= [r[:relay_host], r[:relay_ip] && "[#{r[:relay_ip]}]"].compact.join(" ").presence || "—" %></span>
+            <span class="<%= verdict_token.call({ "sent" => "DELIVERED", "bounced" => "BOUNCED", "deferred" => "DEFERRED" }[r[:status]]) %>"> status=<%= r[:status] %></span>
+          </div>
+          <% if r[:reason].present? %><div class="text-fg pl-4"><%= r[:reason] %></div><% end %>
+          <% if r[:reply].present? %><div class="text-mute pl-4 break-all"><%= r[:reply] %></div><% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
+<% if rejections.present? %>
+  <div class="py-2 border-t border-line font-mono">
+    <div class="mono-label mb-1">[REJECTED AT OUR SERVER]</div>
+    <% rejections.each do |r| %>
+      <% r = r.with_indifferent_access %>
+      <div class="border-t border-line pt-1 mt-1 text-sm">
+        <div>
+          <span class="text-mute">from</span> <span class="text-fg"><%= [r[:client_host], r[:client_ip] && "[#{r[:client_ip]}]"].compact.join(" ").presence || "—" %></span>
+          <span class="text-mute"> to</span> <span class="text-fg"><%= r[:to] || "—" %></span>
+          <span class="text-red"> [<%= r[:code] %>]</span>
+        </div>
+        <% if r[:reason].present? %><div class="text-fg pl-4"><%= r[:reason] %></div><% end %>
+        <% if r[:reply].present? %><div class="text-mute pl-4 break-all"><%= r[:reply] %></div><% end %>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+
+<% if unparsed.to_i > 0 %>
+  <div class="text-mute text-sm font-mono py-2"><%= unparsed %> line<%= 's' unless unparsed.to_i == 1 %> not recognized as Postfix/Dovecot delivery log.</div>
+<% end %>
