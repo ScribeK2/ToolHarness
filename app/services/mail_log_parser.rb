@@ -94,7 +94,7 @@ class MailLogParser
     when "smtp", "lmtp"
       rec[:recipients] << parse_outcome(rest, local: daemon == "lmtp")
     when "bounce"
-      rec[:bounce_logged] = true
+      # Bounce DSN generated — informational; no extra fact recorded in v1.
     end
   end
 
@@ -102,7 +102,7 @@ class MailLogParser
     {
       queue_id: qid, time: ts, client_host: nil, client_ip: nil,
       from: nil, message_id: nil, size: nil, nrcpt: nil,
-      recipients: [], removed: false, bounce_logged: false, verdict: nil
+      recipients: [], removed: false, verdict: nil
     }
   end
 
