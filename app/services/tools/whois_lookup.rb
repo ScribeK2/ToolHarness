@@ -29,8 +29,9 @@ module Tools
 
     # Delegates to RegistrationStatus, which runs the same RDAP-first→WHOIS-
     # fallback ladder (extracted there so Tools::DomainPriceChecker can share
-    # it instead of duplicating it). The extra `registered:` key it adds is
-    # unused here.
+    # it instead of duplicating it). The extra `registered:` key it merges in
+    # is present in this tool's result data but unused by this tool's view
+    # (the custom whois_lookup partial never reads it).
     def lookup(query) = ::RegistrationStatus.check(query)
 
     def build_summary(data)

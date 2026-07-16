@@ -65,7 +65,7 @@ class ToolHarness::RegistryTest < ActiveSupport::TestCase
     by_cat.each { |cat, tools| assert tools.all? { |t| t.category == cat } }
   end
 
-  # ---- catalog shape: 17 tools in 8 categories ----
+  # ---- catalog shape: 18 tools in 8 categories ----
 
   EXPECTED_CATALOG = {
     domain:      %i[domain_price_checker whois_lookup],
