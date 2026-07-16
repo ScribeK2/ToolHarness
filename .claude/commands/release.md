@@ -1,7 +1,7 @@
 ---
 description: Cut a ToolHarness release — gated gauntlet (CI → bump → tag → watch AppImage build). Tag-triggered; halts at each gate, never tags on red.
 argument-hint: [major|minor|patch]
-allowed-tools: Bash(bin/ci), Bash(bin/rails assets:clobber), Bash(git *), Bash(gh *), Read, Edit
+allowed-tools: Bash(bin/ci), Bash(bin/rails assets:clobber), Bash(script/refresh-porkbun-pricing), Bash(git *), Bash(gh *), Read, Edit
 ---
 
 ## Live state
@@ -20,30 +20,40 @@ for my go-ahead.
 1. **Preflight.** Confirm the working tree is clean (or contains only intended
    release changes). If it's dirty with unrelated work, ⛔ STOP and ask.
 
-2. **CI gauntlet.** Run `bin/ci` (rubocop · bundler-audit · importmap audit ·
+2. **Pricing snapshot refresh.** Run `script/refresh-porkbun-pricing` so the
+   bundled Domain Price Checker snapshot (`config/porkbun_pricing.json`) ships
+   fresh. If the curl times out or stalls, the sandbox network is blocked by
+   Porkbun's WAF — ⛔ STOP and ask me to run it in my own terminal, then continue.
+   If the snapshot changed, commit it as:
+   `chore: refresh Porkbun price snapshot (as of YYYY-MM-DD)`.
+   If it's unchanged, note that and move on. (Do NOT skip on failure — a release
+   must never ship a snapshot we couldn't at least attempt to refresh; if Porkbun
+   is genuinely down, ⛔ STOP and ask whether to ship the existing snapshot.)
+
+3. **CI gauntlet.** Run `bin/ci` (rubocop · bundler-audit · importmap audit ·
    brakeman · rails test · system tests · seeds). If anything fails, ⛔ STOP, show
    the failing step's output, and do NOT proceed. Fix or hand back to me first.
 
-3. **Fresh assets.** Run `bin/rails assets:clobber` so no stale precompiled asset
+4. **Fresh assets.** Run `bin/rails assets:clobber` so no stale precompiled asset
    can shadow source.
 
-4. **Smoke checkpoint.** ⛔ STOP. Tell me CI is green and assets are clobbered.
+5. **Smoke checkpoint.** ⛔ STOP. Tell me CI is green and assets are clobbered.
    I run the visual smoke test locally and reply to continue (our smoke split:
    you do programmatic, I do visual). Do not proceed until I confirm.
 
-5. **Bump.** Compute the next semver from the current `VERSION` per `$1`. Write it
+6. **Bump.** Compute the next semver from the current `VERSION` per `$1`. Write it
    to the `VERSION` file. Commit as:
    `chore: bump VERSION to X.Y.Z (<one-line summary of what shipped>)`.
    **No `Co-Authored-By` / "Generated with" trailer.**
 
-6. **Push master.** `git push origin master`.
+7. **Push master.** `git push origin master`.
 
-7. **Tag + push.** `git tag vX.Y.Z && git push origin vX.Y.Z` — this triggers the
+8. **Tag + push.** `git tag vX.Y.Z && git push origin vX.Y.Z` — this triggers the
    AppImage build (`.github/workflows/appimage.yml`).
 
-8. **Watch.** `gh run watch` (or `gh run list` → watch the appimage.yml run) until
+9. **Watch.** `gh run watch` (or `gh run list` → watch the appimage.yml run) until
    it finishes. Report the final status, the tag, and the run URL. If the build
    fails, ⛔ STOP and report.
 
-Rules: never tag unless gates 1–4 are green; never add commit attribution trailers;
+Rules: never tag unless gates 1–5 are green; never add commit attribution trailers;
 the `VERSION` file is the single source of truth for the version number.
