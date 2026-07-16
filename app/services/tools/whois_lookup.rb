@@ -27,16 +27,11 @@ module Tools
 
     private
 
-    # RDAP-first ladder. IPs and domains both get a WHOIS fallback (the whois
-    # gem queries RIR WHOIS for IPs). First success wins; if both miss we keep
-    # the RDAP result so its error/issues surface.
-    def lookup(query)
-      rdap = ::RdapChecker.check(query)
-      return rdap if rdap[:success]
-
-      whois = ::WhoisChecker.check(query)
-      whois[:success] ? whois : rdap.merge(error: rdap[:error] || whois[:error])
-    end
+    # Delegates to RegistrationStatus, which runs the same RDAP-first→WHOIS-
+    # fallback ladder (extracted there so Tools::DomainPriceChecker can share
+    # it instead of duplicating it). The extra `registered:` key it adds is
+    # unused here.
+    def lookup(query) = ::RegistrationStatus.check(query)
 
     def build_summary(data)
       return "Registration lookup failed: #{data[:error] || 'unknown error'}." unless data[:success]
