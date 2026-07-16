@@ -36,6 +36,21 @@ class RegistrationStatusTest < ActiveSupport::TestCase
     end
   end
 
+  test "registered when RDAP succeeds but returns a sparse response with no registrar/dates" do
+    # A thin/sparse RDAP registry response is a real shape for a domain that
+    # IS registered (no rdap_not_found issue is emitted) — the "looks empty"
+    # heuristic must be scoped to WHOIS-sourced results only, or this would
+    # be misclassified as unregistered.
+    rdap_sparse = { success: true, record_type: :domain, source: :rdap_registry,
+                    query: "example.com", registrar: nil, expiration_date: nil,
+                    creation_date: nil, nameservers: [], raw_data: "{}", error: nil, issues: [] }
+    RdapChecker.stub(:check, rdap_sparse) do
+      status = RegistrationStatus.check("example.com")
+      assert status[:success]
+      assert_equal true, status[:registered]
+    end
+  end
+
   test "falls back to WHOIS when RDAP fails, registered when WHOIS has a registrar" do
     whois_ok = { success: true, record_type: :domain, source: :whois_fallback, registrar: "Reg",
                  expiration_date: "2030-01-01", creation_date: "2010-01-01", nameservers: [],

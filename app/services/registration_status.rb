@@ -34,9 +34,14 @@ class RegistrationStatus
   # RDAP signals "unregistered" explicitly via the rdap_not_found issue code.
   # WHOIS has no equivalent explicit signal — a WHOIS response with no
   # registrar, expiration, or creation date at all is the closest proxy for
-  # "no match" and is treated as unregistered. This is a heuristic: a heavily
-  # privacy-redacted WHOIS record for a domain that IS registered could in
-  # theory trip it.
+  # "no match" and is treated as unregistered. This is a heuristic, and it is
+  # deliberately scoped to WHOIS-sourced results only (source == :whois_fallback):
+  # a *successful* RDAP response with the same sparse shape is a real shape for
+  # a domain that IS registered (thin registry data, no rdap_not_found issue),
+  # so it must NOT trip this heuristic — only checking record_type here would
+  # misclassify sparse-but-registered RDAP results as unregistered. Even scoped
+  # to WHOIS, a heavily privacy-redacted WHOIS record for a domain that IS
+  # registered could in theory still trip it.
   def registered?(data)
     return nil unless data[:success]
     return false if not_found_issue?(data)
@@ -49,7 +54,7 @@ class RegistrationStatus
   end
 
   def whois_looks_empty?(data)
-    data[:record_type] == :domain &&
+    data[:source] == :whois_fallback &&
       data[:registrar].blank? && data[:expiration_date].blank? && data[:creation_date].blank?
   end
 end
