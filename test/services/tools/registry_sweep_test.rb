@@ -11,6 +11,7 @@ class Tools::RegistrySweepTest < ActiveSupport::TestCase
     bulk_run
     credentials
     dns_lookup
+    domain_price_checker
     email_auth_check
     email_header_analyzer
     email_validity
@@ -30,6 +31,7 @@ class Tools::RegistrySweepTest < ActiveSupport::TestCase
   # of raising or hitting the network. Used by the validation-rejection test.
   VALIDATED_TOOLS = {
     blacklist:              { domain: "; injection" },
+    domain_price_checker:   { domain: "" },
     email_header_analyzer:  { headers: "" },
     mail_log_analyzer:      { log: "" },
     hosting_diagnostic:     { domain: "; injection" },
