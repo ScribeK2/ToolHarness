@@ -1,26 +1,25 @@
 require "test_helper"
+require "tmpdir"
 
 class PorkbunPriceListTest < ActiveSupport::TestCase
-  setup { Rails.cache.clear }
-
-  PRICING = {
-    "com" => { "registration" => "9.68", "renewal" => "10.37", "transfer" => "9.68" },
-    "co.uk" => { "registration" => "6.99", "renewal" => "6.99", "transfer" => "0.00" }
+  SNAPSHOT = {
+    "fetched_at" => "2026-07-16",
+    "pricing" => {
+      "com" => { "registration" => "9.68", "renewal" => "10.37", "transfer" => "9.68" },
+      "co.uk" => { "registration" => "6.99", "renewal" => "6.99", "transfer" => "0.00" }
+    }
   }.freeze
 
-  # The test env uses :null_store (writes/reads are no-ops), so swap in a real
-  # in-memory store for the duration of any test that exercises caching.
-  def with_memory_cache
-    original = Rails.cache
-    Rails.cache = ActiveSupport::Cache::MemoryStore.new
-    yield
-  ensure
-    Rails.cache = original
+  def with_snapshot(content)
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "porkbun_pricing.json")
+      File.write(path, content) unless content.nil?
+      yield PorkbunPriceList.new(path: path)
+    end
   end
 
   test "resolves a simple TLD to its registration/renewal/transfer prices" do
-    list = PorkbunPriceList.new
-    list.stub(:fetch, PRICING) do
+    with_snapshot(JSON.generate(SNAPSHOT)) do |list|
       price = list.price_for("example.com")
       assert_equal "com", price[:tld]
       assert_equal 9.68, price[:registration]
@@ -30,8 +29,7 @@ class PorkbunPriceListTest < ActiveSupport::TestCase
   end
 
   test "resolves compound TLDs via longest-suffix match" do
-    list = PorkbunPriceList.new
-    list.stub(:fetch, PRICING) do
+    with_snapshot(JSON.generate(SNAPSHOT)) do |list|
       price = list.price_for("example.co.uk")
       assert_equal "co.uk", price[:tld]
       assert_equal 0.0, price[:transfer]
@@ -39,49 +37,34 @@ class PorkbunPriceListTest < ActiveSupport::TestCase
   end
 
   test "returns nil for a TLD not in the price list" do
-    list = PorkbunPriceList.new
-    list.stub(:fetch, PRICING) do
+    with_snapshot(JSON.generate(SNAPSHOT)) do |list|
       assert_nil list.price_for("example.zzz")
     end
   end
 
-  test "caches a successful fetch so a second instance does not refetch" do
-    with_memory_cache do
-      calls = 0
-      fetcher = ->(*) { calls += 1; PRICING }
-      list = PorkbunPriceList.new
-      list.stub(:fetch, fetcher) do
-        list.price_for("example.com")
-      end
-
-      list2 = PorkbunPriceList.new
-      list2.stub(:fetch, ->(*) { flunk "should have hit the cache, not fetched again" }) do
-        price = list2.price_for("example.com")
-        assert_equal 9.68, price[:registration]
-      end
-      assert_equal 1, calls, "expected fetch called once then cached"
+  test "carries the snapshot date through on every price" do
+    with_snapshot(JSON.generate(SNAPSHOT)) do |list|
+      assert_equal "2026-07-16", list.price_for("example.com")[:as_of]
+      assert_equal "2026-07-16", list.snapshot_date
     end
   end
 
-  test "does not cache a failed fetch, so it is retried on the next call" do
-    with_memory_cache do
-      list = PorkbunPriceList.new
-      list.stub(:fetch, nil) { assert_nil list.price_for("example.com") }
-
-      list2 = PorkbunPriceList.new
-      list2.stub(:fetch, PRICING) do
-        assert_equal 9.68, list2.price_for("example.com")[:registration]
-      end
+  test "returns nil without raising when the snapshot file is missing" do
+    with_snapshot(nil) do |list|
+      assert_nil list.price_for("example.com")
+      assert_nil list.snapshot_date
     end
   end
 
-  test "self.price_for is a convenience class method" do
-    instance = PorkbunPriceList.new
-    instance.stub(:fetch, PRICING) do
-      PorkbunPriceList.stub(:new, instance) do
-        price = PorkbunPriceList.price_for("example.com")
-        assert_equal 9.68, price[:registration]
-      end
+  test "returns nil without raising when the snapshot file is malformed" do
+    with_snapshot("not json {{{") do |list|
+      assert_nil list.price_for("example.com")
     end
+  end
+
+  test "self.price_for reads the bundled snapshot path" do
+    # The class method uses the default PATH (the committed snapshot). It must
+    # not raise even if the file is absent in a fresh checkout.
+    assert_nothing_raised { PorkbunPriceList.price_for("example.com") }
   end
 end

@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Refreshes config/porkbun_pricing.json from Porkbun's public pricing API.
+#
+# Run this from a normal dev machine (typically when cutting a release).
+# It must be curl, not Ruby: Porkbun's edge blocks Ruby's TLS fingerprint
+# outright — silent read-stalls on api./api-ipv4. hosts, 403 on the main
+# host — while curl succeeds (verified live 2026-07-16). That's why the app
+# never fetches pricing at runtime and reads this snapshot instead; see
+# app/services/porkbun_price_list.rb.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+resp=$(curl -sS --fail -X POST https://api.porkbun.com/api/json/v3/pricing/get \
+  -H "Content-Type: application/json" -d '{}')
+
+echo "$resp" | ruby -rjson -e '
+  body = JSON.parse($stdin.read)
+  unless body["status"] == "SUCCESS" && body["pricing"].is_a?(Hash)
+    abort "unexpected response: status=#{body["status"].inspect}"
+  end
+  date = Time.now.utc.strftime("%Y-%m-%d")
+  File.write("config/porkbun_pricing.json",
+             JSON.generate({ "fetched_at" => date, "pricing" => body["pricing"] }))
+  puts "wrote config/porkbun_pricing.json (#{body["pricing"].size} TLDs, as of #{date})"
+'

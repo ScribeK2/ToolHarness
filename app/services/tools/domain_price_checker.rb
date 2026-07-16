@@ -6,9 +6,9 @@ module Tools
 
     def self.tool_name = "Domain Price Checker"
     def self.category = :domain
-    def self.description = "Standard TLD registration/transfer pricing (Porkbun's public price list) for a " \
-      "domain, badged against a configurable budget cap — built to check transfer-in cost against a " \
-      "free-domain promo before promising it to a client."
+    def self.description = "Standard TLD registration/transfer pricing (bundled Porkbun price-list " \
+      "snapshot) for a domain, badged against a configurable budget cap — built to check transfer-in " \
+      "cost against a free-domain promo before promising it to a client."
     def self.form_fields = { domain: :text, budget_cap: :number }
     def self.input_type = :domain
     def self.cacheable? = false
@@ -61,13 +61,14 @@ module Tools
 
       {
         domain: query,
-        tld: price&.fetch(:tld, nil),
+        tld: price&.dig(:tld),
         registered: registered,
         registrar: registered ? status[:registrar] : nil,
         pricing: {
-          registration: price&.fetch(:registration, nil),
-          renewal: price&.fetch(:renewal, nil),
-          transfer: price&.fetch(:transfer, nil)
+          registration: price&.dig(:registration),
+          renewal: price&.dig(:renewal),
+          transfer: price&.dig(:transfer),
+          as_of: price&.dig(:as_of)
         },
         headline_price: headline_price,
         headline_label: registered ? "Transfer price" : "Registration price",
@@ -107,9 +108,10 @@ module Tools
       {
         severity: "warning", code: "price_unavailable",
         title: "Price Unavailable",
-        message: "This domain's TLD isn't in the Porkbun public price list, or the price list is " \
-          "temporarily unavailable.",
-        recommendation: "Check pricing manually with your registrar."
+        message: "This domain's TLD isn't in the bundled Porkbun price list, or the price snapshot " \
+          "(config/porkbun_pricing.json) is missing.",
+        recommendation: "Check pricing manually with your registrar, or refresh the snapshot with " \
+          "script/refresh-porkbun-pricing."
       }
     end
 

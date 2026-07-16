@@ -7,8 +7,8 @@ class Tools::DomainPriceCheckerTest < ActiveSupport::TestCase
   REGISTERED   = { success: true, registered: true, registrar: "GoDaddy.com, LLC", error: nil, issues: [] }.freeze
   BOTH_FAILED  = { success: false, registered: nil, error: "no endpoint", issues: [] }.freeze
 
-  CHEAP_COM      = { tld: "com", registration: 9.68, renewal: 10.37, transfer: 9.68 }.freeze
-  EXPENSIVE_GAME = { tld: "game", registration: 599.98, renewal: 599.98, transfer: 599.98 }.freeze
+  CHEAP_COM      = { tld: "com", registration: 9.68, renewal: 10.37, transfer: 9.68, as_of: "2026-07-16" }.freeze
+  EXPENSIVE_GAME = { tld: "game", registration: 599.98, renewal: 599.98, transfer: 599.98, as_of: "2026-07-16" }.freeze
 
   test "unregistered domain under cap: within_budget issue plus the standing pricing caveat" do
     RegistrationStatus.stub(:check, UNREGISTERED) do
@@ -19,6 +19,7 @@ class Tools::DomainPriceCheckerTest < ActiveSupport::TestCase
         assert_equal "Registration price", result.data[:headline_label]
         assert_equal 9.68, result.data[:headline_price]
         assert_equal true, result.data[:within_budget]
+        assert_equal "2026-07-16", result.data[:pricing][:as_of]
         assert_equal %w[within_budget standard_pricing_caveat], result.issues.map { |i| i[:code] }
         assert_equal "info", result.issues.first[:severity]
       end

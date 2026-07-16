@@ -1,30 +1,32 @@
-require "net/http"
 require "json"
 
-# Resolves a domain's TLD to Porkbun's public no-auth registration/renewal/
-# transfer pricing (USD) — api.porkbun.com/api/json/v3/pricing/get, no API
-# key or account required. Mirrors Rdap::Bootstrap's cache-and-degrade
-# pattern: the full price list is Rails.cache-backed for 24h; only a
-# successful fetch is cached (so a failed fetch is retried next call rather
-# than caching the failure); with no cached copy and a failed fetch,
-# price_for returns nil rather than raising.
+# Resolves a domain's TLD to Porkbun registration/renewal/transfer pricing
+# (USD) from the bundled snapshot at config/porkbun_pricing.json — refreshed
+# dev-side by script/refresh-porkbun-pricing, typically at release time.
+#
+# Why a snapshot instead of a live fetch: Porkbun's edge blocks Ruby's TLS
+# fingerprint at runtime — silent read-stalls on the api./api-ipv4. hosts and
+# a 403 from the main host, while plain curl from the same machine succeeds
+# (verified live 2026-07-16). Nothing Ruby-shaped gets through, so the app
+# never fetches at runtime. Each price carries the snapshot's fetched_at date
+# (:as_of) so staleness stays visible; TLD base prices change rarely.
 #
 # Standard TLD pricing only. Porkbun's public endpoint has no per-domain
 # premium/aftermarket pricing (that requires an authenticated account-level
 # call, out of scope) — a premium domain reports its TLD's ordinary price,
 # not its real cost.
 class PorkbunPriceList
-  URL = "https://api.porkbun.com/api/json/v3/pricing/get".freeze
-  CACHE_KEY = "porkbun:pricing".freeze
-  CACHE_TTL = 24.hours
-  OPEN_TIMEOUT = 5
-  READ_TIMEOUT = 10
+  PATH = Rails.root.join("config/porkbun_pricing.json")
 
   def self.price_for(domain) = new.price_for(domain)
 
-  # Returns { tld:, registration:, renewal:, transfer: } (USD floats) for the
-  # domain's TLD, or nil if the TLD isn't priced by Porkbun or the price list
-  # is unavailable.
+  def initialize(path: PATH)
+    @path = path
+  end
+
+  # Returns { tld:, registration:, renewal:, transfer:, as_of: } (USD floats,
+  # ISO date string) for the domain's TLD, or nil if the TLD isn't priced by
+  # Porkbun or the snapshot is missing/unreadable.
   def price_for(domain)
     prices = pricing
     return nil unless prices
@@ -38,15 +40,23 @@ class PorkbunPriceList
     nil
   end
 
+  # The snapshot's fetch date (ISO string), or nil when unreadable.
+  def snapshot_date = snapshot["fetched_at"]
+
   private
 
   def pricing
-    hit = Rails.cache.read(CACHE_KEY)
-    return hit if hit
+    p = snapshot["pricing"]
+    p.is_a?(Hash) ? p : nil
+  end
 
-    val = fetch
-    Rails.cache.write(CACHE_KEY, val, expires_in: CACHE_TTL) if val
-    val
+  def snapshot
+    @snapshot ||= begin
+      JSON.parse(File.read(@path))
+    rescue StandardError => e
+      Rails.logger.warn("PorkbunPriceList snapshot unreadable (#{@path}): #{e.class}: #{e.message}")
+      {}
+    end
   end
 
   def build(tld, entry)
@@ -54,29 +64,8 @@ class PorkbunPriceList
       tld: tld,
       registration: entry["registration"]&.to_f,
       renewal: entry["renewal"]&.to_f,
-      transfer: entry["transfer"]&.to_f
+      transfer: entry["transfer"]&.to_f,
+      as_of: snapshot_date
     }
-  end
-
-  # The single HTTP seam — stub this in tests. Returns
-  # { "<tld>" => { "registration" =>, "renewal" =>, "transfer" => }, ... } or nil.
-  def fetch
-    uri = URI.parse(URL)
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = true
-    http.open_timeout = OPEN_TIMEOUT
-    http.read_timeout = READ_TIMEOUT
-
-    req = Net::HTTP::Post.new(uri.request_uri, "Content-Type" => "application/json")
-    req.body = "{}"
-    resp = http.request(req)
-    return nil unless resp.is_a?(Net::HTTPSuccess)
-
-    body = JSON.parse(resp.body)
-    return nil unless body["status"] == "SUCCESS" && body["pricing"].is_a?(Hash)
-
-    body["pricing"]
-  rescue StandardError
-    nil
   end
 end
